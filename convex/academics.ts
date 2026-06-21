@@ -7,6 +7,10 @@ const examRow = v.object({
   passRate: v.number(),
   achievementRate: v.number(),
   addedValue: v.number(),
+  highCount: v.optional(v.number()),
+  midCount: v.optional(v.number()),
+  lowCount: v.optional(v.number()),
+  failCount: v.optional(v.number()),
 });
 
 // ===== نتائج الاختبارات =====
@@ -24,6 +28,9 @@ export const createExam = mutation({
     rows: v.array(examRow),
     riseReasons: v.optional(v.string()),
     declineReasons: v.optional(v.string()),
+    unmetStandards: v.optional(v.string()),
+    remedialActions: v.optional(v.string()),
+    enrichmentActions: v.optional(v.string()),
     coordinatorRecommendations: v.optional(v.string()),
     deputyRecommendations: v.optional(v.string()),
   },
@@ -37,6 +44,9 @@ export const updateExam = mutation({
     rows: v.optional(v.array(examRow)),
     riseReasons: v.optional(v.string()),
     declineReasons: v.optional(v.string()),
+    unmetStandards: v.optional(v.string()),
+    remedialActions: v.optional(v.string()),
+    enrichmentActions: v.optional(v.string()),
     coordinatorRecommendations: v.optional(v.string()),
     deputyRecommendations: v.optional(v.string()),
   },

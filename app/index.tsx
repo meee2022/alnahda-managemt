@@ -21,6 +21,7 @@ const GROUPS: { label: string; modules: Module[] }[] = [
       { title: "الاجتماعات", desc: "محاضر جماعية وفردية", icon: "chatbubbles", href: "/meetings", gradient: ["#5E0E24", "#9A1B3C"] },
       { title: "جدول الزيارات الشهري", desc: "تخطيط زيارات المنسقة (بدون تقييم)", icon: "footsteps", href: "/visits", gradient: ["#B0883A", "#D4B05C"] },
       { title: "متابعة التوصيات", desc: "من المديرة والنائبات والموجهين", icon: "checkmark-done", href: "/recommendations", gradient: ["#5A0C22", "#8A1538"] },
+      { title: "خطة متابعة الموجه", desc: "متابعة توصيات الموجه التربوي", icon: "git-network", href: "/registers/guide-plan", gradient: ["#5E0E24", "#9A1B3C"] },
       { title: "سجل الاستئذان", desc: "استئذانات المعلمات اليومية", icon: "exit", href: "/registers/leave", gradient: ["#B0883A", "#D4B05C"] },
       { title: "سجل الاحتياط", desc: "حصص الاحتياط والبدائل", icon: "swap-horizontal", href: "/registers/cover", gradient: ["#5A0C22", "#8A1538"] },
     ],

@@ -10,6 +10,7 @@ const EMPTY = {
   name: "", jobTitle: "معلم المرحلة التأسيسية أدبي", employeeNumber: "", nationality: "قطري",
   specialization: "", subject: "اللغة العربية", grade: "الأول", section: "A",
   yearsTrack: "", yearsTotal: "", followMode: "مباشر", phone: "",
+  email: "", license: "", level: "",
 };
 
 export default function Teachers() {
@@ -18,6 +19,13 @@ export default function Teachers() {
   const create = useMutation(api.teachers.create);
   const update = useMutation(api.teachers.update);
   const remove = useMutation(api.teachers.remove);
+  const importExcel = useMutation(api.teachers.importFromExcel);
+
+  const runImport = async () => {
+    if (typeof window !== "undefined" && !window.confirm("تحديث ودمج بيانات المعلمات من ملف القسم الرسمي (15 معلمة)؟ سيتم تحديث الموجود وإضافة الناقص.")) return;
+    const r = await importExcel({});
+    if (typeof window !== "undefined") window.alert(`تم: أضيفت ${r.added} معلمة وحُدّثت ${r.updated} من إجمالي ${r.total}.`);
+  };
 
   const [adding, setAdding] = useState(false);
   const [editing, setEditing] = useState<string | null>(null);
@@ -40,6 +48,7 @@ export default function Teachers() {
       nationality: t.nationality ?? "", specialization: t.specialization ?? "", subject: t.subject ?? "اللغة العربية",
       grade: t.grade ?? "الأول", section: t.section ?? "A", yearsTrack: t.yearsTrack ?? "",
       yearsTotal: t.yearsTotal ?? "", followMode: t.followMode ?? "مباشر", phone: t.phone ?? "",
+      email: t.email ?? "", license: t.license ?? "", level: t.level ?? "",
     });
   };
 
@@ -64,6 +73,7 @@ export default function Teachers() {
         gradient={["#5E0E24", "#9A1B3C"]}
       >
         <HeroBtn title="إضافة معلمة" icon="add" prominent onPress={() => { reset(); setAdding(true); }} />
+        <HeroBtn title="تحديث من ملف القسم" icon="cloud-download" onPress={runImport} />
         <HeroBtn title="طباعة الكشف" icon="print-outline" onPress={printList} />
       </PageHero>
 
@@ -91,6 +101,11 @@ export default function Teachers() {
           <Row style={{ gap: 10 }}>
             <View style={{ flex: 1 }}><Select label="نمط المتابعة" options={["مباشر", "غير مباشر"]} value={form.followMode} onChange={(v) => setForm({ ...form, followMode: v })} /></View>
             <View style={{ flex: 1 }}><Input label="الهاتف" value={form.phone} onChangeText={(v) => setForm({ ...form, phone: v })} keyboardType="phone-pad" /></View>
+          </Row>
+          <Input label="الإيميل الرسمي" value={form.email} onChangeText={(v) => setForm({ ...form, email: v })} keyboardType="email-address" autoCapitalize="none" />
+          <Row style={{ gap: 10 }}>
+            <View style={{ flex: 1 }}><Select label="حاصلة على الرخصة" options={["نعم", "لا"]} value={form.license} onChange={(v) => setForm({ ...form, license: v })} /></View>
+            <View style={{ flex: 1 }}><Select label="المستوى المهني" options={["مستجد", "ممارس", "متمرس", "خبير"]} value={form.level} onChange={(v) => setForm({ ...form, level: v })} /></View>
           </Row>
           <Row>
             <Button title="حفظ" icon="checkmark" small onPress={save} />
@@ -134,6 +149,9 @@ export default function Teachers() {
               <DataRow label="سنوات الخبرة (عام)" value={t.yearsTotal} />
               <DataRow label="نمط المتابعة" value={t.followMode} />
               <DataRow label="الهاتف" value={t.phone} />
+              <DataRow label="الإيميل الرسمي" value={t.email} />
+              <DataRow label="الرخصة المهنية" value={t.license} />
+              <DataRow label="المستوى المهني" value={t.level} />
               {!t.employeeNumber && !t.specialization ? (
                 <P muted style={{ fontSize: 12, marginTop: 6 }}>بيانات هذه المعلمة غير مكتملة — اضغطي ✎ لإكمالها.</P>
               ) : null}

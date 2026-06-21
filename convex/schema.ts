@@ -25,6 +25,9 @@ export default defineSchema({
     hireDate: v.optional(v.string()),
     appointmentDate: v.optional(v.string()), // تاريخ التعيين
     phone: v.optional(v.string()),
+    email: v.optional(v.string()), // الإيميل الرسمي
+    license: v.optional(v.string()), // حاصلة على الرخصة (نعم/لا)
+    level: v.optional(v.string()), // المستوى المهني (متمرس/ممارس...)
     subjects: v.optional(v.array(v.string())),
     active: v.boolean(),
   }),
@@ -257,9 +260,16 @@ export default defineSchema({
       passRate: v.number(),
       achievementRate: v.number(),
       addedValue: v.number(),
+      highCount: v.optional(v.number()), // عدد الطلبة ذوي الأداء المرتفع
+      midCount: v.optional(v.number()), // المتوسط
+      lowCount: v.optional(v.number()), // المتدني
+      failCount: v.optional(v.number()), // الراسبين
     })),
     riseReasons: v.optional(v.string()),
     declineReasons: v.optional(v.string()),
+    unmetStandards: v.optional(v.string()), // المعايير/المهارات غير المحققة وأسباب التدني
+    remedialActions: v.optional(v.string()), // الإجراءات العلاجية المشتركة
+    enrichmentActions: v.optional(v.string()), // الإجراءات الإثرائية المشتركة
     coordinatorRecommendations: v.optional(v.string()),
     deputyRecommendations: v.optional(v.string()),
   }),
@@ -371,4 +381,22 @@ export default defineSchema({
       notes: v.optional(v.string()),
     })),
   }).index("by_date", ["date"]),
+
+  // خطة متابعة توصيات (موجه تربوي) — تُستخدم عند تكرار مؤشرات لم تتوفر لها أدلة في الزيارات الصفية
+  guidePlans: defineTable({
+    teacherName: v.string(),
+    grade: v.optional(v.string()),
+    section: v.optional(v.string()),
+    date: v.optional(v.string()), // تاريخ إنشاء الخطة
+    rows: v.array(v.object({
+      guideName: v.optional(v.string()), // اسم الموجه التربوي
+      visitDate: v.optional(v.string()), // تاريخ الزيارة / المادة
+      domain: v.optional(v.string()), // المجال / المؤشر
+      actions: v.optional(v.string()), // الإجراءات (حضور صفي، حلقة نقاشية...)
+      period: v.optional(v.string()), // الفترة الزمنية
+      followDate: v.optional(v.string()), // تاريخ المتابعة من قبل المنسق
+      indicators: v.optional(v.string()), // مؤشرات تحقق الأداء
+    })),
+    notes: v.optional(v.string()),
+  }),
 });

@@ -6,7 +6,9 @@ import { Screen, Card, H2, P, Input, Button, Loading, Empty, Row, IconBtn, Badge
 import { colors, fonts, radius } from "../../lib/theme";
 import { printExamReport } from "../../lib/printTemplates";
 
-type ExamRow = { grade: string; section: string; passRate: string; achievementRate: string; addedValue: string };
+type ExamRow = { grade: string; section: string; passRate: string; achievementRate: string; addedValue: string; highCount: string; midCount: string; lowCount: string; failCount: string };
+
+const emptyRow = (): ExamRow => ({ grade: "الأول", section: "A", passRate: "", achievementRate: "", addedValue: "", highCount: "", midCount: "", lowCount: "", failCount: "" });
 
 export default function Exams() {
   const exams = useQuery(api.academics.listExams, {});
@@ -15,8 +17,10 @@ export default function Exams() {
   const remove = useMutation(api.academics.removeExam);
 
   const [adding, setAdding] = useState(false);
-  const [form, setForm] = useState({ title: "", subject: "اللغة العربية", term: "الفصل الأول", riseReasons: "", declineReasons: "", coordinatorRecommendations: "" });
-  const [rows, setRows] = useState<ExamRow[]>([{ grade: "الأول", section: "A", passRate: "", achievementRate: "", addedValue: "" }]);
+  const [form, setForm] = useState({ title: "", subject: "اللغة العربية", term: "الفصل الأول", riseReasons: "", declineReasons: "", unmetStandards: "", remedialActions: "", enrichmentActions: "", coordinatorRecommendations: "" });
+  const [rows, setRows] = useState<ExamRow[]>([emptyRow()]);
+
+  const numOrUndef = (v: string) => (v.trim() === "" ? undefined : (parseInt(v) || 0));
 
   const save = async () => {
     if (!form.title.trim()) return;
@@ -28,6 +32,10 @@ export default function Exams() {
         passRate: parseFloat(r.passRate) || 0,
         achievementRate: parseFloat(r.achievementRate) || 0,
         addedValue: parseFloat(r.addedValue) || 0,
+        highCount: numOrUndef(r.highCount),
+        midCount: numOrUndef(r.midCount),
+        lowCount: numOrUndef(r.lowCount),
+        failCount: numOrUndef(r.failCount),
       })),
     });
     setAdding(false);
@@ -73,12 +81,23 @@ export default function Exams() {
                 <View style={{ flex: 1 }}><Input label="نسبة التحصيل %" value={r.achievementRate} keyboardType="numeric" onChangeText={(v) => setRows(rows.map((x, i) => i === idx ? { ...x, achievementRate: v } : x))} /></View>
                 <View style={{ flex: 1 }}><Input label="القيمة المضافة %" value={r.addedValue} keyboardType="numeric" onChangeText={(v) => setRows(rows.map((x, i) => i === idx ? { ...x, addedValue: v } : x))} /></View>
               </Row>
+              <P muted style={{ fontSize: 12, marginTop: 2 }}>أعداد الطلبة حسب المستوى</P>
+              <Row>
+                <View style={{ flex: 1 }}><Input label="مرتفع" value={r.highCount} keyboardType="numeric" onChangeText={(v) => setRows(rows.map((x, i) => i === idx ? { ...x, highCount: v } : x))} /></View>
+                <View style={{ flex: 1 }}><Input label="متوسط" value={r.midCount} keyboardType="numeric" onChangeText={(v) => setRows(rows.map((x, i) => i === idx ? { ...x, midCount: v } : x))} /></View>
+                <View style={{ flex: 1 }}><Input label="متدني" value={r.lowCount} keyboardType="numeric" onChangeText={(v) => setRows(rows.map((x, i) => i === idx ? { ...x, lowCount: v } : x))} /></View>
+                <View style={{ flex: 1 }}><Input label="راسبين" value={r.failCount} keyboardType="numeric" onChangeText={(v) => setRows(rows.map((x, i) => i === idx ? { ...x, failCount: v } : x))} /></View>
+              </Row>
             </Card>
           ))}
-          <Button title="إضافة شعبة" icon="add" variant="outline" small onPress={() => setRows([...rows, { grade: "الأول", section: "A", passRate: "", achievementRate: "", addedValue: "" }])} style={{ marginBottom: 12 }} />
+          <Button title="إضافة شعبة" icon="add" variant="outline" small onPress={() => setRows([...rows, emptyRow()])} style={{ marginBottom: 12 }} />
 
+          <H2>التقرير الوصفي</H2>
           <Input label="أسباب ارتفاع النتائج" value={form.riseReasons} onChangeText={(v) => setForm({ ...form, riseReasons: v })} multiline />
           <Input label="أسباب انخفاض النتائج" value={form.declineReasons} onChangeText={(v) => setForm({ ...form, declineReasons: v })} multiline />
+          <Input label="المعايير/المهارات المشتركة غير المحققة وأسباب التدني" value={form.unmetStandards} onChangeText={(v) => setForm({ ...form, unmetStandards: v })} multiline />
+          <Input label="الإجراءات العلاجية المشتركة" value={form.remedialActions} onChangeText={(v) => setForm({ ...form, remedialActions: v })} multiline />
+          <Input label="الإجراءات الإثرائية المشتركة" value={form.enrichmentActions} onChangeText={(v) => setForm({ ...form, enrichmentActions: v })} multiline />
           <Input label="توصيات المنسق" value={form.coordinatorRecommendations} onChangeText={(v) => setForm({ ...form, coordinatorRecommendations: v })} multiline />
           <Button title="حفظ التقرير" icon="checkmark" onPress={save} />
         </Card>

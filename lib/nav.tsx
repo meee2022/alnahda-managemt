@@ -26,6 +26,7 @@ export const NAV: Group[] = [
       { label: "الاجتماعات", icon: "chatbubbles", href: "/meetings" },
       { label: "جدول الزيارات الشهري", icon: "footsteps", href: "/visits" },
       { label: "متابعة التوصيات", icon: "checkmark-done", href: "/recommendations" },
+      { label: "خطة متابعة الموجه", icon: "git-network", href: "/registers/guide-plan" },
     ],
   },
   {

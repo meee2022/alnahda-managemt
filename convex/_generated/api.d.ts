@@ -17,6 +17,7 @@ import type * as classVisits from "../classVisits.js";
 import type * as development from "../development.js";
 import type * as evaluations from "../evaluations.js";
 import type * as files from "../files.js";
+import type * as guidePlans from "../guidePlans.js";
 import type * as meetings from "../meetings.js";
 import type * as performance from "../performance.js";
 import type * as plans from "../plans.js";
@@ -44,6 +45,7 @@ declare const fullApi: ApiFromModules<{
   development: typeof development;
   evaluations: typeof evaluations;
   files: typeof files;
+  guidePlans: typeof guidePlans;
   meetings: typeof meetings;
   performance: typeof performance;
   plans: typeof plans;

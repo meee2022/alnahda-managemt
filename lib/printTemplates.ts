@@ -412,12 +412,21 @@ export function printExamReport(e: any, s: Settings) {
   const tables = grades
     .map((g) => {
       const rows = e.rows.filter((r: any) => r.grade === g);
+      const hasCounts = rows.some((r: any) => r.highCount != null || r.midCount != null || r.lowCount != null || r.failCount != null);
+      const cnt = (v: any) => (v == null ? "" : v);
+      const sum = (k: string) => rows.reduce((a: number, r: any) => a + (r[k] ?? 0), 0);
+      const countRows = hasCounts ? `
+    <tr><td class="b">عدد الطلبة ذوي الأداء المرتفع .</td>${rows.map((r: any) => `<td class="c">${cnt(r.highCount)}</td>`).join("")}<td class="c b">${sum("highCount")}</td></tr>
+    <tr><td class="b">عدد الطلبة ذوي الأداء المتوسط .</td>${rows.map((r: any) => `<td class="c">${cnt(r.midCount)}</td>`).join("")}<td class="c b">${sum("midCount")}</td></tr>
+    <tr><td class="b">عدد الطلبة ذوي الأداء المتدني .</td>${rows.map((r: any) => `<td class="c">${cnt(r.lowCount)}</td>`).join("")}<td class="c b">${sum("lowCount")}</td></tr>
+    <tr><td class="b">عدد الطلبة الراسبين .</td>${rows.map((r: any) => `<td class="c">${cnt(r.failCount)}</td>`).join("")}<td class="c b">${sum("failCount")}</td></tr>` : "";
       return `
   <table>
-    <tr><th style="width:30%">الصف ${esc(g)} بالبنود</th>${rows.map((r: any) => `<th>المرحلة الدراسية<br/>${esc(g)} ${r.section}</th>`).join("")}</tr>
-    <tr><td class="b">نسبة النجاح في الاختبار .</td>${rows.map((r: any) => `<td class="c">${r.passRate}%</td>`).join("")}</tr>
-    <tr><td class="b">نسبة التحصيل الأكاديمي.</td>${rows.map((r: any) => `<td class="c">${r.achievementRate}%</td>`).join("")}</tr>
-    <tr><td class="b">القيمة المضافة للتحصيل الأكاديمي .</td>${rows.map((r: any) => `<td class="c">${r.addedValue}%</td>`).join("")}</tr>
+    <tr><th style="width:30%">الصف ${esc(g)} بالبنود</th>${rows.map((r: any) => `<th>المرحلة الدراسية<br/>${esc(g)} ${r.section}</th>`).join("")}${hasCounts ? '<th>المجموع</th>' : ''}</tr>
+    <tr><td class="b">نسبة النجاح في الاختبار .</td>${rows.map((r: any) => `<td class="c">${r.passRate}%</td>`).join("")}${hasCounts ? '<td></td>' : ''}</tr>
+    <tr><td class="b">نسبة التحصيل الأكاديمي.</td>${rows.map((r: any) => `<td class="c">${r.achievementRate}%</td>`).join("")}${hasCounts ? '<td></td>' : ''}</tr>
+    <tr><td class="b">القيمة المضافة للتحصيل الأكاديمي .</td>${rows.map((r: any) => `<td class="c">${r.addedValue}%</td>`).join("")}${hasCounts ? '<td></td>' : ''}</tr>
+    ${countRows}
   </table>`;
     })
     .join("");
@@ -442,12 +451,62 @@ export function printExamReport(e: any, s: Settings) {
     <tr><td class="b">أسباب انخفاض نتائج الطلبة</td><td>${esc(e.declineReasons) || dotted(2)}</td></tr>
   </table>
   <table>${summary}</table>
+  <table>
+    <tr><th>التقرير الوصفي للنتائج</th></tr>
+    <tr><td class="b">تحديد المعايير / المهارات المشتركة غير المحققة وأسباب التدني.</td></tr>
+    <tr><td>${esc(e.unmetStandards) || dotted(2)}</td></tr>
+    <tr><td class="b">الإجراءات العلاجية المشتركة لجميع الشعب.</td></tr>
+    <tr><td>${esc(e.remedialActions) || dotted(2)}</td></tr>
+    <tr><td class="b">الإجراءات الإثرائية المشتركة لجميع الشعب.</td></tr>
+    <tr><td>${esc(e.enrichmentActions) || dotted(2)}</td></tr>
+  </table>
   <div class="b">توصيات المنسق المقترحة للنائبة الأكاديمية :-</div>
   <p>${esc(e.coordinatorRecommendations) || dotted(3)}</p>
   <div class="b">توصيات النائبة الأكاديمية:-</div>
   ${dotted(3)}
   <div class="sigrow"><span>توقيع المنسقة:</span><span>توقيع النائبة الأكاديمية :</span></div>`;
   return printHtml(officialPage(body, { s }));
+}
+
+// ====================================================================
+// 7b) خطة متابعة توصيات (موجه تربوي) — طبق الأصل من الملف
+// ====================================================================
+export function printGuidePlan(p: any, s: Settings) {
+  const rows = (p.rows ?? []).length
+    ? p.rows.map((r: any) => `<tr>
+        <td>${esc(r.guideName)}</td>
+        <td class="c">${esc(r.visitDate)}</td>
+        <td>${esc(r.domain)}</td>
+        <td>${esc(r.actions)}</td>
+        <td class="c">${esc(r.period)}</td>
+        <td class="c">${esc(r.followDate)}</td>
+        <td>${esc(r.indicators)}</td>
+      </tr>`).join("")
+    : Array.from({ length: 4 }, () => `<tr><td style="height:30px"></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>`).join("");
+  const body = `
+  <table><tr><th colspan="8">خطة متابعة توصيات (موجه تربوي) — ${esc(s.department)}</th></tr>
+    <tr>
+      <td class="b" style="width:12%">اسم المدرسة</td><td>${esc(s.school)}</td>
+      <td class="b" style="width:10%">اسم المنسق</td><td>${esc(s.coordinator)}</td>
+      <td class="b" style="width:10%">اسم المعلم</td><td>${esc(p.teacherName)}</td>
+      <td class="b" style="width:10%">الصف والشعبة</td><td>${esc(p.grade)} ${esc(p.section)}</td>
+    </tr>
+  </table>
+  <table>
+    <tr>
+      <th style="width:13%">اسم (الموجه التربوي)</th><th style="width:11%">تاريخ الزيارة / المادة</th>
+      <th style="width:14%">المجال / المؤشر</th><th>الإجراءات<br/><span class="note">(حضور صفّي، حلقة نقاشية، اجتماع، جلسات تحضير جماعي...)</span></th>
+      <th style="width:10%">الفترة الزمنية</th><th style="width:11%">تاريخ المتابعة من المنسق</th><th style="width:15%">مؤشرات تحقق الأداء</th>
+    </tr>
+    ${rows}
+  </table>
+  ${p.notes ? `<table><tr><td class="b" style="width:15%">ملاحظات</td><td>${esc(p.notes)}</td></tr></table>` : ""}
+  <table>
+    <tr><th style="width:33%">توقيع المعلم</th><th style="width:33%">توقيع المنسق</th><th>توقيع النائب الأكاديمي</th></tr>
+    <tr><td style="height:40px"></td><td>${esc(s.coordinator)}</td><td>${esc(s.academicDeputy)}</td></tr>
+  </table>
+  <table><tr><td class="b" style="width:12%">ملاحظة</td><td class="note">تُستخدم هذه الاستمارة فقط في حال حصول المعلم في استمارات الزيارة الصفية على مؤشرات لم تتوفر لها الأدلة، أو توفرت بشكل محدود، أو توفرت لها بعض الأدلة، كما تُستخدم في حال تكرار التوصيات في أكثر من زيارة صفية.</td></tr></table>`;
+  return printHtml(officialPage(body, { landscape: true, s }));
 }
 
 // ====================================================================
