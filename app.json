@@ -1,17 +1,21 @@
 {
   "expo": {
-    "name": "platform",
-    "slug": "platform",
+    "name": "منصة المسار الأدبي",
+    "slug": "literary-track-platform",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
+    "scheme": "literarytrack",
+    "extra": {
+      "convexUrl": "https://successful-panda-576.convex.cloud"
+    },
     "ios": {
       "supportsTablet": true
     },
     "android": {
       "adaptiveIcon": {
-        "backgroundColor": "#E6F4FE",
+        "backgroundColor": "#0E4F4F",
         "foregroundImage": "./assets/android-icon-foreground.png",
         "backgroundImage": "./assets/android-icon-background.png",
         "monochromeImage": "./assets/android-icon-monochrome.png"
@@ -19,7 +23,25 @@
       "predictiveBackGestureEnabled": false
     },
     "web": {
-      "favicon": "./assets/favicon.png"
-    }
+      "favicon": "./assets/favicon.png",
+      "bundler": "metro",
+      "output": "single",
+      "name": "منصة قسم المسار الأدبي",
+      "shortName": "المسار الأدبي",
+      "lang": "ar",
+      "dir": "rtl",
+      "display": "standalone",
+      "orientation": "portrait",
+      "themeColor": "#8A1538",
+      "backgroundColor": "#F7F2E9",
+      "description": "منصة إدارة قسم المسار الأدبي — مدرسة النهضة الابتدائية للبنات",
+      "startUrl": "/"
+    },
+    "plugins": [
+      "expo-router",
+      "expo-status-bar",
+      "expo-sharing",
+      "expo-font"
+    ]
   }
 }

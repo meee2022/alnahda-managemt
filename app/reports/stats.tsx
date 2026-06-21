@@ -1,0 +1,169 @@
+import React from "react";
+import { View, Text, StyleSheet } from "react-native";
+import { router } from "expo-router";
+import { useQuery } from "convex/react";
+import { api } from "../../convex/_generated/api";
+import { Ionicons } from "@expo/vector-icons";
+import { Screen, Card, H2, P, Loading, Empty, Row, Badge, Button, IconBtn, PageHero, HeroBtn, AnimatedItem } from "../../lib/ui";
+import { colors, fonts } from "../../lib/theme";
+import { printTeacherStats } from "../../lib/printTemplates";
+
+// رسم أعمدة بسيط بدون مكتبة خارجية
+function MiniBars({ data }: { data: { label: string; leaves: number; covers: number }[] }) {
+  const max = Math.max(1, ...data.map((d) => Math.max(d.leaves, d.covers)));
+  return (
+    <View style={{ marginTop: 10 }}>
+      <Row style={{ gap: 14, marginBottom: 8 }}>
+        <Row style={{ gap: 5 }}><View style={[s.dot, { backgroundColor: colors.warning }]} /><Text style={s.legend}>استئذان</Text></Row>
+        <Row style={{ gap: 5 }}><View style={[s.dot, { backgroundColor: colors.gold }]} /><Text style={s.legend}>احتياط</Text></Row>
+      </Row>
+      <View style={{ flexDirection: "row", alignItems: "flex-end", justifyContent: "space-around", height: 120, gap: 8 }}>
+        {data.map((d, i) => (
+          <View key={i} style={{ flex: 1, alignItems: "center" }}>
+            <Row style={{ alignItems: "flex-end", gap: 3, height: 96 }}>
+              <View style={{ width: 12, height: Math.max(3, (d.leaves / max) * 96), backgroundColor: colors.warning, borderTopLeftRadius: 4, borderTopRightRadius: 4 }} />
+              <View style={{ width: 12, height: Math.max(3, (d.covers / max) * 96), backgroundColor: colors.gold, borderTopLeftRadius: 4, borderTopRightRadius: 4 }} />
+            </Row>
+            <Text style={s.barLabel}>{d.label}</Text>
+          </View>
+        ))}
+      </View>
+    </View>
+  );
+}
+
+const StatChip = ({ label, value, tone }: { label: string; value: number | string; tone: string }) => (
+  <View style={[styles.chip, { backgroundColor: tone }]}>
+    <Text style={styles.chipVal}>{value}</Text>
+    <Text style={styles.chipLbl}>{label}</Text>
+  </View>
+);
+
+export default function Stats() {
+  const data = useQuery(api.analytics.teacherStats, {});
+  const settings = useQuery(api.admin.getSettings, {});
+
+  if (data === undefined) return <Loading />;
+  const { rows, totals, alerts, monthly } = data as any;
+  const alertTone: Record<string, any> = { danger: "danger", warn: "warning", info: "muted" };
+
+  return (
+    <Screen>
+      <PageHero
+        title="الإحصائيات والتقارير"
+        desc="صورة فورية لكل معلمة — استئذان، احتياط، زيارات، تقييم — تُحسب تلقائياً"
+        icon="stats-chart"
+        gradient={["#5E0E24", "#9A1B3C"]}
+      >
+        <HeroBtn title="طباعة التقرير" icon="print-outline" prominent onPress={() => printTeacherStats(rows, totals, settings ?? {})} />
+      </PageHero>
+
+      {/* إجماليات القسم */}
+      <Card>
+        <H2>إجمالي القسم</H2>
+        <View style={styles.grid}>
+          <StatChip label="معلمة" value={totals.teachers} tone={colors.primarySoft} />
+          <StatChip label="استئذان" value={totals.leaves} tone={colors.warningSoft} />
+          <StatChip label="حصة احتياط" value={totals.covers} tone={colors.goldSoft} />
+          <StatChip label="زيارة صفية" value={totals.classVisits} tone={colors.accentSoft} />
+          <StatChip label="متابعة أداء" value={totals.perfVisits} tone={colors.successSoft} />
+          <StatChip label="تقرير دوري" value={totals.periodic} tone={colors.primaryTint} />
+        </View>
+      </Card>
+
+      {/* التنبيهات الذكية */}
+      {alerts && alerts.length > 0 && (
+        <Card style={{ borderColor: colors.warning, borderWidth: 1 }}>
+          <Row style={{ justifyContent: "space-between", marginBottom: 8 }}>
+            <H2>تنبيهات تحتاج انتباهك</H2>
+            <Badge label={String(alerts.length)} tone="warning" />
+          </Row>
+          {alerts.map((a: any, i: number) => (
+            <Row key={i} style={{ gap: 8, paddingVertical: 6, borderBottomWidth: 1, borderBottomColor: colors.border }}>
+              <Ionicons name={a.level === "danger" ? "alert-circle" : a.level === "warn" ? "warning" : "information-circle"} size={17}
+                color={a.level === "danger" ? colors.danger : a.level === "warn" ? colors.warning : colors.textMuted} style={{ marginTop: 1 }} />
+              <View style={{ flex: 1 }}>
+                <Text style={{ fontFamily: fonts.semibold, fontSize: 13, color: colors.text, textAlign: "right" }}>{a.name}</Text>
+                <Text style={{ fontFamily: fonts.regular, fontSize: 12, color: colors.textSecondary, textAlign: "right" }}>{a.text}</Text>
+              </View>
+            </Row>
+          ))}
+        </Card>
+      )}
+
+      {/* الرسوم الشهرية */}
+      {monthly && monthly.length > 0 && (
+        <Card>
+          <H2>الاستئذان والاحتياط شهرياً</H2>
+          <MiniBars data={monthly} />
+        </Card>
+      )}
+
+      {/* مقارنة المعلمات */}
+      {(() => {
+        const ranked = [...rows].filter((r: any) => (r.leaveCount + r.absences + r.classVisitCount + r.perfCount) > 0)
+          .sort((a: any, b: any) => (b.leaveCount + b.absences) - (a.leaveCount + a.absences)).slice(0, 8);
+        if (!ranked.length) return null;
+        const max = Math.max(1, ...ranked.map((r: any) => r.leaveCount + r.absences));
+        return (
+          <Card>
+            <H2>مقارنة المعلمات (الاستئذان + الغياب)</H2>
+            <View style={{ marginTop: 8, gap: 8 }}>
+              {ranked.map((r: any) => (
+                <View key={r.id}>
+                  <Row style={{ justifyContent: "space-between", marginBottom: 2 }}>
+                    <Text style={{ fontFamily: fonts.medium, fontSize: 12, color: colors.text }} numberOfLines={1}>{r.name}</Text>
+                    <Text style={{ fontFamily: fonts.semibold, fontSize: 12, color: colors.primary }}>{r.leaveCount + r.absences}</Text>
+                  </Row>
+                  <View style={{ height: 12, backgroundColor: colors.bg, borderRadius: 6, overflow: "hidden" }}>
+                    <View style={{ width: `${Math.round(((r.leaveCount + r.absences) / max) * 100)}%`, height: "100%", backgroundColor: colors.primary, borderRadius: 6 }} />
+                  </View>
+                </View>
+              ))}
+            </View>
+          </Card>
+        );
+      })()}
+
+      {rows.length === 0 ? (
+        <Empty text="لا توجد بيانات بعد — أدخلي السجلات والاستمارات وستظهر الإحصائيات تلقائياً" icon="stats-chart-outline" />
+      ) : rows.map((r: any, i: number) => (
+        <AnimatedItem key={r.id} index={i}>
+          <Card style={{ paddingVertical: 12 }}>
+            <Row style={{ justifyContent: "space-between", alignItems: "flex-start" }}>
+              <View style={{ flex: 1 }}>
+                <P style={{ color: colors.text, fontSize: 15 }}>{r.name}</P>
+                <Row style={{ marginTop: 3, flexWrap: "wrap" }}>
+                  {r.grade ? <Badge label={`${r.grade}${r.section ? " " + r.section : ""}`} tone="muted" /> : null}
+                  {r.lastAnnualScore != null ? <Badge label={`تقييم ${r.lastAnnualScore}%`} tone={r.lastAnnualScore >= 90 ? "success" : "primary"} /> : null}
+                </Row>
+              </View>
+              <IconBtn name="document-text-outline" color={colors.primary} onPress={() => router.push({ pathname: "/reports/teacher", params: { id: r.id } })} />
+            </Row>
+            <View style={styles.grid}>
+              <StatChip label="استئذان" value={r.leaveCount} tone={colors.warningSoft} />
+              <StatChip label="احتياط نفّذته" value={r.coversDone} tone={colors.goldSoft} />
+              <StatChip label="غياب" value={r.absences} tone={colors.dangerSoft} />
+              <StatChip label="زيارة صفية" value={r.classVisitCount} tone={colors.accentSoft} />
+              <StatChip label="متابعة أداء" value={r.perfCount} tone={colors.successSoft} />
+              <StatChip label="تقرير دوري" value={r.periodicCount} tone={colors.primarySoft} />
+            </View>
+          </Card>
+        </AnimatedItem>
+      ))}
+    </Screen>
+  );
+}
+
+const styles = StyleSheet.create({
+  grid: { flexDirection: "row", flexWrap: "wrap", gap: 8, marginTop: 10 },
+  chip: { minWidth: 92, flexGrow: 1, borderRadius: 14, paddingVertical: 10, alignItems: "center" },
+  chipVal: { fontFamily: fonts.bold, fontSize: 20, color: colors.text },
+  chipLbl: { fontFamily: fonts.medium, fontSize: 11.5, color: colors.textSecondary, marginTop: 2 },
+});
+
+const s = StyleSheet.create({
+  dot: { width: 10, height: 10, borderRadius: 3 },
+  legend: { fontFamily: fonts.medium, fontSize: 12, color: colors.textSecondary },
+  barLabel: { fontFamily: fonts.regular, fontSize: 10.5, color: colors.textMuted, marginTop: 5 },
+});

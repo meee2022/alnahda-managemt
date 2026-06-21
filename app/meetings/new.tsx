@@ -1,0 +1,145 @@
+import React, { useState } from "react";
+import { View, Text, Pressable } from "react-native";
+import { useLocalSearchParams, router } from "expo-router";
+import { useQuery, useMutation } from "convex/react";
+import { api } from "../../convex/_generated/api";
+import { Ionicons } from "@expo/vector-icons";
+import { Screen, Card, H2, Input, Button, Row, IconBtn, P, PageHero } from "../../lib/ui";
+import { DateField, TimeField } from "../../lib/pickers";
+import { colors, radius, fonts } from "../../lib/theme";
+
+export default function NewMeeting() {
+  const { type = "group" } = useLocalSearchParams<{ type?: string }>();
+  const isGroup = type === "group";
+  const create = useMutation(api.meetings.create);
+  const settings = useQuery(api.admin.getSettings, {});
+
+  const [form, setForm] = useState({
+    number: "", date: "", time: "", place: "غرفة المدرسات",
+    leader: "منسقة القسم", attendees: isGroup ? "جميع معلمات القسم" : "",
+    absentees: "", teacherName: "", goal: "", recommendations: "", followUp: "",
+  });
+  // بنك البنود المقترحة — تُضاف بضغطة، وليست إلزامية (كل اجتماع يختار ما يناسبه)
+  const GROUP_ITEMS = [
+    "أولويات المدرسة",
+    "شكر وتقدير",
+    "توصيات مديرة المدرسة والنائبة الأكاديمية",
+    "نقل توصيات النائبة الإدارية",
+    "المنسقة",
+    "ممارسات متميزة",
+    "الموجه التربوي",
+    "نقل الخبرة",
+  ];
+  const INDIVIDUAL_ITEMS = [
+    "التهيئة",
+    "نشاط (1)",
+    "نشاط (2)",
+    "التدريب المستقل",
+    "الغلق",
+    "الأعمال الكتابية",
+  ];
+  const BANK = isGroup ? GROUP_ITEMS : INDIVIDUAL_ITEMS;
+  // تبدأ فارغة — المنسقة تختار البنود التي تريدها لكل اجتماع
+  const [items, setItems] = useState<{ title: string; content: string }[]>([]);
+
+  const addItem = (title: string) => setItems((p) => [...p, { title, content: "" }]);
+  const available = BANK.filter((b) => !items.some((it) => it.title === b));
+
+  const save = async () => {
+    if (!form.date.trim()) return;
+    await create({
+      type: isGroup ? "group" : "individual",
+      ...form,
+      items: items.filter((i) => i.title.trim() || i.content.trim()),
+    });
+    router.back();
+  };
+
+  return (
+    <Screen>
+      <PageHero
+        title={isGroup ? "محضر اجتماع أكاديمي جديد" : "محضر اجتماع فردي جديد"}
+        desc={`${settings?.school ?? ""} — يُحفظ ويُطبع بنفس النموذج الرسمي`}
+        icon={isGroup ? "chatbubbles" : "person"}
+        gradient={isGroup ? ["#5E0E24", "#9A1B3C"] : ["#5A0C22", "#8A1538"]}
+      />
+      <Card>
+        {isGroup && <Input label="رقم الاجتماع" value={form.number} onChangeText={(v) => setForm({ ...form, number: v })} />}
+        <DateField label="التاريخ" value={form.date} onChange={(v) => setForm((p) => ({ ...p, date: v }))} />
+        <TimeField label="الوقت" value={form.time} onChange={(v) => setForm((p) => ({ ...p, time: v }))} />
+        <Input label="المكان" value={form.place} onChangeText={(v) => setForm({ ...form, place: v })} />
+        {isGroup ? (
+          <>
+            <Input label="الاجتماع بقيادة" value={form.leader} onChangeText={(v) => setForm({ ...form, leader: v })} />
+            <Input label="الحضور" value={form.attendees} onChangeText={(v) => setForm({ ...form, attendees: v })} />
+            <Input label="الغياب" value={form.absentees} onChangeText={(v) => setForm({ ...form, absentees: v })} />
+          </>
+        ) : (
+          <>
+            <Input label="اسم المعلمة" value={form.teacherName} onChangeText={(v) => setForm({ ...form, teacherName: v })} />
+            <Input label="هدف الاجتماع" value={form.goal} onChangeText={(v) => setForm({ ...form, goal: v })} multiline />
+          </>
+        )}
+      </Card>
+
+      <Card>
+        <H2>{isGroup ? "بنود الاجتماع" : "محاور الاجتماع"}</H2>
+        <P muted style={{ marginBottom: 10 }}>
+          اضغط على البند لإضافته — كل اجتماع يختار ما يناسبه، وليست كل البنود إلزامية.
+        </P>
+
+        {/* بنك البنود المقترحة — تُضاف بضغطة */}
+        {available.length > 0 && (
+          <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8, marginBottom: 14 }}>
+            {available.map((b) => (
+              <Pressable
+                key={b}
+                onPress={() => addItem(b)}
+                style={({ hovered, pressed }: any) => [
+                  {
+                    flexDirection: "row", alignItems: "center", gap: 5,
+                    backgroundColor: colors.primarySoft, borderColor: colors.primary,
+                    borderWidth: 1, borderRadius: 999, paddingHorizontal: 12, paddingVertical: 7,
+                  },
+                  hovered && { backgroundColor: colors.primary },
+                  pressed && { transform: [{ scale: 0.97 }] },
+                ]}
+              >
+                {({ hovered }: any) => (
+                  <>
+                    <Ionicons name="add" size={15} color={hovered ? "#fff" : colors.primary} />
+                    <Text style={{ fontFamily: fonts.medium, fontSize: 13, color: hovered ? "#fff" : colors.primary }}>{b}</Text>
+                  </>
+                )}
+              </Pressable>
+            ))}
+          </View>
+        )}
+
+        {/* البنود المضافة */}
+        {items.map((it, idx) => (
+          <Card key={idx} style={{ backgroundColor: colors.bg, marginBottom: 8 }}>
+            <Row style={{ justifyContent: "space-between" }}>
+              <Text style={{ fontFamily: fonts.semibold, fontSize: 14, color: colors.primary, textAlign: "right", flex: 1 }}>
+                {it.title || `بند ${idx + 1}`}
+              </Text>
+              <IconBtn name="close-circle-outline" color={colors.danger} onPress={() => setItems(items.filter((_, i) => i !== idx))} />
+            </Row>
+            {!it.title && (
+              <Input label="عنوان البند" value={it.title} onChangeText={(v) => setItems(items.map((x, i) => (i === idx ? { ...x, title: v } : x)))} />
+            )}
+            <Input label="ما تم مناقشته" value={it.content} multiline onChangeText={(v) => setItems(items.map((x, i) => (i === idx ? { ...x, content: v } : x)))} />
+          </Card>
+        ))}
+
+        <Button title="بند مخصص" icon="add" variant="outline" small onPress={() => addItem("")} />
+      </Card>
+
+      <Card>
+        <Input label="التوصيات" value={form.recommendations} onChangeText={(v) => setForm({ ...form, recommendations: v })} multiline />
+        <Input label="متابعة التوصيات / خطوات قادمة" value={form.followUp} onChangeText={(v) => setForm({ ...form, followUp: v })} multiline />
+        <Button title="حفظ المحضر" icon="checkmark" onPress={save} />
+      </Card>
+    </Screen>
+  );
+}
