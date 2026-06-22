@@ -2,10 +2,11 @@ import React, { useState } from "react";
 import { View, Text, Pressable, StyleSheet } from "react-native";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "../../convex/_generated/api";
-import { Screen, Card, H2, P, Input, Button, Loading, Empty, Row, IconBtn, Badge, Select, Chip, PageHero, HeroBtn, AnimatedItem } from "../../lib/ui";
+import { Screen, Card, H2, P, Input, Button, Loading, Empty, Row, IconBtn, Badge, Select, Chip, PageHero, HeroBtn, AnimatedItem, ExportMenu } from "../../lib/ui";
 import { colors, fonts } from "../../lib/theme";
 import { CLASS_VISIT_DOMAINS, CLASS_VISIT_FOLLOWUP, CLASS_VISIT_SCALE, SCORE_OPTIONS } from "../../lib/forms";
 import { DateField } from "../../lib/pickers";
+import { setExportMode } from "../../lib/print";
 import { printClassVisit } from "../../lib/printTemplates";
 import { SourceFileBtn } from "../../lib/sourceFile";
 
@@ -205,7 +206,7 @@ export default function ClassVisit() {
                 </View>
                 <Row>
                   <SourceFileBtn storageId={(v as any).sourceFileId} />
-                  <IconBtn name="print-outline" color={colors.primary} onPress={() => printClassVisit(v, settings ?? {})} />
+                  <ExportMenu run={(m) => { setExportMode(m, `تقييم زيارة - ${v.teacherName ?? ""}`); printClassVisit(v, settings ?? {}); }} />
                   <IconBtn name="pencil-outline" color={colors.primary} onPress={() => startEdit(v)} />
                   <IconBtn name="trash-outline" color={colors.danger} onPress={() => remove({ id: v._id })} />
                 </Row>

@@ -3,11 +3,12 @@ import { View, Text, Pressable, StyleSheet } from "react-native";
 import { useDraft } from "../../lib/useDraft";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "../../convex/_generated/api";
-import { Screen, Card, H2, P, Input, Button, Loading, Empty, Row, IconBtn, Badge, Select, PageHero, HeroBtn, AnimatedItem } from "../../lib/ui";
+import { Screen, Card, H2, P, Input, Button, Loading, Empty, Row, IconBtn, Badge, Select, PageHero, HeroBtn, AnimatedItem, ExportMenu } from "../../lib/ui";
 import { colors, fonts, radius } from "../../lib/theme";
 import { PERF_DOMAINS, PERF_ALL_CODES, SCORE_OPTIONS } from "../../lib/forms";
 import { Chip } from "../../lib/ui";
 import { DateField, TimeField, Stepper } from "../../lib/pickers";
+import { setExportMode } from "../../lib/print";
 import { printPerformanceVisit } from "../../lib/printTemplates";
 import { SourceFileBtn } from "../../lib/sourceFile";
 
@@ -300,7 +301,7 @@ export default function Performance() {
                 <Row>
                   <SourceFileBtn storageId={(v as any).sourceFileId} />
                   <IconBtn name="pencil-outline" color={colors.primary} onPress={() => startEdit(v)} />
-                  <IconBtn name="print-outline" color={colors.primary} onPress={() => printPerformanceVisit(v, settings ?? {})} />
+                  <ExportMenu run={(m) => { setExportMode(m, `متابعة أداء - ${v.teacherName ?? ""}`); printPerformanceVisit(v, settings ?? {}); }} />
                   <IconBtn name="trash-outline" color={colors.danger} onPress={() => remove({ id: v._id })} />
                 </Row>
               </Row>

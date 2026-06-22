@@ -32,7 +32,7 @@ function officialPage(body: string, opts?: { landscape?: boolean; s?: Settings; 
     <div class="estamp-txt">
       <div class="estamp-title">✔ معتمد إلكترونياً</div>
       <div>${esc(s.coordinator) || "منسقة القسم"}${s.coordinator ? " — منسقة القسم" : ""}</div>
-      <div class="estamp-sub">${ds} · منصة قسم المسار الأدبي · امسح الرمز للتحقق</div>
+      <div class="estamp-sub">منصة قسم المسار الأدبي · امسح الرمز للتحقق</div>
     </div>
   </div>` : "";
   const footer = showFooter ? `
@@ -47,7 +47,8 @@ function officialPage(body: string, opts?: { landscape?: boolean; s?: Settings; 
 <meta charset="utf-8" />
 <style>
   @page { size: A4 ${opts?.landscape ? "landscape" : "portrait"}; margin: 10mm 9mm; }
-  * { box-sizing: border-box; }
+  * { box-sizing: border-box; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+  html, body { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
   body { font-family: 'Sakkal Majalla', 'Traditional Arabic', 'Segoe UI', 'Tahoma', sans-serif; color: #111; margin: 0; font-size: 14px; line-height: 1.55; }
   .letterhead { display: flex; align-items: center; justify-content: space-between; border-bottom: 2.5px solid ${MAROON}; padding-bottom: 6px; margin-bottom: 10px; gap: 10px; }
   .lh-logo { height: 52px; width: auto; }
@@ -85,7 +86,8 @@ const dotted = (n = 3) => Array.from({ length: n }, () => `<div class="dots"></d
 // ====================================================================
 // 1) محضر اجتماع أكاديمي (جماعي) — مطابق لملف "اجتماع 12"
 // ====================================================================
-export function printGroupMeeting(m: any, s: Settings) {
+export function printGroupMeeting(m: any, s: Settings, sig?: string) {
+  const sigImg = sig ? `<img src="${sig}" style="max-height:90px;max-width:70%;object-fit:contain" />` : "";
   const itemsRows = m.items
     .map((it: any) => {
       const heart = /شكر/.test(it.title) ? ' <span class="heart">❤</span>' : "";
@@ -109,7 +111,7 @@ export function printGroupMeeting(m: any, s: Settings) {
   </table>
   ${m.recommendations ? `<table><tr><th>التوصيات</th></tr><tr><td>${esc(m.recommendations)}</td></tr></table>` : ""}
   <table><tr><th>توقيع الحضور والعِلم</th></tr>
-    <tr><td style="height:80px"></td></tr>
+    <tr><td style="height:80px;text-align:center">${sigImg}</td></tr>
   </table>`;
   return printHtml(officialPage(body, { s }));
 }
@@ -117,7 +119,8 @@ export function printGroupMeeting(m: any, s: Settings) {
 // ====================================================================
 // 2) محضر اجتماع فردي — مطابق لملف "محضر اجتماع فردي"
 // ====================================================================
-export function printIndividualMeeting(m: any, s: Settings) {
+export function printIndividualMeeting(m: any, s: Settings, sig?: string) {
+  const sigImg = sig ? `<img src="${sig}" style="max-height:70px;max-width:80%;object-fit:contain" />` : "";
   const rows = m.items
     .map((it: any) => `<tr><td class="b c" style="width:18%">${esc(it.title)}</td><td>${esc(it.content)}</td></tr>`)
     .join("");
@@ -139,7 +142,7 @@ export function printIndividualMeeting(m: any, s: Settings) {
     <tr><td class="hd" style="width:18%">المحور</td><td class="hd">ما تم مناقشته / التوصيات</td></tr>
     ${rows}
     ${m.followUp ? `<tr><td class="b c">خطوات قادمة</td><td>${esc(m.followUp)}</td></tr>` : ""}
-    <tr><td class="b">توقيع المعلم</td><td></td></tr>
+    <tr><td class="b">توقيع المعلم</td><td style="height:60px;text-align:center">${sigImg}</td></tr>
     <tr><td class="b">توقيع المنسق</td><td></td></tr>
   </table>`;
   return printHtml(officialPage(body, { s }));
@@ -1017,11 +1020,23 @@ export function printTeachersSheet(teachers: any[], s: Settings) {
   <div class="title">كشف بيانات معلمات ${esc(s.department)}</div>
   <div class="subtitle">${esc(s.school)} — العام الأكاديمي ${esc(s.academicYear)}</div>
   <table>
-    <tr><th style="width:5%">م</th><th>اسم الموظفة</th><th style="width:15%">الرقم الوظيفي</th><th style="width:18%">المسمى الوظيفي</th><th style="width:15%">الهاتف</th></tr>
-    ${teachers.map((t, i) => `<tr><td class="c">${i + 1}</td><td>${esc(t.name)}</td><td class="c">${esc(t.employeeNumber)}</td><td class="c">${esc(t.jobTitle) || "معلمة"}</td><td class="c">${esc(t.phone)}</td></tr>`).join("")}
+    <tr>
+      <th style="width:3%">م</th><th style="width:14%">اسم الموظفة</th>
+      <th style="width:8%">الرقم الوظيفي</th><th style="width:11%">المسمى الوظيفي</th>
+      <th style="width:6%">الصف</th><th style="width:6%">الشعبة</th>
+      <th style="width:11%">التخصص</th><th style="width:7%">الجنسية</th>
+      <th style="width:9%">الرقم الشخصي</th><th style="width:9%">الهاتف</th><th>الإيميل الرسمي</th>
+    </tr>
+    ${teachers.map((t, i) => `<tr>
+      <td class="c">${i + 1}</td><td>${esc(t.name)}</td>
+      <td class="c">${esc(t.employeeNumber)}</td><td class="c">${esc(t.jobTitle) || "معلمة"}</td>
+      <td class="c">${esc(t.grade)}</td><td class="c">${esc(t.section)}</td>
+      <td class="c">${esc(t.specialization)}</td><td class="c">${esc(t.nationality)}</td>
+      <td class="c">${esc(t.nationalId)}</td><td class="c">${esc(t.phone)}</td><td class="c">${esc(t.email)}</td>
+    </tr>`).join("")}
   </table>
   <div class="sigrow"><span>منسقة القسم: ${esc(s.coordinator)}</span><span>التوقيع:</span></div>`;
-  return printHtml(officialPage(body, { s }));
+  return printHtml(officialPage(body, { landscape: true, s }));
 }
 
 // ====================================================================
@@ -1034,15 +1049,13 @@ export function printLeaveRegister(r: any, s: Settings) {
       <td>${esc(e.teacherName)}</td>
       <td>${esc(e.reason)}</td>
       <td class="c">من ( ${esc(e.fromTime) || "&nbsp;&nbsp;:&nbsp;&nbsp;"} ) إلى ( ${esc(e.toTime) || "&nbsp;&nbsp;:&nbsp;&nbsp;"} )</td>
-      <td></td>
       <td>${esc(e.deputyOpinion)}</td>
-      <td></td>
     </tr>`).join("");
   // أكمل لـ 6 صفوف فارغة على الأقل كالنموذج الورقي
   const filler = Math.max(0, 6 - (r.entries?.length ?? 0));
   const empties = Array.from({ length: filler }, (_, k) => `
     <tr><td class="c">${(r.entries?.length ?? 0) + k + 1}</td><td></td><td></td>
-    <td class="c">من ( &nbsp;&nbsp;:&nbsp;&nbsp; ) إلى ( &nbsp;&nbsp;:&nbsp;&nbsp; )</td><td></td><td></td><td></td></tr>`).join("");
+    <td class="c">من ( &nbsp;&nbsp;:&nbsp;&nbsp; ) إلى ( &nbsp;&nbsp;:&nbsp;&nbsp; )</td><td></td></tr>`).join("");
   const body = `
   <div class="title">سجل الاستئذان الأكاديمي ( ${esc(s.academicYear) || "2025-2026م"} )</div>
   <div class="subtitle">${esc(s.department) || "قسم المسار الأدبي"} — ${esc(s.school)}</div>
@@ -1052,9 +1065,8 @@ export function printLeaveRegister(r: any, s: Settings) {
   </div>
   <table>
     <tr>
-      <th style="width:5%">م</th><th style="width:22%">اسم المعلمة</th><th>السبب</th>
-      <th style="width:20%">الزمن</th><th style="width:11%">توقيع الموظفة</th>
-      <th style="width:16%">رأي النائبة الأكاديمية</th><th style="width:11%">توقيع النائبة</th>
+      <th style="width:6%">م</th><th style="width:26%">اسم المعلمة</th><th>السبب</th>
+      <th style="width:24%">الزمن</th><th style="width:22%">رأي النائبة الأكاديمية</th>
     </tr>
     ${rows}${empties}
   </table>
@@ -1066,38 +1078,53 @@ export function printLeaveRegister(r: any, s: Settings) {
 // 16) سجل الاحتياط الأكاديمي (طبق الأصل من ملف "سجل الاحتياط")
 // ====================================================================
 export function printCoverRegister(r: any, s: Settings) {
-  const rows = (r.entries ?? []).map((e: any, i: number) => `
+  // طبق الأصل من «سجل الاحتياط العام الأكاديمي»: خيارات راديو داخل الخلايا
+  const rd = (on: boolean, label: string) => `${on ? "●" : "○"} ${label}`;
+  const PLAN = ["مراجعة", "درس", "متابعة واجبات", "إشرافية فقط"];
+  const NOTIFY = ["تم إبلاغي قبل الحصة بوقت كافٍ", "تم إبلاغي قبل الحصة مباشرة", "تم الرفض"];
+  const nameCell = (e: any) =>
+    `<div>${esc(e?.teacherName) || "................................"}</div>` +
+    `<div style="font-size:12px;margin-top:4px">${rd(e?.reason === "تبديل", "تبديل")} &nbsp;&nbsp; ${rd(e?.reason === "غياب", "غياب")}</div>`;
+  const planCell = (e: any) =>
+    `<div style="font-size:12px;text-align:right">${PLAN.map((p) => rd(e?.planType === p, p)).join("<br/>")}</div>`;
+  const notesCell = (e: any) =>
+    `<div style="font-size:12px;text-align:right">${NOTIFY.map((n) => rd(e?.notify === n, n)).join("<br/>")}</div>` +
+    (e?.notes ? `<div style="font-size:11.5px;margin-top:3px">${esc(e.notes)}</div>` : "");
+
+  const total = Math.max(4, r.entries?.length ?? 0);
+  const rows = Array.from({ length: total }, (_, i) => {
+    const e = (r.entries ?? [])[i];
+    return `
     <tr>
       <td class="c">${i + 1}</td>
-      <td>${esc(e.teacherName)}</td>
-      <td>${esc(e.reason)}</td>
-      <td class="c">${esc(e.grade)} ${esc(e.section)}</td>
-      <td class="c">${esc(e.period)}</td>
-      <td>${esc(e.coverTeacher)}</td>
-      <td>${esc(e.planType)}</td>
+      <td>${nameCell(e)}</td>
+      <td class="c">${esc(e?.reason && e.reason !== "تبديل" && e.reason !== "غياب" ? e.reason : "")}</td>
+      <td class="c">${esc(e?.grade)} ${esc(e?.section)}</td>
+      <td class="c">${esc(e?.period)}</td>
+      <td>${esc(e?.coverTeacher)}</td>
+      <td>${planCell(e)}</td>
       <td></td>
-      <td>${esc(e.notes)}</td>
-    </tr>`).join("");
-  const filler = Math.max(0, 4 - (r.entries?.length ?? 0));
-  const empties = Array.from({ length: filler }, (_, k) => `
-    <tr><td class="c">${(r.entries?.length ?? 0) + k + 1}</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>`).join("");
+      <td>${notesCell(e)}</td>
+    </tr>`;
+  }).join("");
+
   const body = `
-  <div class="title">سجل الاحتياط الأكاديمي ( ${esc(s.academicYear) || "2025-2026م"} )</div>
-  <div class="subtitle">${esc(s.department) || "قسم المسار الأدبي"} — ${esc(s.school)}</div>
+  <div class="title">سجل الاحتياط العام الأكاديمي ( ${esc(s.academicYear) || "2025-2026م"} )</div>
   <div class="school-line">
     <span class="b">اليوم: ${esc(r.day) || "................"}</span>
     <span class="b">التاريخ: ${esc(r.date) || ".......... / .......... / 20.....م"}</span>
+    <span class="b">القسم: ${esc(s.department) || "قسم المسار الأدبي"}</span>
   </div>
   <table>
     <tr>
-      <th style="width:4%">م</th><th style="width:16%">اسم المعلمة</th><th style="width:11%">السبب</th>
-      <th style="width:9%">الصف</th><th style="width:7%">الحصة</th><th style="width:15%">معلمة الاحتياط</th>
-      <th style="width:13%">طبيعة الخطة المنفذة</th><th style="width:9%">التوقيع</th><th>الملاحظات</th>
+      <th style="width:4%">م</th><th style="width:16%">اسم المعلمة</th><th style="width:10%">السبب</th>
+      <th style="width:8%">الصف</th><th style="width:6%">الحصة</th><th style="width:14%">معلمة الاحتياط</th>
+      <th style="width:15%">طبيعة الخطة المنفذة</th><th style="width:8%">التوقيع</th><th>الملاحظات</th>
     </tr>
-    ${rows}${empties}
+    ${rows}
   </table>
   <div class="note" style="margin-top:6px;">ملاحظة: في حال رفضت المعلمة تنفيذ الاحتياط يتم التسجيل ويوضع بديل.</div>
-  <div class="sigrow"><span>توقيع المنسقة: ${esc(s.coordinator)}</span><span>إدارة المدرسة:</span></div>`;
+  <div class="sigrow"><span>توقيع المنسقة/ ${esc(s.coordinator)}</span><span>إدارة المدرسة/</span></div>`;
   return printHtml(officialPage(body, { landscape: true, s }));
 }
 

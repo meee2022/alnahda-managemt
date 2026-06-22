@@ -3,9 +3,10 @@ import { View, Text } from "react-native";
 import { useLocalSearchParams } from "expo-router";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "../../convex/_generated/api";
-import { Screen, Card, H2, P, Input, Button, Loading, Empty, Row, IconBtn, Badge, Select, Chip, PageHero, HeroBtn, AnimatedItem } from "../../lib/ui";
+import { Screen, Card, H2, P, Input, Button, Loading, Empty, Row, IconBtn, Badge, Select, Chip, PageHero, HeroBtn, AnimatedItem, ExportMenu } from "../../lib/ui";
 import { colors, fonts } from "../../lib/theme";
 import { DateField } from "../../lib/pickers";
+import { setExportMode } from "../../lib/print";
 import { printCoverRegister, printCoverPolicy } from "../../lib/printTemplates";
 
 type Entry = {
@@ -13,8 +14,8 @@ type Entry = {
   period: string; coverTeacher: string; planType: string; notify: string; notes: string;
 };
 
-const REASONS = ["غياب", "تبديل", "إشرافية فقط"];
-const PLAN_TYPES = ["مراجعة", "درس", "متابعة واجبات", "تبديل درس"];
+const REASONS = ["غياب", "تبديل"];
+const PLAN_TYPES = ["مراجعة", "درس", "متابعة واجبات", "إشرافية فقط"];
 const NOTIFY = ["تم إبلاغي قبل الحصة بوقت كافٍ", "تم إبلاغي قبل الحصة مباشرة", "تم الرفض"];
 
 const emptyEntry = (): Entry => ({ teacherName: "", reason: "غياب", grade: "", section: "", period: "", coverTeacher: "", planType: "مراجعة", notify: NOTIFY[0], notes: "" });
@@ -136,7 +137,7 @@ export default function CoverRegister() {
                 <Badge label={`${r.entries?.length ?? 0} حصة`} tone="primary" />
               </View>
               <Row>
-                <IconBtn name="print-outline" color={colors.primary} onPress={() => printCoverRegister(r, settings ?? {})} />
+                <ExportMenu run={(m) => { setExportMode(m, `سجل احتياط - ${r.date ?? ""}`); printCoverRegister(r, settings ?? {}); }} />
                 <IconBtn name="pencil-outline" color={colors.primary} onPress={() => startEdit(r)} />
                 <IconBtn name="trash-outline" color={colors.danger} onPress={() => remove({ id: r._id })} />
               </Row>

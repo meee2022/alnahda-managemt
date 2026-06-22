@@ -2,9 +2,10 @@ import React, { useState } from "react";
 import { View } from "react-native";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "../../convex/_generated/api";
-import { Screen, Card, H2, P, Input, Button, Loading, Empty, Row, IconBtn, Badge, Select, PageHero, HeroBtn, AnimatedItem } from "../../lib/ui";
+import { Screen, Card, H2, P, Input, Button, Loading, Empty, Row, IconBtn, Badge, Select, PageHero, HeroBtn, ExportMenu, AnimatedItem } from "../../lib/ui";
 import { colors } from "../../lib/theme";
 import { printAchievementPlan } from "../../lib/printTemplates";
+import { setExportMode } from "../../lib/print";
 
 const STAGES = [
   "المرحلة الأولى: مرحلة التخطيط وجمع البيانات",
@@ -46,7 +47,7 @@ export default function AchievementPlan() {
         gradient={["#5A0C22", "#8A1538"]}
       >
         <HeroBtn title={adding || editing ? "إغلاق النموذج" : "إضافة هدف"} icon={adding || editing ? "close" : "add"} prominent onPress={() => (adding || editing ? reset() : setAdding(true))} />
-        <HeroBtn title="طباعة الخطة" icon="print-outline" onPress={() => printAchievementPlan(rows, settings ?? {})} />
+        <ExportMenu heroTitle="تصدير الخطة" run={(m) => { setExportMode(m, "خطة التحصيل"); printAchievementPlan(rows, settings ?? {}); }} />
       </PageHero>
 
       {(adding || editing) && (

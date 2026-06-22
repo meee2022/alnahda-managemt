@@ -2,10 +2,11 @@ import React, { useState } from "react";
 import { View } from "react-native";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "../convex/_generated/api";
-import { Screen, Card, H2, P, Input, Button, Loading, Empty, Row, IconBtn, Badge, Select, Chip, PageHero, HeroBtn, AnimatedItem } from "../lib/ui";
+import { Screen, Card, H2, P, Input, Button, Loading, Empty, Row, IconBtn, Badge, Select, Chip, PageHero, HeroBtn, AnimatedItem, ExportMenu } from "../lib/ui";
 import { colors } from "../lib/theme";
 import { MONTHS } from "../lib/forms";
 import { DateField } from "../lib/pickers";
+import { setExportMode } from "../lib/print";
 import { printTrainingSheet, printReading } from "../lib/printTemplates";
 
 export default function Development() {
@@ -99,7 +100,7 @@ export default function Development() {
                 </Row>
               </View>
               <Row>
-                <IconBtn name="print-outline" color={colors.primary} onPress={() => printTeacherSheet(t.teacherName)} />
+                <ExportMenu run={(m) => { setExportMode(m, `تدريب - ${t.teacherName}`); printTeacherSheet(t.teacherName); }} />
                 <IconBtn name="pencil-outline" color={colors.primary} onPress={() => startEditTraining(t)} />
                 <IconBtn name="trash-outline" color={colors.danger} onPress={() => removeTraining({ id: t._id })} />
               </Row>
@@ -116,7 +117,7 @@ export default function Development() {
                 <P style={{ fontSize: 13, marginTop: 6 }} >{r.summary.length > 220 ? r.summary.slice(0, 220) + "…" : r.summary}</P>
               </View>
               <Row>
-                <IconBtn name="print-outline" color={colors.primary} onPress={() => printReading(r, settings ?? {})} />
+                <ExportMenu run={(m) => { setExportMode(m, `قراءة مهنية - ${r.bookTitle ?? ""}`); printReading(r, settings ?? {}); }} />
                 <IconBtn name="pencil-outline" color={colors.primary} onPress={() => startEditReading(r)} />
                 <IconBtn name="trash-outline" color={colors.danger} onPress={() => removeReading({ id: r._id })} />
               </Row>

@@ -2,9 +2,10 @@ import React, { useState } from "react";
 import { View, Text } from "react-native";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "../convex/_generated/api";
-import { Screen, Card, H2, P, Input, Button, Loading, Empty, Row, IconBtn, Badge, Select, PageHero, HeroBtn, AnimatedItem } from "../lib/ui";
+import { Screen, Card, H2, P, Input, Button, Loading, Empty, Row, IconBtn, Badge, Select, PageHero, HeroBtn, ExportMenu, AnimatedItem } from "../lib/ui";
 import { colors, fonts } from "../lib/theme";
 import { printTeachersSheet } from "../lib/printTemplates";
+import { setExportMode } from "../lib/print";
 
 const EMPTY = {
   name: "", jobTitle: "معلم المرحلة التأسيسية أدبي", employeeNumber: "", nationality: "قطري",
@@ -74,7 +75,7 @@ export default function Teachers() {
       >
         <HeroBtn title="إضافة معلمة" icon="add" prominent onPress={() => { reset(); setAdding(true); }} />
         <HeroBtn title="تحديث من ملف القسم" icon="cloud-download" onPress={runImport} />
-        <HeroBtn title="طباعة الكشف" icon="print-outline" onPress={printList} />
+        <ExportMenu heroTitle="تصدير الكشف" run={(m) => { setExportMode(m, "كشف بيانات المعلمات"); printList(); }} />
       </PageHero>
 
       {(adding || editing) && (

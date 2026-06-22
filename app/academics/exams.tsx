@@ -2,8 +2,9 @@ import React, { useState } from "react";
 import { View, Text, StyleSheet } from "react-native";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "../../convex/_generated/api";
-import { Screen, Card, H2, P, Input, Button, Loading, Empty, Row, IconBtn, Badge, Select, PageHero, HeroBtn, AnimatedItem } from "../../lib/ui";
+import { Screen, Card, H2, P, Input, Button, Loading, Empty, Row, IconBtn, Badge, Select, PageHero, HeroBtn, AnimatedItem, ExportMenu } from "../../lib/ui";
 import { colors, fonts, radius } from "../../lib/theme";
+import { setExportMode } from "../../lib/print";
 import { printExamReport } from "../../lib/printTemplates";
 
 type ExamRow = { grade: string; section: string; passRate: string; achievementRate: string; addedValue: string; highCount: string; midCount: string; lowCount: string; failCount: string };
@@ -157,7 +158,7 @@ export default function Exams() {
                 <Row><Badge label={e.subject} tone="primary" /><Badge label={e.term} tone="muted" /></Row>
               </View>
               <Row>
-                <IconBtn name="print-outline" color={colors.primary} onPress={() => printExam(e)} />
+                <ExportMenu run={(m) => { setExportMode(m, `تقرير نتائج - ${e.title ?? ""}`); printExam(e); }} />
                 <IconBtn name="pencil-outline" color={colors.primary} onPress={() => startEdit(e)} />
                 <IconBtn name="trash-outline" color={colors.danger} onPress={() => remove({ id: e._id })} />
               </Row>

@@ -2,9 +2,10 @@ import React, { useState } from "react";
 import { View } from "react-native";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "../../convex/_generated/api";
-import { Screen, Card, H2, P, Input, Button, Loading, Empty, Row, IconBtn, Badge, Chip, PageHero, HeroBtn, AnimatedItem } from "../../lib/ui";
+import { Screen, Card, H2, P, Input, Button, Loading, Empty, Row, IconBtn, Badge, Chip, PageHero, HeroBtn, ExportMenu, AnimatedItem } from "../../lib/ui";
 import { colors } from "../../lib/theme";
 import { printAgenda } from "../../lib/printTemplates";
+import { setExportMode } from "../../lib/print";
 
 const TERMS = ["الفصل الدراسي الأول", "الفصل الدراسي الثاني"];
 
@@ -44,7 +45,7 @@ export default function Agenda() {
         gradient={["#B0883A", "#D4B05C"]}
       >
         <HeroBtn title={adding || editing ? "إغلاق النموذج" : "إضافة فترة"} icon={adding || editing ? "close" : "add"} prominent onPress={() => (adding || editing ? reset() : setAdding(true))} />
-        <HeroBtn title="طباعة الجدول" icon="print-outline" onPress={() => printAgenda(entries, term, settings ?? {})} />
+        <ExportMenu heroTitle="تصدير الجدول" run={(m) => { setExportMode(m, "جدول الأعمال"); printAgenda(entries, term, settings ?? {}); }} />
       </PageHero>
 
       <Card>

@@ -34,7 +34,9 @@ export const teacherStats = query({
         if (match(e.teacherName)) absences++;
       }
 
-      const classVisitCount = classVisits.filter((v: any) => match(v.teacherName)).length;
+      const myVisits = classVisits.filter((v: any) => match(v.teacherName));
+      const classVisitDates: string[] = myVisits.map((v: any) => v.date).filter(Boolean);
+      const classVisitCount = myVisits.length;
       const perfCount = perfVisits.filter((v: any) => match(v.teacherName)).length;
       const periodicCount = periodic.filter((v: any) => match(v.teacherName)).length;
       const annualCount = annual.filter((v: any) => match(v.teacherName)).length;
@@ -45,7 +47,7 @@ export const teacherStats = query({
         id: t._id, name, grade: t.grade, section: t.section, subject: t.subject,
         employeeNumber: t.employeeNumber,
         leaveCount, leaveDates, coversDone, absences,
-        classVisitCount, perfCount, periodicCount, annualCount,
+        classVisitCount, classVisitDates, perfCount, periodicCount, annualCount,
         lastAnnualScore: lastAnnual?.total ?? null, lastAnnualLevel: lastAnnual?.levelLabel ?? null,
       };
     });

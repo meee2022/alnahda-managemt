@@ -38,13 +38,20 @@ export function prevDay(value?: string): string | null {
   dt.setDate(dt.getDate() - 1);
   return fmt(dt.getDate(), dt.getMonth(), dt.getFullYear());
 }
-// مدة بالدقائق بين وقتين "H:MM"
+// تحويل وقت (12 ساعة بـ ص/م أو 24 ساعة قديم) إلى دقائق من منتصف الليل
+function toMinutes(str?: string): number | null {
+  const m = (str ?? "").match(/(\d{1,2}):(\d{2})/);
+  if (!m) return null;
+  let h = +m[1]; const mn = +m[2];
+  const isPM = /م/.test(str ?? ""); const isAM = /ص/.test(str ?? "");
+  if (isPM && h < 12) h += 12;       // مساءً
+  if (isAM && h === 12) h = 0;       // 12 ص = منتصف الليل
+  return h * 60 + mn;
+}
+// مدة بالدقائق بين وقتين
 export function minutesBetween(from?: string, to?: string): number {
-  const pf = (from ?? "").match(/(\d{1,2}):(\d{2})/);
-  const pt = (to ?? "").match(/(\d{1,2}):(\d{2})/);
-  if (!pf || !pt) return 0;
-  const a = +pf[1] * 60 + +pf[2];
-  const b = +pt[1] * 60 + +pt[2];
+  const a = toMinutes(from); const b = toMinutes(to);
+  if (a == null || b == null) return 0;
   return b > a ? b - a : 0;
 }
 
@@ -142,15 +149,31 @@ export function DateField({
   );
 }
 
-// ============ منتقي الوقت ============
-const HOURS = Array.from({ length: 14 }, (_, i) => i + 6); // 6 → 19
+// ============ منتقي الوقت (نظام 12 ساعة بـ ص/م) ============
+const HOURS12 = Array.from({ length: 12 }, (_, i) => i + 1); // 1 → 12
 const MINUTES = [0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55];
+
+// تحليل القيمة المخزّنة (12 ساعة بـ ص/م أو 24 ساعة قديم) إلى ساعة 12 ودقيقة وفترة
+function parseTime12(value?: string): { h12: number; min: number; period: "ص" | "م" } | null {
+  const m = (value ?? "").match(/(\d{1,2}):(\d{2})/);
+  if (!m) return null;
+  let h = +m[1]; const min = +m[2];
+  let period: "ص" | "م";
+  if (/ص/.test(value ?? "") || /م/.test(value ?? "")) {
+    period = /م/.test(value ?? "") ? "م" : "ص";
+  } else {
+    // قيمة 24 ساعة قديمة
+    period = h >= 12 ? "م" : "ص";
+    h = h % 12; if (h === 0) h = 12;
+  }
+  return { h12: h, min, period };
+}
+const fmtTime12 = (h12: number, min: number, period: "ص" | "م") => `${h12}:${pad(min)} ${period}`;
 
 export function TimeField({ label, value, onChange }: { label?: string; value?: string; onChange: (v: string) => void }) {
   const [open, setOpen] = useState(false);
-  const m = value?.match(/(\d{1,2}):(\d{2})/);
-  const curH = m ? parseInt(m[1]) : null;
-  const curMin = m ? parseInt(m[2]) : null;
+  const cur = parseTime12(value);
+  const emit = (h12: number, min: number, period: "ص" | "م") => onChange(fmtTime12(h12, min, period));
 
   return (
     <View style={{ marginBottom: 14 }}>
@@ -164,14 +187,23 @@ export function TimeField({ label, value, onChange }: { label?: string; value?: 
         <Pressable style={st.modalBackdrop} onPress={() => setOpen(false)}>
           <Pressable style={st.timePanel} onPress={() => {}}>
             <Text style={st.calTitle}>اختر الوقت</Text>
+            {/* ص / م */}
+            <View style={st.periodRow}>
+              {(["ص", "م"] as const).map((p) => (
+                <Pressable key={p} onPress={() => emit(cur?.h12 ?? 8, cur?.min ?? 0, p)}
+                  style={[st.periodBtn, (cur?.period ?? "ص") === p && st.periodSel]}>
+                  <Text style={[st.periodText, (cur?.period ?? "ص") === p && { color: "#fff", fontFamily: fonts.bold }]}>{p === "ص" ? "صباحاً" : "مساءً"}</Text>
+                </Pressable>
+              ))}
+            </View>
             <View style={{ flexDirection: "row", gap: 10, marginTop: 12 }}>
               <View style={{ flex: 1 }}>
                 <Text style={st.colLabel}>الساعة</Text>
                 <ScrollView style={st.wheel} showsVerticalScrollIndicator={false}>
-                  {HOURS.map((h) => (
-                    <Pressable key={h} onPress={() => onChange(`${h}:${pad(curMin ?? 0)}`)}
-                      style={[st.wheelItem, curH === h && st.wheelSel]}>
-                      <Text style={[st.wheelText, curH === h && { color: "#fff", fontFamily: fonts.bold }]}>{h}</Text>
+                  {HOURS12.map((h) => (
+                    <Pressable key={h} onPress={() => emit(h, cur?.min ?? 0, cur?.period ?? "ص")}
+                      style={[st.wheelItem, cur?.h12 === h && st.wheelSel]}>
+                      <Text style={[st.wheelText, cur?.h12 === h && { color: "#fff", fontFamily: fonts.bold }]}>{h}</Text>
                     </Pressable>
                   ))}
                 </ScrollView>
@@ -180,9 +212,9 @@ export function TimeField({ label, value, onChange }: { label?: string; value?: 
                 <Text style={st.colLabel}>الدقيقة</Text>
                 <ScrollView style={st.wheel} showsVerticalScrollIndicator={false}>
                   {MINUTES.map((mn) => (
-                    <Pressable key={mn} onPress={() => onChange(`${curH ?? 8}:${pad(mn)}`)}
-                      style={[st.wheelItem, curMin === mn && st.wheelSel]}>
-                      <Text style={[st.wheelText, curMin === mn && { color: "#fff", fontFamily: fonts.bold }]}>{pad(mn)}</Text>
+                    <Pressable key={mn} onPress={() => emit(cur?.h12 ?? 8, mn, cur?.period ?? "ص")}
+                      style={[st.wheelItem, cur?.min === mn && st.wheelSel]}>
+                      <Text style={[st.wheelText, cur?.min === mn && { color: "#fff", fontFamily: fonts.bold }]}>{pad(mn)}</Text>
                     </Pressable>
                   ))}
                 </ScrollView>
@@ -239,6 +271,10 @@ const st = StyleSheet.create({
   todayBtn: { marginTop: 12, backgroundColor: colors.primary, borderRadius: radius.md, paddingVertical: 11, alignItems: "center" },
   todayText: { fontFamily: fonts.semibold, fontSize: 14, color: "#fff" },
   timePanel: { width: 300, maxWidth: "92%", backgroundColor: colors.card, borderRadius: radius.xl, padding: 16, ...shadow.raised },
+  periodRow: { flexDirection: "row", gap: 8, marginTop: 12 },
+  periodBtn: { flex: 1, paddingVertical: 10, borderRadius: radius.md, backgroundColor: colors.bg, alignItems: "center", borderWidth: 1, borderColor: colors.border },
+  periodSel: { backgroundColor: colors.primary, borderColor: colors.primary },
+  periodText: { fontFamily: fonts.medium, fontSize: 14, color: colors.text },
   colLabel: { fontFamily: fonts.medium, fontSize: 12, color: colors.textMuted, textAlign: "center", marginBottom: 6 },
   wheel: { height: 180, backgroundColor: colors.bg, borderRadius: radius.md },
   wheelItem: { paddingVertical: 11, alignItems: "center", marginHorizontal: 6, marginVertical: 2, borderRadius: 10 },

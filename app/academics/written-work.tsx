@@ -2,10 +2,11 @@ import React, { useState } from "react";
 import { View, Text, Pressable, StyleSheet } from "react-native";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "../../convex/_generated/api";
-import { Screen, Card, H2, P, Button, Loading, Empty, Row, Badge, Chip, Input, PageHero, HeroBtn, AnimatedItem } from "../../lib/ui";
+import { Screen, Card, H2, P, Button, Loading, Empty, Row, Badge, Chip, Input, PageHero, HeroBtn, ExportMenu, AnimatedItem } from "../../lib/ui";
 import { DateField } from "../../lib/pickers";
 import { colors, fonts } from "../../lib/theme";
 import { printWrittenWorkSheet } from "../../lib/printTemplates";
+import { setExportMode } from "../../lib/print";
 
 const KEY = ["0 ضعيف", "1 مقبول", "2 جيد", "3 متميز"];
 
@@ -69,7 +70,7 @@ export default function WrittenWork() {
         icon="create"
         gradient={["#B0883A", "#D4B05C"]}
       >
-        <HeroBtn title="طباعة الاستمارة" icon="print-outline" prominent onPress={printSheet} />
+        <ExportMenu heroTitle="تصدير الاستمارة" run={(m) => { setExportMode(m, "متابعة الأعمال الكتابية"); printSheet(); }} />
       </PageHero>
 
       <Card>

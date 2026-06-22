@@ -2,10 +2,11 @@ import React, { useState } from "react";
 import { View } from "react-native";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "../../convex/_generated/api";
-import { Screen, Card, H2, P, Input, Button, Loading, Empty, Row, IconBtn, Badge, PageHero, HeroBtn, AnimatedItem } from "../../lib/ui";
+import { Screen, Card, H2, P, Input, Button, Loading, Empty, Row, IconBtn, Badge, PageHero, HeroBtn, ExportMenu, AnimatedItem } from "../../lib/ui";
 import { colors } from "../../lib/theme";
 import { DateField } from "../../lib/pickers";
 import { printAnnualPlan } from "../../lib/printTemplates";
+import { setExportMode } from "../../lib/print";
 
 export default function AnnualPlan() {
   const rows = useQuery(api.plans.listAnnual, {});
@@ -41,7 +42,7 @@ export default function AnnualPlan() {
         gradient={["#5E0E24", "#9A1B3C"]}
       >
         <HeroBtn title={adding || editing ? "إغلاق النموذج" : "إضافة مجال"} icon={adding || editing ? "close" : "add"} prominent onPress={() => (adding || editing ? reset() : setAdding(true))} />
-        <HeroBtn title="طباعة الخطة" icon="print-outline" onPress={() => printAnnualPlan(rows, settings ?? {})} />
+        <ExportMenu heroTitle="تصدير الخطة" run={(m) => { setExportMode(m, "الخطة السنوية"); printAnnualPlan(rows, settings ?? {}); }} />
       </PageHero>
 
       {(adding || editing) && (

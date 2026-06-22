@@ -15,6 +15,7 @@ const meetingArgs = {
   items: v.array(v.object({ title: v.string(), content: v.string() })),
   recommendations: v.optional(v.string()),
   followUp: v.optional(v.string()),
+  signatureId: v.optional(v.id("_storage")),
 };
 
 export const list = query({

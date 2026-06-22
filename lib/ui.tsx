@@ -1,7 +1,7 @@
 import React from "react";
 import {
   View, Text, TextInput, Pressable, ScrollView, StyleSheet,
-  ActivityIndicator, Platform, ViewStyle, TextStyle, useWindowDimensions,
+  ActivityIndicator, Platform, ViewStyle, TextStyle, useWindowDimensions, Modal,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
@@ -349,6 +349,39 @@ export function IconBtn({ name, onPress, color = colors.textSecondary }: { name:
   );
 }
 
+// قائمة تصدير: طباعة / PDF / Word — تُستدعى run(mode) بعد اختيار النوع
+// heroTitle: لو مُرِّر يظهر كزر هيرو بدل أيقونة (للأزرار على مستوى الصفحة)
+export function ExportMenu({ run, color = colors.primary, heroTitle, heroIcon }: { run: (mode: "print" | "pdf" | "word") => void; color?: string; heroTitle?: string; heroIcon?: keyof typeof Ionicons.glyphMap }) {
+  const [open, setOpen] = React.useState(false);
+  const pick = (mode: "print" | "pdf" | "word") => { setOpen(false); run(mode); };
+  const opts: { mode: "print" | "pdf" | "word"; label: string; icon: keyof typeof Ionicons.glyphMap; tint: string }[] = [
+    { mode: "print", label: "طباعة", icon: "print-outline", tint: colors.primary },
+    { mode: "pdf", label: "حفظ PDF", icon: "document-text-outline", tint: colors.danger },
+    { mode: "word", label: "حفظ Word", icon: "document-outline", tint: "#2B579A" },
+  ];
+  return (
+    <>
+      {heroTitle
+        ? <HeroBtn title={heroTitle} icon={heroIcon ?? "download-outline"} onPress={() => setOpen(true)} />
+        : <IconBtn name="download-outline" color={color} onPress={() => setOpen(true)} />}
+      <Modal visible={open} transparent animationType="fade" onRequestClose={() => setOpen(false)}>
+        <Pressable style={styles.exBackdrop} onPress={() => setOpen(false)}>
+          <Pressable style={styles.exSheet} onPress={() => {}}>
+            <Text style={styles.exTitle}>تصدير الاستمارة</Text>
+            {opts.map((o) => (
+              <Pressable key={o.mode} onPress={() => pick(o.mode)}
+                style={({ hovered }: any) => [styles.exRow, hovered && { backgroundColor: colors.bg }]}>
+                <Ionicons name={o.icon} size={20} color={o.tint} />
+                <Text style={styles.exLabel}>{o.label}</Text>
+              </Pressable>
+            ))}
+          </Pressable>
+        </Pressable>
+      </Modal>
+    </>
+  );
+}
+
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: colors.bg },
   screenInner: {
@@ -357,6 +390,11 @@ const styles = StyleSheet.create({
     maxWidth: 1040,
     alignSelf: "center",
   },
+  exBackdrop: { flex: 1, backgroundColor: "rgba(7,32,31,0.5)", alignItems: "center", justifyContent: "center", padding: 20 },
+  exSheet: { width: 280, maxWidth: "100%", backgroundColor: colors.card, borderRadius: radius.xl, padding: 14, ...shadow.raised },
+  exTitle: { fontFamily: fonts.bold, fontSize: 15, color: colors.text, textAlign: "center", marginBottom: 10 },
+  exRow: { flexDirection: "row", alignItems: "center", gap: 12, paddingVertical: 13, paddingHorizontal: 12, borderRadius: radius.md },
+  exLabel: { fontFamily: fonts.semibold, fontSize: 14.5, color: colors.text },
   card: {
     backgroundColor: colors.card,
     borderRadius: radius.lg,

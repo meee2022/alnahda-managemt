@@ -68,6 +68,7 @@ export default defineSchema({
     items: v.array(v.object({ title: v.string(), content: v.string() })),
     recommendations: v.optional(v.string()),
     followUp: v.optional(v.string()),
+    signatureId: v.optional(v.id("_storage")), // صورة التوقيع المرفوعة
   }).index("by_date", ["date"]),
 
   // الزيارات الصفية (الجدول الشهري)

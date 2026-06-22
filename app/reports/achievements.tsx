@@ -2,10 +2,11 @@ import React, { useState } from "react";
 import { View } from "react-native";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "../../convex/_generated/api";
-import { Screen, Card, H2, P, Input, Button, Loading, Empty, Row, IconBtn, Badge, Select, PageHero, HeroBtn, AnimatedItem } from "../../lib/ui";
+import { Screen, Card, H2, P, Input, Button, Loading, Empty, Row, IconBtn, Badge, Select, PageHero, HeroBtn, ExportMenu, AnimatedItem } from "../../lib/ui";
 import { colors } from "../../lib/theme";
 import { MONTHS } from "../../lib/forms";
 import { printAchievementsSheet } from "../../lib/printTemplates";
+import { setExportMode } from "../../lib/print";
 
 const CATS = ["أكاديمية", "إدارية", "داخل القسم", "للمدرسة والمجتمع"];
 
@@ -47,7 +48,7 @@ export default function Achievements() {
         gradient={["#B0883A", "#D4B05C"]}
       >
         <HeroBtn title="إضافة إنجاز" icon="add" prominent onPress={() => { if (adding || editing) reset(); else setAdding(true); }} />
-        <HeroBtn title="طباعة النموذج" icon="print-outline" onPress={printSheet} />
+        <ExportMenu heroTitle="تصدير النموذج" run={(m) => { setExportMode(m, "إنجازات القسم"); printSheet(); }} />
       </PageHero>
 
       {(adding || editing) && (

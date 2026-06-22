@@ -2,9 +2,10 @@ import React, { useState } from "react";
 import { View, Platform } from "react-native";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "../convex/_generated/api";
-import { Screen, Card, H2, P, Input, Button, Loading, Empty, Row, IconBtn, Badge, Chip, Select, PageHero, HeroBtn, AnimatedItem } from "../lib/ui";
+import { Screen, Card, H2, P, Input, Button, Loading, Empty, Row, IconBtn, Badge, Chip, Select, PageHero, HeroBtn, ExportMenu, AnimatedItem } from "../lib/ui";
 import { colors } from "../lib/theme";
 import { printStudentsSkillSheet } from "../lib/printTemplates";
+import { setExportMode } from "../lib/print";
 
 const GRADES = ["الأول", "الثاني"];
 const SECTIONS = ["A", "B", "C", "D", "E"];
@@ -69,7 +70,7 @@ export default function Students() {
       >
         <HeroBtn title="إضافة طالبة" icon="add" prominent onPress={() => { reset(); setAdding(true); }} />
         <HeroBtn title="استيراد من ملف (CSV)" icon="cloud-upload-outline" onPress={importCsv} />
-        <HeroBtn title="طباعة الكشف" icon="print-outline" onPress={printList} />
+        <ExportMenu heroTitle="تصدير الكشف" run={(m) => { setExportMode(m, "كشف الطالبات"); printList(); }} />
       </PageHero>
 
       {importMsg ? <Card style={{ backgroundColor: colors.successSoft }}><P style={{ fontSize: 13, color: colors.success }}>{importMsg}</P></Card> : null}

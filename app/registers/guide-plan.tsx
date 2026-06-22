@@ -2,8 +2,9 @@ import React, { useState } from "react";
 import { View } from "react-native";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "../../convex/_generated/api";
-import { Screen, Card, H2, P, Input, Button, Loading, Empty, Row, IconBtn, Badge, Select, PageHero, HeroBtn, AnimatedItem } from "../../lib/ui";
+import { Screen, Card, H2, P, Input, Button, Loading, Empty, Row, IconBtn, Badge, Select, PageHero, HeroBtn, AnimatedItem, ExportMenu } from "../../lib/ui";
 import { colors } from "../../lib/theme";
+import { setExportMode } from "../../lib/print";
 import { printGuidePlan } from "../../lib/printTemplates";
 import { DateField } from "../../lib/pickers";
 
@@ -115,7 +116,7 @@ export default function GuidePlan() {
               </Row>
             </View>
             <Row>
-              <IconBtn name="print-outline" color={colors.primary} onPress={() => print(p)} />
+              <ExportMenu run={(m) => { setExportMode(m, `خطة متابعة الموجه - ${p.teacherName ?? ""}`); print(p); }} />
               <IconBtn name="pencil-outline" color={colors.primary} onPress={() => startEdit(p)} />
               <IconBtn name="trash-outline" color={colors.danger} onPress={() => remove({ id: p._id })} />
             </Row>

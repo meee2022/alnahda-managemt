@@ -61,8 +61,102 @@ export function dataTable(headers: string[], rows: string[][]) {
   ${rows.map((r) => `<tr>${r.map((c) => `<td>${c ?? ""}</td>`).join("")}</tr>`).join("")}</table>`;
 }
 
+// ===== وضع التصدير: طباعة / PDF / Word =====
+type ExportMode = "print" | "pdf" | "word";
+let pendingMode: ExportMode = "print";
+let pendingName = "مستند";
+// تُستدعى قبل دالة الطباعة لتحديد نوع المخرَج واسم الملف
+export function setExportMode(mode: ExportMode, filename?: string) {
+  pendingMode = mode;
+  if (filename) pendingName = filename.replace(/[\\/:*?"<>|]/g, "_").slice(0, 80) || "مستند";
+}
+
+function downloadFile(content: string, mime: string, filename: string) {
+  const blob = new Blob([content], { type: mime });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  setTimeout(() => { document.body.removeChild(a); URL.revokeObjectURL(url); }, 1500);
+}
+
+// تصدير PDF حقيقي مطابق تماماً للاستمارة (يلتقط HTML كصورة عالية الدقة ثم يضعها في PDF)
+// يحافظ على الألوان والتنسيق بصرف النظر عن إعدادات طباعة المتصفح
+async function exportPdf(html: string, filename: string) {
+  const landscape = /size:\s*A4\s*landscape/i.test(html);
+  const [h2cMod, jspdfMod] = await Promise.all([
+    import(/* @vite-ignore */ "html2canvas/dist/html2canvas.esm.js" as any),
+    import(/* @vite-ignore */ "jspdf/dist/jspdf.es.js" as any),
+  ]);
+  const html2canvas = (h2cMod as any).default ?? h2cMod;
+  const jsPDF = (jspdfMod as any).jsPDF ?? (jspdfMod as any).default;
+
+  const pageWidthPx = landscape ? 1123 : 794; // A4 @96dpi
+  const iframe = document.createElement("iframe");
+  iframe.style.cssText = "position:fixed;left:-99999px;top:0;border:0;";
+  iframe.width = String(pageWidthPx);
+  document.body.appendChild(iframe);
+  const doc = iframe.contentDocument!;
+  doc.open(); doc.write(html); doc.close();
+  doc.body.style.margin = "0";
+  doc.body.style.padding = landscape ? "26px 30px" : "30px 26px";
+  doc.body.style.background = "#ffffff";
+  doc.body.style.width = pageWidthPx + "px";
+
+  try { await (doc as any).fonts?.ready; } catch {}
+  await new Promise((r) => setTimeout(r, 700)); // انتظار الشعار/الرمز
+
+  const canvas = await html2canvas(doc.body, {
+    scale: 2, useCORS: true, backgroundColor: "#ffffff", windowWidth: pageWidthPx, width: pageWidthPx,
+  });
+  document.body.removeChild(iframe);
+
+  const pdf = new jsPDF({ orientation: landscape ? "landscape" : "portrait", unit: "mm", format: "a4" });
+  const pw = pdf.internal.pageSize.getWidth();
+  const ph = pdf.internal.pageSize.getHeight();
+  const imgH = (canvas.height * pw) / canvas.width;
+  const img = canvas.toDataURL("image/jpeg", 0.95);
+
+  let heightLeft = imgH;
+  let position = 0;
+  pdf.addImage(img, "JPEG", 0, position, pw, imgH);
+  heightLeft -= ph;
+  while (heightLeft > 0) {
+    position -= ph;
+    pdf.addPage();
+    pdf.addImage(img, "JPEG", 0, position, pw, imgH);
+    heightLeft -= ph;
+  }
+  pdf.save(filename + ".pdf");
+}
+
 export async function printHtml(html: string) {
+  const mode = pendingMode;
+  const name = pendingName;
+  pendingMode = "print"; pendingName = "مستند"; // إعادة الضبط بعد كل استدعاء
+
   if (Platform.OS === "web") {
+    if (mode === "pdf") {
+      // PDF مطابق تماماً للاستمارة (لا يعتمد على إعدادات الطباعة)
+      try { await exportPdf(html, name); }
+      catch (e) {
+        const w = window.open("", "_blank");
+        if (w) { w.document.write(html); w.document.close(); w.focus(); setTimeout(() => w.print(), 400); }
+      }
+      return;
+    }
+    if (mode === "word") {
+      // ملف Word (.doc) قائم على HTML — يفتح في Microsoft Word بنفس تنسيق الجداول
+      const docHtml = html.replace(
+        /<html /,
+        '<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" '
+      );
+      downloadFile("﻿" + docHtml, "application/msword", name + ".doc");
+      return;
+    }
+    // طباعة / PDF: نفتح نافذة الطباعة (يمكن اختيار "حفظ كـ PDF")
     const w = window.open("", "_blank");
     if (!w) return;
     w.document.write(html);

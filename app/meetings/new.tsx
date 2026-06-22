@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { View, Text, Pressable } from "react-native";
+import { View, Text, Pressable, Image, Platform } from "react-native";
 import { useLocalSearchParams, router } from "expo-router";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "../../convex/_generated/api";
@@ -12,9 +12,32 @@ export default function NewMeeting() {
   const { type = "group", id } = useLocalSearchParams<{ type?: string; id?: string }>();
   const create = useMutation(api.meetings.create);
   const update = useMutation(api.meetings.update);
+  const generateUploadUrl = useMutation(api.files.generateUploadUrl);
   const settings = useQuery(api.admin.getSettings, {});
   const existing = useQuery(api.meetings.get, id ? { id: id as any } : "skip");
   const [loaded, setLoaded] = useState(false);
+  const [signatureId, setSignatureId] = useState<string | null>(null);
+  const [uploading, setUploading] = useState(false);
+  const sigUrl = useQuery(api.files.getUrl, signatureId ? { storageId: signatureId as any } : "skip");
+
+  const pickSignature = async () => {
+    if (Platform.OS !== "web") return;
+    const file: File | null = await new Promise((resolve) => {
+      const input = document.createElement("input");
+      input.type = "file"; input.accept = "image/*";
+      (input as any).capture = "environment"; // يتيح الكاميرا على الجوال
+      input.onchange = () => resolve(input.files && input.files[0] ? input.files[0] : null);
+      input.click();
+    });
+    if (!file) return;
+    setUploading(true);
+    try {
+      const url = await generateUploadUrl();
+      const up = await fetch(url, { method: "POST", headers: { "Content-Type": file.type }, body: file });
+      const { storageId } = await up.json();
+      setSignatureId(storageId);
+    } finally { setUploading(false); }
+  };
   // في وضع التعديل يُؤخذ النوع من المحضر المحمَّل، وإلا من رابط الإنشاء
   const isGroup = id ? existing?.type === "group" : type === "group";
 
@@ -63,6 +86,7 @@ export default function NewMeeting() {
       followUp: existing.followUp ?? "",
     });
     setItems((existing.items ?? []).map((it) => ({ title: it.title, content: it.content })));
+    setSignatureId((existing as any).signatureId ?? null);
     setLoaded(true);
   }, [id, loaded, existing]);
 
@@ -75,6 +99,7 @@ export default function NewMeeting() {
       type: isGroup ? "group" : "individual",
       ...form,
       items: items.filter((i) => i.title.trim() || i.content.trim()),
+      signatureId: (signatureId as any) ?? undefined,
     };
     if (id) await update({ id: id as any, ...payload });
     else await create(payload);
@@ -164,6 +189,23 @@ export default function NewMeeting() {
       <Card>
         <Input label="التوصيات" value={form.recommendations} onChangeText={(v) => setForm({ ...form, recommendations: v })} multiline />
         <Input label="متابعة التوصيات / خطوات قادمة" value={form.followUp} onChangeText={(v) => setForm({ ...form, followUp: v })} multiline />
+      </Card>
+
+      <Card>
+        <H2>التوقيع</H2>
+        <P muted style={{ marginBottom: 10 }}>ارفعي صورة التوقيع (من ألبوم الصور أو الكاميرا) لتظهر في الاستمارة عند الطباعة/التصدير.</P>
+        {sigUrl ? (
+          <View style={{ alignItems: "center", marginBottom: 10 }}>
+            <Image source={{ uri: sigUrl }} style={{ width: 220, height: 110, resizeMode: "contain", borderWidth: 1, borderColor: colors.border, borderRadius: radius.md, backgroundColor: "#fff" }} />
+          </View>
+        ) : null}
+        <Row>
+          <Button title={uploading ? "جارٍ الرفع…" : sigUrl ? "تغيير صورة التوقيع" : "رفع صورة التوقيع"} icon="cloud-upload-outline" variant="outline" small onPress={pickSignature} />
+          {signatureId ? <Button title="إزالة" variant="ghost" small onPress={() => setSignatureId(null)} /> : null}
+        </Row>
+      </Card>
+
+      <Card>
         <Button title="حفظ المحضر" icon="checkmark" onPress={save} />
       </Card>
     </Screen>

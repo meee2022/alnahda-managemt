@@ -2,9 +2,10 @@ import React, { useState } from "react";
 import { View } from "react-native";
 import { useQuery, useMutation, useAction } from "convex/react";
 import { api } from "../../convex/_generated/api";
-import { Screen, Card, H2, P, Input, Button, Loading, Empty, Row, IconBtn, Badge, Select, PageHero, HeroBtn, AnimatedItem } from "../../lib/ui";
+import { Screen, Card, H2, P, Input, Button, Loading, Empty, Row, IconBtn, Badge, Select, PageHero, HeroBtn, AnimatedItem, ExportMenu } from "../../lib/ui";
 import { colors } from "../../lib/theme";
 import { MONTHLY_SECTIONS, MONTHS } from "../../lib/forms";
+import { setExportMode } from "../../lib/print";
 import { printMonthlyReport } from "../../lib/printTemplates";
 
 export default function MonthlyReports() {
@@ -112,7 +113,7 @@ export default function MonthlyReports() {
               <Badge label={r.year} tone="muted" />
             </View>
             <Row>
-              <IconBtn name="print-outline" color={colors.primary} onPress={() => printReport(r)} />
+              <ExportMenu run={(m) => { setExportMode(m, `تقرير شهري - ${r.month ?? ""}`); printReport(r); }} />
               <IconBtn name="pencil-outline" color={colors.primary} onPress={() => startEdit(r)} />
               <IconBtn name="trash-outline" color={colors.danger} onPress={() => remove({ id: r._id })} />
             </Row>

@@ -2,9 +2,10 @@ import React, { useState } from "react";
 import { View } from "react-native";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "../../convex/_generated/api";
-import { Screen, Card, H2, P, Input, Button, Loading, Empty, Row, IconBtn, Badge, Select, Chip, PageHero, HeroBtn, AnimatedItem } from "../../lib/ui";
+import { Screen, Card, H2, P, Input, Button, Loading, Empty, Row, IconBtn, Badge, Select, Chip, PageHero, HeroBtn, ExportMenu, AnimatedItem } from "../../lib/ui";
 import { colors } from "../../lib/theme";
 import { printCurriculumPlan } from "../../lib/printTemplates";
+import { setExportMode } from "../../lib/print";
 
 export default function Curriculum() {
   const [grade, setGrade] = useState("الثاني");
@@ -52,7 +53,7 @@ export default function Curriculum() {
         gradient={["#5E0E24", "#9A1B3C"]}
       >
         <HeroBtn title={adding ? "إغلاق النموذج" : "إضافة أسبوع"} icon={adding ? "close" : "add"} prominent onPress={() => adding ? reset() : setAdding(true)} />
-        <HeroBtn title="طباعة الخطة" icon="print-outline" onPress={printPlan} />
+        <ExportMenu heroTitle="تصدير الخطة" run={(m) => { setExportMode(m, "الخطة الفصلية"); printPlan(); }} />
       </PageHero>
 
       <Card>

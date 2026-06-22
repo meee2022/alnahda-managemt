@@ -2,9 +2,10 @@ import React, { useState } from "react";
 import { View, Text, Pressable, StyleSheet } from "react-native";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "../../convex/_generated/api";
-import { Screen, Card, H2, P, Input, Button, Loading, Empty, Row, IconBtn, Badge, Select, PageHero, HeroBtn, AnimatedItem } from "../../lib/ui";
+import { Screen, Card, H2, P, Input, Button, Loading, Empty, Row, IconBtn, Badge, Select, PageHero, HeroBtn, AnimatedItem, ExportMenu } from "../../lib/ui";
 import { colors, fonts } from "../../lib/theme";
 import { PERIODIC_DOMAINS, MONTHS } from "../../lib/forms";
+import { setExportMode } from "../../lib/print";
 import { printPeriodicReport } from "../../lib/printTemplates";
 
 export default function PeriodicReports() {
@@ -105,7 +106,7 @@ export default function PeriodicReports() {
               <Badge label={`شهر ${r.month}`} tone="primary" />
             </View>
             <Row>
-              <IconBtn name="print-outline" color={colors.primary} onPress={() => printReport(r)} />
+              <ExportMenu run={(m) => { setExportMode(m, `تقرير دوري - ${r.teacherName ?? ""}`); printPeriodicReport(r, settings ?? {}); }} />
               <IconBtn name="pencil-outline" color={colors.primary} onPress={() => startEdit(r)} />
               <IconBtn name="trash-outline" color={colors.danger} onPress={() => remove({ id: r._id })} />
             </Row>

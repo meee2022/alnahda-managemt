@@ -2,10 +2,11 @@ import React, { useState } from "react";
 import { View, Text, Pressable, StyleSheet } from "react-native";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "../../convex/_generated/api";
-import { Screen, Card, H2, P, Input, Button, Loading, Empty, Row, IconBtn, Badge, Select, PageHero, HeroBtn, AnimatedItem } from "../../lib/ui";
+import { Screen, Card, H2, P, Input, Button, Loading, Empty, Row, IconBtn, Badge, Select, PageHero, HeroBtn, AnimatedItem, ExportMenu } from "../../lib/ui";
 import { colors, fonts } from "../../lib/theme";
 import { ANNUAL_INDICATORS, annualLevel } from "../../lib/forms";
 import { DateField } from "../../lib/pickers";
+import { setExportMode } from "../../lib/print";
 import { printAnnualEvaluation } from "../../lib/printTemplates";
 
 export default function AnnualEvaluations() {
@@ -175,7 +176,7 @@ export default function AnnualEvaluations() {
             </View>
             <Row>
               <IconBtn name="pencil-outline" color={colors.primary} onPress={() => startEdit(e)} />
-              <IconBtn name="print-outline" color={colors.primary} onPress={() => printEval(e)} />
+              <ExportMenu run={(m) => { setExportMode(m, `تقييم سنوي - ${e.teacherName ?? ""}`); printAnnualEvaluation(e, settings ?? {}); }} />
               <IconBtn name="trash-outline" color={colors.danger} onPress={() => remove({ id: e._id })} />
             </Row>
           </Row>

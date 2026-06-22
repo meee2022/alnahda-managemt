@@ -3,8 +3,9 @@ import { View, Text, StyleSheet } from "react-native";
 import { useLocalSearchParams } from "expo-router";
 import { useQuery } from "convex/react";
 import { api } from "../../convex/_generated/api";
-import { Screen, Card, H2, P, Loading, Empty, Row, Badge, PageHero, HeroBtn } from "../../lib/ui";
+import { Screen, Card, H2, P, Loading, Empty, Row, Badge, PageHero, ExportMenu } from "../../lib/ui";
 import { colors, fonts } from "../../lib/theme";
+import { setExportMode } from "../../lib/print";
 import { printTeacherDossier } from "../../lib/printTemplates";
 
 const Line = ({ children }: { children: React.ReactNode }) => (
@@ -39,7 +40,7 @@ export default function TeacherReport() {
         icon="person"
         gradient={["#5E0E24", "#9A1B3C"]}
       >
-        <HeroBtn title="طباعة الملف الكامل" icon="print-outline" prominent onPress={() => printTeacherDossier(d, settings ?? {})} />
+        <ExportMenu color="#fff" run={(m) => { setExportMode(m, `ملف المعلمة - ${t.name ?? ""}`); printTeacherDossier(d, settings ?? {}); }} />
       </PageHero>
 
       <Section title="الاستئذانات" count={d.leaves.length}>

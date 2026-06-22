@@ -3,11 +3,14 @@ import { View } from "react-native";
 import { router } from "expo-router";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "../../convex/_generated/api";
-import { Screen, Card, H2, P, Input, Button, Loading, Empty, Row, IconBtn, Badge, Select, PageHero, HeroBtn, AnimatedItem } from "../../lib/ui";
+import { Screen, Card, H2, P, Input, Button, Loading, Empty, Row, IconBtn, Badge, Select, PageHero, HeroBtn, AnimatedItem, ExportMenu } from "../../lib/ui";
 import { Text } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { colors, fonts } from "../../lib/theme";
-import { DateField, TimeField, weekdayOf, prevWeekSameDay, prevDay, monthKeyOf, minutesBetween } from "../../lib/pickers";
+import { DateField, TimeField, weekdayOf, prevWeekSameDay, prevDay, monthKeyOf, minutesBetween, parseDate } from "../../lib/pickers";
+
+const LEAVE_REASONS = ["موعد", "ظرف خاص", "ظرف عائلي", "سفر", "مرض", "أخرى"];
+import { setExportMode } from "../../lib/print";
 import { printLeaveRegister, printLeavePolicy } from "../../lib/printTemplates";
 
 type Entry = { teacherName: string; reason: string; fromTime: string; toTime: string; deputyOpinion: string };
@@ -26,6 +29,7 @@ export default function LeaveRegister() {
   const [date, setDate] = useState("");
   const [day, setDay] = useState("");
   const [entries, setEntries] = useState<Entry[]>([{ teacherName: "", reason: "", fromTime: "", toTime: "", deputyOpinion: "" }]);
+  const [otherFlags, setOtherFlags] = useState<Record<number, boolean>>({});
 
   const teacherNames = (teachers ?? []).map((t) => t.name);
   const setEntry = (i: number, patch: Partial<Entry>) => setEntries((p) => p.map((e, j) => (j === i ? { ...e, ...patch } : e)));
@@ -48,7 +52,25 @@ export default function LeaveRegister() {
     if (!teacherName || !date) return 0;
     const mk = monthKeyOf(date);
     let c = 0;
-    for (const r of list ?? []) if (monthKeyOf(r.date) === mk) for (const e of r.entries ?? []) if (nameMatch(e.teacherName, teacherName)) c++;
+    for (const r of list ?? []) if (r._id !== editing && monthKeyOf(r.date) === mk) for (const e of r.entries ?? []) if (nameMatch(e.teacherName, teacherName)) c++;
+    return c;
+  };
+
+  // عدد استئذانات المعلمة في نفس الأسبوع (الأحد→السبت) — لا يشمل السجل الجاري تعديله
+  const weekCount = (teacherName: string): number => {
+    if (!teacherName || !date) return 0;
+    const t = parseDate(date);
+    if (!t) return 0;
+    const td = new Date(t.y, t.m, t.d);
+    const sun = new Date(td); sun.setDate(td.getDate() - td.getDay());
+    const sat = new Date(sun); sat.setDate(sun.getDate() + 6);
+    let c = 0;
+    for (const r of list ?? []) {
+      if (r._id === editing) continue;
+      const p = parseDate(r.date); if (!p) continue;
+      const rd = new Date(p.y, p.m, p.d);
+      if (rd >= sun && rd <= sat) for (const e of r.entries ?? []) if (nameMatch(e.teacherName, teacherName)) c++;
+    }
     return c;
   };
 
@@ -62,6 +84,18 @@ export default function LeaveRegister() {
     return null;
   };
 
+  // تكرار الاستئذان أكثر من مرتين في نفس الأسبوع
+  const weekWarning = (teacherName: string): string | null => {
+    if (!teacherName || !date) return null;
+    const c = weekCount(teacherName);
+    if (c >= 2) return `استأذنت ${c} ${c === 2 ? "مرتين" : "مرات"} هذا الأسبوع — السياسة لا تسمح بأكثر من مرتين أسبوعياً.`;
+    return null;
+  };
+
+  // كل مخالفات السياسة لمعلمة (تُستخدم في العرض وعند الحفظ)
+  const entryViolations = (teacherName: string): string[] =>
+    [policyWarning(teacherName), absentYesterday(teacherName), weekWarning(teacherName)].filter(Boolean) as string[];
+
   // مجموع دقائق استئذان المعلمة في هذا اليوم (من بنود النموذج الحالي)
   const dayMinutes = (teacherName: string): number =>
     entries.filter((e) => nameMatch(e.teacherName, teacherName)).reduce((s, e) => s + minutesBetween(e.fromTime, e.toTime), 0);
@@ -70,7 +104,7 @@ export default function LeaveRegister() {
     return `${h ? `${h} ساعة` : ""}${h && m ? " و" : ""}${m ? `${m} دقيقة` : ""}` || "٠";
   };
 
-  const reset = () => { setAdding(false); setEditing(null); setDate(""); setDay(""); setEntries([{ teacherName: "", reason: "", fromTime: "", toTime: "", deputyOpinion: "" }]); };
+  const reset = () => { setAdding(false); setEditing(null); setDate(""); setDay(""); setEntries([{ teacherName: "", reason: "", fromTime: "", toTime: "", deputyOpinion: "" }]); setOtherFlags({}); };
 
   const startEdit = (r: any) => {
     setDate(r.date ?? "");
@@ -85,6 +119,18 @@ export default function LeaveRegister() {
   const save = async () => {
     const valid = entries.filter((e) => e.teacherName.trim());
     if (!date.trim() || valid.length === 0) return;
+    // فحص سياسة الاستئذان — يرفض الحفظ عند وجود مخالفة (مع إمكانية التجاوز بموافقة الإدارة)
+    const violations: string[] = [];
+    for (const e of valid) {
+      for (const v of entryViolations(e.teacherName)) violations.push(`• ${e.teacherName}: ${v}`);
+    }
+    if (violations.length && typeof window !== "undefined") {
+      const ok = window.confirm(
+        "تنبيه: هذا الاستئذان يخالف سياسة القسم:\n\n" + violations.join("\n") +
+        "\n\nالسياسة ترفض هذه الحالات. هل تريدين الحفظ استثناءً بموافقة الإدارة؟"
+      );
+      if (!ok) return;
+    }
     if (editing) await update({ id: editing as any, date, day, term: settings?.term, department: settings?.department, entries: valid });
     else await create({ date, day, department: settings?.department, term: settings?.term, entries: valid });
     reset();
@@ -124,7 +170,7 @@ export default function LeaveRegister() {
               </Row>
               <Select label="اسم المعلمة" options={teacherNames} value={e.teacherName} onChange={(v) => setEntry(i, { teacherName: v })} />
               {(() => {
-                const warns = [policyWarning(e.teacherName), absentYesterday(e.teacherName)].filter(Boolean) as string[];
+                const warns = entryViolations(e.teacherName);
                 const mc = monthCount(e.teacherName);
                 return (
                   <>
@@ -142,7 +188,23 @@ export default function LeaveRegister() {
                   </>
                 );
               })()}
-              <Input label="السبب" value={e.reason} onChangeText={(v) => setEntry(i, { reason: v })} multiline />
+              {(() => {
+                const PRE = LEAVE_REASONS.slice(0, 5); // بدون "أخرى"
+                const isOther = otherFlags[i] || (!!e.reason && !PRE.includes(e.reason));
+                const selValue = PRE.includes(e.reason) ? e.reason : (isOther ? "أخرى" : "");
+                return (
+                  <>
+                    <Select label="السبب" options={LEAVE_REASONS} value={selValue}
+                      onChange={(v) => {
+                        if (v === "أخرى") { setOtherFlags((f) => ({ ...f, [i]: true })); setEntry(i, { reason: "" }); }
+                        else { setOtherFlags((f) => ({ ...f, [i]: false })); setEntry(i, { reason: v }); }
+                      }} />
+                    {isOther ? (
+                      <Input label="تفاصيل السبب" value={e.reason} onChangeText={(v) => setEntry(i, { reason: v })} placeholder="اكتبي السبب" />
+                    ) : null}
+                  </>
+                );
+              })()}
               <Row style={{ gap: 10 }}>
                 <View style={{ flex: 1 }}><TimeField label="من" value={e.fromTime} onChange={(v) => setEntry(i, { fromTime: v })} /></View>
                 <View style={{ flex: 1 }}><TimeField label="إلى" value={e.toTime} onChange={(v) => setEntry(i, { toTime: v })} /></View>
@@ -193,7 +255,7 @@ export default function LeaveRegister() {
               </View>
               <Row>
                 <IconBtn name="swap-horizontal-outline" color={colors.gold} onPress={() => router.push({ pathname: "/registers/cover", params: { from: r.date, day: r.day ?? "", absentees: (r.entries ?? []).map((e: any) => e.teacherName).join("|") } })} />
-                <IconBtn name="print-outline" color={colors.primary} onPress={() => printLeaveRegister(r, settings ?? {})} />
+                <ExportMenu run={(m) => { setExportMode(m, `سجل استئذان - ${r.date ?? ""}`); printLeaveRegister(r, settings ?? {}); }} />
                 <IconBtn name="pencil-outline" color={colors.primary} onPress={() => startEdit(r)} />
                 <IconBtn name="trash-outline" color={colors.danger} onPress={() => remove({ id: r._id })} />
               </Row>

@@ -1,11 +1,11 @@
 import React from "react";
-import { View, Text, StyleSheet } from "react-native";
+import { View, Text, StyleSheet, Pressable, Platform } from "react-native";
 import { router } from "expo-router";
 import { useQuery } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import { Ionicons } from "@expo/vector-icons";
 import { Screen, Card, H2, P, Loading, Empty, Row, Badge, Button, IconBtn, PageHero, HeroBtn, AnimatedItem } from "../../lib/ui";
-import { colors, fonts } from "../../lib/theme";
+import { colors, fonts, shadow } from "../../lib/theme";
 import { printTeacherStats } from "../../lib/printTemplates";
 
 // رسم أعمدة بسيط بدون مكتبة خارجية
@@ -32,12 +32,24 @@ function MiniBars({ data }: { data: { label: string; leaves: number; covers: num
   );
 }
 
-const StatChip = ({ label, value, tone }: { label: string; value: number | string; tone: string }) => (
-  <View style={[styles.chip, { backgroundColor: tone }]}>
-    <Text style={styles.chipVal}>{value}</Text>
-    <Text style={styles.chipLbl}>{label}</Text>
-  </View>
-);
+const StatChip = ({ label, value, tone, href }: { label: string; value: number | string; tone: string; href?: string }) => {
+  const inner = (
+    <>
+      <Text style={styles.chipVal}>{value}</Text>
+      <Text style={styles.chipLbl}>{label}</Text>
+      {href ? <Text style={styles.chipHint}>اضغط للعرض ‹</Text> : null}
+    </>
+  );
+  if (!href) return <View style={[styles.chip, { backgroundColor: tone }]}>{inner}</View>;
+  return (
+    <Pressable
+      onPress={() => router.push(href as any)}
+      style={({ hovered, pressed }: any) => [styles.chip, { backgroundColor: tone }, hovered && styles.chipHover, pressed && { transform: [{ scale: 0.97 }] }]}
+    >
+      {inner}
+    </Pressable>
+  );
+};
 
 export default function Stats() {
   const data = useQuery(api.analytics.teacherStats, {});
@@ -62,12 +74,12 @@ export default function Stats() {
       <Card>
         <H2>إجمالي القسم</H2>
         <View style={styles.grid}>
-          <StatChip label="معلمة" value={totals.teachers} tone={colors.primarySoft} />
-          <StatChip label="استئذان" value={totals.leaves} tone={colors.warningSoft} />
-          <StatChip label="حصة احتياط" value={totals.covers} tone={colors.goldSoft} />
-          <StatChip label="زيارة صفية" value={totals.classVisits} tone={colors.accentSoft} />
-          <StatChip label="متابعة أداء" value={totals.perfVisits} tone={colors.successSoft} />
-          <StatChip label="تقرير دوري" value={totals.periodic} tone={colors.primaryTint} />
+          <StatChip label="معلمة" value={totals.teachers} tone={colors.primarySoft} href="/teachers" />
+          <StatChip label="استئذان" value={totals.leaves} tone={colors.warningSoft} href="/registers/leave" />
+          <StatChip label="حصة احتياط" value={totals.covers} tone={colors.goldSoft} href="/registers/cover" />
+          <StatChip label="زيارة صفية" value={totals.classVisits} tone={colors.accentSoft} href="/evaluations/class-visit" />
+          <StatChip label="متابعة أداء" value={totals.perfVisits} tone={colors.successSoft} href="/evaluations/performance" />
+          <StatChip label="تقرير دوري" value={totals.periodic} tone={colors.primaryTint} href="/evaluations/periodic" />
         </View>
       </Card>
 
@@ -148,6 +160,22 @@ export default function Stats() {
               <StatChip label="متابعة أداء" value={r.perfCount} tone={colors.successSoft} />
               <StatChip label="تقرير دوري" value={r.periodicCount} tone={colors.primarySoft} />
             </View>
+            {(r.leaveDates?.length || r.classVisitDates?.length) ? (
+              <View style={{ marginTop: 10, gap: 6 }}>
+                {r.leaveDates?.length ? (
+                  <View style={{ flexDirection: "row", flexWrap: "wrap", alignItems: "center", gap: 6 }}>
+                    <Text style={s.dateLbl}>أيام الاستئذان:</Text>
+                    {r.leaveDates.map((d: string, k: number) => <Badge key={k} label={d} tone="warning" />)}
+                  </View>
+                ) : null}
+                {r.classVisitDates?.length ? (
+                  <View style={{ flexDirection: "row", flexWrap: "wrap", alignItems: "center", gap: 6 }}>
+                    <Text style={s.dateLbl}>تواريخ الزيارة الصفية:</Text>
+                    {r.classVisitDates.map((d: string, k: number) => <Badge key={k} label={d} tone="accent" />)}
+                  </View>
+                ) : null}
+              </View>
+            ) : null}
           </Card>
         </AnimatedItem>
       ))}
@@ -157,13 +185,16 @@ export default function Stats() {
 
 const styles = StyleSheet.create({
   grid: { flexDirection: "row", flexWrap: "wrap", gap: 8, marginTop: 10 },
-  chip: { minWidth: 92, flexGrow: 1, borderRadius: 14, paddingVertical: 10, alignItems: "center" },
+  chip: { minWidth: 92, flexGrow: 1, borderRadius: 14, paddingVertical: 10, alignItems: "center", ...(Platform.OS === "web" ? { transitionDuration: "150ms" as any, cursor: "pointer" as any } : {}) },
+  chipHover: { transform: [{ translateY: -2 }], ...shadow.card } as any,
   chipVal: { fontFamily: fonts.bold, fontSize: 20, color: colors.text },
   chipLbl: { fontFamily: fonts.medium, fontSize: 11.5, color: colors.textSecondary, marginTop: 2 },
+  chipHint: { fontFamily: fonts.medium, fontSize: 9.5, color: colors.primary, marginTop: 3 },
 });
 
 const s = StyleSheet.create({
   dot: { width: 10, height: 10, borderRadius: 3 },
   legend: { fontFamily: fonts.medium, fontSize: 12, color: colors.textSecondary },
   barLabel: { fontFamily: fonts.regular, fontSize: 10.5, color: colors.textMuted, marginTop: 5 },
+  dateLbl: { fontFamily: fonts.semibold, fontSize: 12, color: colors.textSecondary },
 });

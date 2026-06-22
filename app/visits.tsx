@@ -2,9 +2,10 @@ import React, { useState } from "react";
 import { View } from "react-native";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "../convex/_generated/api";
-import { Screen, Card, H2, P, Input, Button, Loading, Empty, Row, IconBtn, Badge, Select, Chip, PageHero, HeroBtn, AnimatedItem } from "../lib/ui";
+import { Screen, Card, H2, P, Input, Button, Loading, Empty, Row, IconBtn, Badge, Select, Chip, PageHero, HeroBtn, ExportMenu, AnimatedItem } from "../lib/ui";
 import { colors } from "../lib/theme";
 import { printVisitsSchedule } from "../lib/printTemplates";
+import { setExportMode } from "../lib/print";
 import { VISIT_PURPOSES } from "../lib/forms";
 import { DateField } from "../lib/pickers";
 
@@ -60,7 +61,7 @@ export default function Visits() {
         gradient={["#B0883A", "#D4B05C"]}
       >
         <HeroBtn title={adding ? "إغلاق النموذج" : "إضافة زيارة"} icon={adding ? "close" : "add"} prominent onPress={() => adding ? reset() : setAdding(true)} />
-        <HeroBtn title="طباعة الجدول" icon="print-outline" onPress={printSchedule} />
+        <ExportMenu heroTitle="تصدير الجدول" run={(m) => { setExportMode(m, `جدول الزيارات - ${month}`); printSchedule(); }} />
       </PageHero>
 
       <Card>

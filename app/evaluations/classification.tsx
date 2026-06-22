@@ -2,10 +2,11 @@ import React, { useState } from "react";
 import { View, Text, Pressable, StyleSheet } from "react-native";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "../../convex/_generated/api";
-import { Screen, Card, H2, P, Button, Loading, Row, Badge, Select, PageHero, HeroBtn } from "../../lib/ui";
+import { Screen, Card, H2, P, Button, Loading, Row, Badge, Select, PageHero, HeroBtn, ExportMenu } from "../../lib/ui";
 import { colors, fonts } from "../../lib/theme";
 import { TEACHER_CATEGORIES } from "../../lib/forms";
 import { printTeacherClassification } from "../../lib/printTemplates";
+import { setExportMode } from "../../lib/print";
 
 export default function Classification() {
   const teachers = useQuery(api.teachers.list, {});
@@ -34,7 +35,7 @@ export default function Classification() {
         icon="git-branch"
         gradient={["#B0883A", "#D4B05C"]}
       >
-        <HeroBtn title="طباعة التصنيف" icon="print-outline" prominent onPress={printSheet} />
+        <ExportMenu heroTitle="تصدير التصنيف" run={(m) => { setExportMode(m, "تصنيف الأداء"); printSheet(); }} />
       </PageHero>
 
       <Card>
