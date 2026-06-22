@@ -74,7 +74,7 @@ export default function GuidePlan() {
               </Row>
               <Input label="المجال / المؤشر" value={r.domain} onChangeText={(v) => setRows(rows.map((x, i) => i === idx ? { ...x, domain: v } : x))} multiline />
               <Input label="الإجراءات (حضور صفّي، حلقة نقاشية، اجتماع، جلسات تحضير جماعي...)" value={r.actions} onChangeText={(v) => setRows(rows.map((x, i) => i === idx ? { ...x, actions: v } : x))} multiline />
-              <Input label="تاريخ المتابعة من المنسق" value={r.followDate} onChangeText={(v) => setRows(rows.map((x, i) => i === idx ? { ...x, followDate: v } : x))} />
+              <DateField label="تاريخ المتابعة من المنسق" value={r.followDate} onChange={(v) => setRows(rows.map((x, i) => i === idx ? { ...x, followDate: v } : x))} />
               <Input label="مؤشرات تحقق الأداء" value={r.indicators} onChangeText={(v) => setRows(rows.map((x, i) => i === idx ? { ...x, indicators: v } : x))} multiline />
             </Card>
           ))}

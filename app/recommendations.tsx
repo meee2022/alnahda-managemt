@@ -4,6 +4,7 @@ import { useQuery, useMutation } from "convex/react";
 import { api } from "../convex/_generated/api";
 import { Screen, Card, H2, P, Input, Button, Loading, Empty, Row, IconBtn, Badge, Select, Chip, PageHero, HeroBtn, AnimatedItem } from "../lib/ui";
 import { colors } from "../lib/theme";
+import { DateField } from "../lib/pickers";
 
 const STATUSES = ["الكل", "جديدة", "قيد التنفيذ", "منفذة"];
 const SOURCES = ["مديرة المدرسة", "النائبة الأكاديمية", "النائبة الإدارية", "الموجه التربوي", "المنسقة", "لجنة الاعتماد"];
@@ -41,7 +42,7 @@ export default function Recommendations() {
           <Select label="المصدر" options={SOURCES} value={form.source} onChange={(v) => setForm({ ...form, source: v })} />
           <Input label="نص التوصية" value={form.text} onChangeText={(v) => setForm({ ...form, text: v })} multiline />
           <Input label="المكلّفة بالتنفيذ" value={form.assignee} onChangeText={(v) => setForm({ ...form, assignee: v })} />
-          <Input label="تاريخ الاستحقاق" value={form.dueDate} onChangeText={(v) => setForm({ ...form, dueDate: v })} />
+          <DateField label="تاريخ الاستحقاق" value={form.dueDate} onChange={(v) => setForm({ ...form, dueDate: v })} />
           <Button title="حفظ" icon="checkmark" onPress={async () => {
             if (!form.text.trim()) return;
             await create({ ...form, createdDate: new Date().toLocaleDateString("ar-EG") });

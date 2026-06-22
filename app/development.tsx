@@ -5,6 +5,7 @@ import { api } from "../convex/_generated/api";
 import { Screen, Card, H2, P, Input, Button, Loading, Empty, Row, IconBtn, Badge, Select, Chip, PageHero, HeroBtn, AnimatedItem } from "../lib/ui";
 import { colors } from "../lib/theme";
 import { MONTHS } from "../lib/forms";
+import { DateField } from "../lib/pickers";
 import { printTrainingSheet, printReading } from "../lib/printTemplates";
 
 export default function Development() {
@@ -48,7 +49,7 @@ export default function Development() {
           <H2>برنامج تدريبي جديد</H2>
           <Select label="المعلمة" options={(teachers ?? []).map((t) => t.name)} value={tform.teacherName} onChange={(v) => setTform({ ...tform, teacherName: v })} />
           <Input label="اسم البرنامج" value={tform.programName} onChangeText={(v) => setTform({ ...tform, programName: v })} />
-          <Input label="التاريخ" value={tform.date} onChangeText={(v) => setTform({ ...tform, date: v })} />
+          <DateField label="التاريخ" value={tform.date} onChange={(v) => setTform({ ...tform, date: v })} />
           <Select label="الشهر" options={MONTHS} value={tform.month} onChange={(v) => setTform({ ...tform, month: v })} />
           <Input label="عدد الساعات" value={tform.hours} onChangeText={(v) => setTform({ ...tform, hours: v })} />
           <Select label="النوع" options={["داخلي", "خارجي"]} value={tform.type} onChange={(v) => setTform({ ...tform, type: v })} />
@@ -65,7 +66,7 @@ export default function Development() {
         <Card>
           <H2>قراءة مهنية جديدة</H2>
           <Select label="الموظفة" options={[settings?.coordinator ?? "", ...(teachers ?? []).map((t) => t.name)]} value={rform.teacherName} onChange={(v) => setRform({ ...rform, teacherName: v })} />
-          <Input label="التاريخ" value={rform.date} onChangeText={(v) => setRform({ ...rform, date: v })} />
+          <DateField label="التاريخ" value={rform.date} onChange={(v) => setRform({ ...rform, date: v })} />
           <Input label="عنوان الكتاب" value={rform.bookTitle} onChangeText={(v) => setRform({ ...rform, bookTitle: v })} />
           <Input label="ماذا استفدت من الكتاب" value={rform.summary} onChangeText={(v) => setRform({ ...rform, summary: v })} multiline />
           <Button title="حفظ" icon="checkmark" onPress={async () => {

@@ -5,6 +5,7 @@ import { api } from "../../convex/_generated/api";
 import { Screen, Card, H2, P, Input, Button, Loading, Empty, Row, IconBtn, Badge, Select, PageHero, HeroBtn, AnimatedItem } from "../../lib/ui";
 import { colors, fonts } from "../../lib/theme";
 import { ANNUAL_INDICATORS, annualLevel } from "../../lib/forms";
+import { DateField } from "../../lib/pickers";
 import { printAnnualEvaluation } from "../../lib/printTemplates";
 
 export default function AnnualEvaluations() {
@@ -63,7 +64,7 @@ export default function AnnualEvaluations() {
           <Select label="المعلمة" options={(teachers ?? []).map((t) => t.name)} value={teacherName} onChange={setTeacherName} />
           <Row style={{ gap: 10 }}>
             <View style={{ flex: 1 }}><Input label="الرقم الشخصي" value={personalNo} onChangeText={setPersonalNo} /></View>
-            <View style={{ flex: 1 }}><Input label="تاريخ التعيين" value={appointmentDate} onChangeText={setAppointmentDate} placeholder="مثال: 2020-09-01" /></View>
+            <View style={{ flex: 1 }}><DateField label="تاريخ التعيين" value={appointmentDate} onChange={setAppointmentDate} /></View>
           </Row>
 
           <H2>الجزاءات التأديبية التي وقعت على الموظف خلال سنة التقييم</H2>
@@ -75,7 +76,7 @@ export default function AnnualEvaluations() {
               </Row>
               <Input label="نوع الجزاء" value={p.type} onChangeText={(v) => setPenalties(penalties.map((x, j) => j === i ? { ...x, type: v } : x))} />
               <Input label="سبب الجزاء" value={p.reason} onChangeText={(v) => setPenalties(penalties.map((x, j) => j === i ? { ...x, reason: v } : x))} />
-              <Input label="تاريخ الجزاء" value={p.date} onChangeText={(v) => setPenalties(penalties.map((x, j) => j === i ? { ...x, date: v } : x))} />
+              <DateField label="تاريخ الجزاء" value={p.date} onChange={(v) => setPenalties(penalties.map((x, j) => j === i ? { ...x, date: v } : x))} />
             </Card>
           ))}
           <Button title="إضافة جزاء" icon="add" variant="outline" small onPress={() => setPenalties([...penalties, { type: "", reason: "", date: "" }])} style={{ marginBottom: 12, alignSelf: "flex-start" }} />
@@ -91,7 +92,7 @@ export default function AnnualEvaluations() {
               <Input label="مكان الانعقاد" value={c.place} onChangeText={(v) => setCourses(courses.map((x, j) => j === i ? { ...x, place: v } : x))} />
               <Row style={{ gap: 10 }}>
                 <View style={{ flex: 1 }}><Input label="المدة" value={c.duration} onChangeText={(v) => setCourses(courses.map((x, j) => j === i ? { ...x, duration: v } : x))} /></View>
-                <View style={{ flex: 1 }}><Input label="التاريخ" value={c.date} onChangeText={(v) => setCourses(courses.map((x, j) => j === i ? { ...x, date: v } : x))} /></View>
+                <View style={{ flex: 1 }}><DateField label="التاريخ" value={c.date} onChange={(v) => setCourses(courses.map((x, j) => j === i ? { ...x, date: v } : x))} /></View>
               </Row>
             </Card>
           ))}

@@ -4,6 +4,7 @@ import { useQuery, useMutation } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import { Screen, Card, H2, P, Input, Button, Loading, Empty, Row, IconBtn, Badge, PageHero, HeroBtn, AnimatedItem } from "../../lib/ui";
 import { colors } from "../../lib/theme";
+import { DateField } from "../../lib/pickers";
 import { printAnnualPlan } from "../../lib/printTemplates";
 
 export default function AnnualPlan() {
@@ -55,7 +56,7 @@ export default function AnnualPlan() {
           <Input label="أدلة التنفيذ" value={form.evidence} onChangeText={(v) => setForm({ ...form, evidence: v })} multiline />
           <Row style={{ gap: 10 }}>
             <View style={{ flex: 1 }}><Input label="المتابعة" value={form.followup} onChangeText={(v) => setForm({ ...form, followup: v })} /></View>
-            <View style={{ flex: 1 }}><Input label="تاريخ المتابعة" value={form.followupDate} onChangeText={(v) => setForm({ ...form, followupDate: v })} /></View>
+            <View style={{ flex: 1 }}><DateField label="تاريخ المتابعة" value={form.followupDate} onChange={(v) => setForm({ ...form, followupDate: v })} /></View>
           </Row>
           <Button title="حفظ" icon="checkmark" onPress={save} />
         </Card>
