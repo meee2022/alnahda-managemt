@@ -204,7 +204,7 @@ export default function CoverRegister() {
         gradient={["#5A0C22", "#8A1538"]}
       >
         <HeroBtn title={adding ? "إغلاق" : "سجل جديد"} icon={adding ? "close" : "add"} prominent onPress={() => (adding ? reset() : setAdding(true))} />
-        <HeroBtn title="طباعة السياسة والتواقيع" icon="document-text-outline" onPress={() => printCoverPolicy(teachers ?? [], settings ?? {})} />
+        <ExportMenu heroTitle="السياسة والتواقيع" heroIcon="document-text-outline" run={(m) => { setExportMode(m, "سياسة الاحتياط والتواقيع"); printCoverPolicy(teachers ?? [], settings ?? {}); }} />
         <HeroBtn title="جدول الحصص" icon="grid-outline" onPress={() => router.push("/registers/timetable")} />
       </PageHero>
 

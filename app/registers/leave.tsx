@@ -147,7 +147,7 @@ export default function LeaveRegister() {
         gradient={["#5A0C22", "#8A1538"]}
       >
         <HeroBtn title={adding ? "إغلاق" : "سجل جديد"} icon={adding ? "close" : "add"} prominent onPress={() => (adding ? reset() : setAdding(true))} />
-        <HeroBtn title="طباعة السياسة والتواقيع" icon="document-text-outline" onPress={() => printLeavePolicy(teachers ?? [], settings ?? {})} />
+        <ExportMenu heroTitle="السياسة والتواقيع" heroIcon="document-text-outline" run={(m) => { setExportMode(m, "سياسة الاستئذان والتواقيع"); printLeavePolicy(teachers ?? [], settings ?? {}); }} />
       </PageHero>
 
       {adding && (

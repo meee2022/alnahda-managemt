@@ -4,9 +4,10 @@ import { router } from "expo-router";
 import { useQuery } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import { Ionicons } from "@expo/vector-icons";
-import { Screen, Card, H2, P, Loading, Empty, Row, Badge, Button, IconBtn, PageHero, HeroBtn, AnimatedItem } from "../../lib/ui";
+import { Screen, Card, H2, P, Loading, Empty, Row, Badge, Button, IconBtn, PageHero, HeroBtn, AnimatedItem, ExportMenu } from "../../lib/ui";
 import { colors, fonts, shadow } from "../../lib/theme";
 import { printTeacherStats } from "../../lib/printTemplates";
+import { setExportMode } from "../../lib/print";
 
 // رسم أعمدة بسيط بدون مكتبة خارجية
 function MiniBars({ data }: { data: { label: string; leaves: number; covers: number }[] }) {
@@ -67,7 +68,7 @@ export default function Stats() {
         icon="stats-chart"
         gradient={["#5E0E24", "#9A1B3C"]}
       >
-        <HeroBtn title="طباعة التقرير" icon="print-outline" prominent onPress={() => printTeacherStats(rows, totals, settings ?? {})} />
+        <ExportMenu heroTitle="تصدير التقرير" run={(m) => { setExportMode(m, "تقرير إحصائيات المعلمات"); printTeacherStats(rows, totals, settings ?? {}); }} />
       </PageHero>
 
       {/* إجماليات القسم */}
