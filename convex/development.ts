@@ -58,6 +58,18 @@ export const createReading = mutation({
   handler: async (ctx, args) => ctx.db.insert("professionalReadings", args),
 });
 
+export const updateReading = mutation({
+  args: {
+    id: v.id("professionalReadings"),
+    teacherName: v.optional(v.string()), date: v.optional(v.string()),
+    bookTitle: v.optional(v.string()), summary: v.optional(v.string()),
+  },
+  handler: async (ctx, { id, ...rest }) => {
+    const patch = Object.fromEntries(Object.entries(rest).filter(([, val]) => val !== undefined));
+    await ctx.db.patch(id, patch);
+  },
+});
+
 export const removeReading = mutation({
   args: { id: v.id("professionalReadings") },
   handler: async (ctx, { id }) => ctx.db.delete(id),

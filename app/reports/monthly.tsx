@@ -11,14 +11,28 @@ export default function MonthlyReports() {
   const reports = useQuery(api.reports.listMonthly, {});
   const settings = useQuery(api.admin.getSettings, {});
   const create = useMutation(api.reports.createMonthly);
+  const update = useMutation(api.reports.updateMonthly);
   const remove = useMutation(api.reports.removeMonthly);
   const draftMonthly = useAction(api.ai.draftMonthly);
 
   const [adding, setAdding] = useState(false);
+  const [editing, setEditing] = useState<string | null>(null);
   const [month, setMonth] = useState("مايو");
   const [entries, setEntries] = useState<Record<string, { summary: string; notes: string }>>({});
   const [drafting, setDrafting] = useState(false);
   const [draftErr, setDraftErr] = useState<string | null>(null);
+
+  const reset = () => { setMonth("مايو"); setEntries({}); setAdding(false); setEditing(null); };
+
+  const startEdit = (r: any) => {
+    setEditing(r._id); setAdding(true);
+    setMonth(r.month ?? "مايو");
+    const next: Record<string, { summary: string; notes: string }> = {};
+    for (const s of (r.sections ?? [])) {
+      next[s.subDomain] = { summary: s.summary ?? "", notes: s.notes ?? "" };
+    }
+    setEntries(next);
+  };
 
   const aiOn = settings?.aiEnabled === "true" || !!settings?.anthropicApiKey;
 
@@ -36,17 +50,15 @@ export default function MonthlyReports() {
   };
 
   const save = async () => {
-    await create({
-      month,
-      year: settings?.academicYear ?? "2025-2026",
-      sections: MONTHLY_SECTIONS.map((s) => ({
-        domain: s.domain,
-        subDomain: s.subDomain,
-        summary: entries[s.subDomain]?.summary ?? "",
-        notes: entries[s.subDomain]?.notes ?? "",
-      })),
-    });
-    setAdding(false); setEntries({});
+    const sections = MONTHLY_SECTIONS.map((s) => ({
+      domain: s.domain,
+      subDomain: s.subDomain,
+      summary: entries[s.subDomain]?.summary ?? "",
+      notes: entries[s.subDomain]?.notes ?? "",
+    }));
+    if (editing) await update({ id: editing as any, sections });
+    else await create({ month, year: settings?.academicYear ?? "2025-2026", sections });
+    reset();
   };
 
   const printReport = (r: any) => printMonthlyReport(r, settings ?? {});
@@ -61,12 +73,12 @@ export default function MonthlyReports() {
         icon="document-text"
         gradient={["#5A0C22", "#8A1538"]}
       >
-        <HeroBtn title={adding ? "إغلاق النموذج" : "تقرير شهري جديد"} icon={adding ? "close" : "add"} prominent onPress={() => setAdding(!adding)} />
+        <HeroBtn title={(adding || editing) ? "إغلاق النموذج" : "تقرير شهري جديد"} icon={(adding || editing) ? "close" : "add"} prominent onPress={() => { if (adding || editing) reset(); else setAdding(true); }} />
       </PageHero>
 
-      {adding && (
+      {(adding || editing) && (
         <Card>
-          <H2>التقرير الشهري للمنسقة</H2>
+          <H2>{editing ? "تعديل التقرير الشهري" : "التقرير الشهري للمنسقة"}</H2>
           <Select label="الشهر" options={MONTHS} value={month} onChange={setMonth} />
           <Button title={drafting ? "جارٍ التوليد بالذكاء…" : "توليد المسودة تلقائياً بالذكاء"} icon="sparkles" variant="outline" small
             loading={drafting} onPress={generate} style={{ alignSelf: "flex-start", marginBottom: 6 }} />
@@ -82,7 +94,10 @@ export default function MonthlyReports() {
                 onChangeText={(v) => setEntries({ ...entries, [s.subDomain]: { summary: v, notes: entries[s.subDomain]?.notes ?? "" } })} multiline />
             </View>
           ))}
-          <Button title="حفظ التقرير" icon="checkmark" onPress={save} />
+          <Row>
+            <Button title={editing ? "حفظ التعديل" : "حفظ التقرير"} icon="checkmark" onPress={save} />
+            {editing ? <Button title="إلغاء" variant="ghost" onPress={reset} /> : null}
+          </Row>
         </Card>
       )}
 
@@ -98,6 +113,7 @@ export default function MonthlyReports() {
             </View>
             <Row>
               <IconBtn name="print-outline" color={colors.primary} onPress={() => printReport(r)} />
+              <IconBtn name="pencil-outline" color={colors.primary} onPress={() => startEdit(r)} />
               <IconBtn name="trash-outline" color={colors.danger} onPress={() => remove({ id: r._id })} />
             </Row>
           </Row>

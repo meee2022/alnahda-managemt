@@ -40,6 +40,7 @@ export default function Meetings() {
                   <Badge label={m.type === "group" ? "جماعي" : "فردي"} tone={m.type === "group" ? "primary" : "accent"} />
                 </Row>
               </View>
+              <IconBtn name="pencil-outline" color={colors.primary} onPress={() => router.push(`/meetings/new?id=${m._id}`)} />
               <IconBtn name="trash-outline" color={colors.danger} onPress={() => remove({ id: m._id })} />
             </Row>
           </Card>

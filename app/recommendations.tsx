@@ -13,11 +13,25 @@ export default function Recommendations() {
   const [filter, setFilter] = useState("الكل");
   const items = useQuery(api.reports.listRecommendations, filter === "الكل" ? {} : { status: filter });
   const create = useMutation(api.reports.createRecommendation);
+  const update = useMutation(api.reports.updateRecommendation);
   const setStatus = useMutation(api.reports.setRecommendationStatus);
   const remove = useMutation(api.reports.removeRecommendation);
 
   const [adding, setAdding] = useState(false);
+  const [editing, setEditing] = useState<string | null>(null);
   const [form, setForm] = useState({ source: "المنسقة", text: "", assignee: "", dueDate: "", createdDate: "" });
+
+  const reset = () => { setForm({ source: "المنسقة", text: "", assignee: "", dueDate: "", createdDate: "" }); setAdding(false); setEditing(null); };
+  const startEdit = (x: any) => {
+    setForm({ source: x.source, text: x.text, assignee: x.assignee ?? "", dueDate: x.dueDate ?? "", createdDate: x.createdDate ?? "" });
+    setEditing(x._id); setAdding(true);
+  };
+  const save = async () => {
+    if (!form.text.trim()) return;
+    if (editing) await update({ id: editing as any, source: form.source, text: form.text, assignee: form.assignee, dueDate: form.dueDate });
+    else await create({ ...form, createdDate: new Date().toLocaleDateString("ar-EG") });
+    reset();
+  };
 
   return (
     <Screen>
@@ -27,7 +41,7 @@ export default function Recommendations() {
         icon="checkmark-done"
         gradient={["#5A0C22", "#8A1538"]}
       >
-        <HeroBtn title={adding ? "إغلاق النموذج" : "إضافة توصية"} icon={adding ? "close" : "add"} prominent onPress={() => setAdding(!adding)} />
+        <HeroBtn title={adding ? "إغلاق النموذج" : "إضافة توصية"} icon={adding ? "close" : "add"} prominent onPress={() => adding ? reset() : setAdding(true)} />
       </PageHero>
 
       <Card>
@@ -38,17 +52,15 @@ export default function Recommendations() {
 
       {adding && (
         <Card>
-          <H2>توصية جديدة</H2>
+          <H2>{editing ? "تعديل التوصية" : "توصية جديدة"}</H2>
           <Select label="المصدر" options={SOURCES} value={form.source} onChange={(v) => setForm({ ...form, source: v })} />
           <Input label="نص التوصية" value={form.text} onChangeText={(v) => setForm({ ...form, text: v })} multiline />
           <Input label="المكلّفة بالتنفيذ" value={form.assignee} onChangeText={(v) => setForm({ ...form, assignee: v })} />
           <DateField label="تاريخ الاستحقاق" value={form.dueDate} onChange={(v) => setForm({ ...form, dueDate: v })} />
-          <Button title="حفظ" icon="checkmark" onPress={async () => {
-            if (!form.text.trim()) return;
-            await create({ ...form, createdDate: new Date().toLocaleDateString("ar-EG") });
-            setForm({ ...form, text: "", assignee: "", dueDate: "" });
-            setAdding(false);
-          }} />
+          <Row>
+            <Button title={editing ? "حفظ التعديل" : "حفظ"} icon="checkmark" onPress={save} />
+            {editing ? <Button title="إلغاء" variant="ghost" onPress={reset} /> : null}
+          </Row>
         </Card>
       )}
 
@@ -73,7 +85,10 @@ export default function Recommendations() {
                 <Button title="تمت ✔" small onPress={() => setStatus({ id: x._id, status: "منفذة" })} />
               )}
             </Row>
-            <IconBtn name="trash-outline" color={colors.danger} onPress={() => remove({ id: x._id })} />
+            <Row>
+              <IconBtn name="pencil-outline" color={colors.primary} onPress={() => startEdit(x)} />
+              <IconBtn name="trash-outline" color={colors.danger} onPress={() => remove({ id: x._id })} />
+            </Row>
           </Row>
         </Card>
         </AnimatedItem>

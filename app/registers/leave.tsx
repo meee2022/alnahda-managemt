@@ -18,9 +18,11 @@ export default function LeaveRegister() {
   const teachers = useQuery(api.teachers.list, {});
   const settings = useQuery(api.admin.getSettings, {});
   const create = useMutation(api.registers.createLeave);
+  const update = useMutation(api.registers.updateLeave);
   const remove = useMutation(api.registers.removeLeave);
 
   const [adding, setAdding] = useState(false);
+  const [editing, setEditing] = useState<string | null>(null);
   const [date, setDate] = useState("");
   const [day, setDay] = useState("");
   const [entries, setEntries] = useState<Entry[]>([{ teacherName: "", reason: "", fromTime: "", toTime: "", deputyOpinion: "" }]);
@@ -68,12 +70,23 @@ export default function LeaveRegister() {
     return `${h ? `${h} ساعة` : ""}${h && m ? " و" : ""}${m ? `${m} دقيقة` : ""}` || "٠";
   };
 
-  const reset = () => { setAdding(false); setDate(""); setDay(""); setEntries([{ teacherName: "", reason: "", fromTime: "", toTime: "", deputyOpinion: "" }]); };
+  const reset = () => { setAdding(false); setEditing(null); setDate(""); setDay(""); setEntries([{ teacherName: "", reason: "", fromTime: "", toTime: "", deputyOpinion: "" }]); };
+
+  const startEdit = (r: any) => {
+    setDate(r.date ?? "");
+    setDay(r.day ?? "");
+    setEntries((r.entries ?? []).length
+      ? r.entries.map((e: any) => ({ teacherName: e.teacherName ?? "", reason: e.reason ?? "", fromTime: e.fromTime ?? "", toTime: e.toTime ?? "", deputyOpinion: e.deputyOpinion ?? "" }))
+      : [{ teacherName: "", reason: "", fromTime: "", toTime: "", deputyOpinion: "" }]);
+    setEditing(r._id);
+    setAdding(true);
+  };
 
   const save = async () => {
     const valid = entries.filter((e) => e.teacherName.trim());
     if (!date.trim() || valid.length === 0) return;
-    await create({ date, day, department: settings?.department, term: settings?.term, entries: valid });
+    if (editing) await update({ id: editing as any, date, day, term: settings?.term, department: settings?.department, entries: valid });
+    else await create({ date, day, department: settings?.department, term: settings?.term, entries: valid });
     reset();
   };
 
@@ -94,7 +107,7 @@ export default function LeaveRegister() {
       {adding && (
         <>
           <Card>
-            <H2>بيانات السجل</H2>
+            <H2>{editing ? "تعديل السجل" : "بيانات السجل"}</H2>
             <DateField label="التاريخ" value={date} onChange={(v) => setDate(v)} onDay={(d) => setDay(d)} />
             <Input label="اليوم" value={day} onChangeText={setDay} placeholder="يُملأ تلقائياً من التاريخ" />
             {(list ?? []).length > 0 ? (
@@ -161,7 +174,10 @@ export default function LeaveRegister() {
 
           <Button title="إضافة استئذان آخر" icon="add" variant="outline" small style={{ alignSelf: "flex-start" }}
             onPress={() => setEntries([...entries, { teacherName: "", reason: "", fromTime: "", toTime: "", deputyOpinion: "" }])} />
-          <Button title="حفظ السجل" icon="checkmark" onPress={save} />
+          <Row>
+            <Button title={editing ? "حفظ التعديل" : "حفظ السجل"} icon="checkmark" onPress={save} />
+            {editing ? <Button title="إلغاء" variant="ghost" onPress={reset} /> : null}
+          </Row>
         </>
       )}
 
@@ -178,6 +194,7 @@ export default function LeaveRegister() {
               <Row>
                 <IconBtn name="swap-horizontal-outline" color={colors.gold} onPress={() => router.push({ pathname: "/registers/cover", params: { from: r.date, day: r.day ?? "", absentees: (r.entries ?? []).map((e: any) => e.teacherName).join("|") } })} />
                 <IconBtn name="print-outline" color={colors.primary} onPress={() => printLeaveRegister(r, settings ?? {})} />
+                <IconBtn name="pencil-outline" color={colors.primary} onPress={() => startEdit(r)} />
                 <IconBtn name="trash-outline" color={colors.danger} onPress={() => remove({ id: r._id })} />
               </Row>
             </Row>

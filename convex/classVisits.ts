@@ -30,6 +30,27 @@ export const create = mutation({
   handler: async (ctx, args) => ctx.db.insert("classVisits", args),
 });
 
+export const update = mutation({
+  args: {
+    id: v.id("classVisits"),
+    teacherName: v.optional(v.string()),
+    subject: v.optional(v.string()),
+    grade: v.optional(v.string()),
+    section: v.optional(v.string()),
+    date: v.optional(v.string()),
+    lessonTopic: v.optional(v.string()),
+    visitor: v.optional(v.string()),
+    visitType: v.optional(v.string()),
+    scores: v.optional(v.array(v.object({ code: v.string(), score: v.number(), recommendation: v.optional(v.string()) }))),
+    followup: v.optional(v.array(v.string())),
+    recommendations: v.optional(v.string()),
+  },
+  handler: async (ctx, { id, ...rest }) => {
+    const patch = Object.fromEntries(Object.entries(rest).filter(([, val]) => val !== undefined));
+    await ctx.db.patch(id, patch);
+  },
+});
+
 export const remove = mutation({
   args: { id: v.id("classVisits") },
   handler: async (ctx, { id }) => ctx.db.delete(id),

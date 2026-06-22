@@ -20,16 +20,33 @@ export default function Visits() {
   const remove = useMutation(api.visits.remove);
 
   const [adding, setAdding] = useState(false);
+  const [editing, setEditing] = useState<string | null>(null);
   const [form, setForm] = useState({
     teacherName: "", grade: "الأول", section: "A", date: "", subject: "اللغة العربية",
     lesson: "", purpose: "متابعة أداء الطلبة", attendanceType: "كلي", status: "مخطط", notes: "",
   });
 
+  const reset = () => {
+    setForm({
+      teacherName: "", grade: "الأول", section: "A", date: "", subject: "اللغة العربية",
+      lesson: "", purpose: "متابعة أداء الطلبة", attendanceType: "كلي", status: "مخطط", notes: "",
+    });
+    setAdding(false); setEditing(null);
+  };
+  const startEdit = (x: any) => {
+    setForm({
+      teacherName: x.teacherName, grade: x.grade, section: x.section, date: x.date ?? "",
+      subject: x.subject, lesson: x.lesson ?? "", purpose: x.purpose ?? "متابعة أداء الطلبة",
+      attendanceType: x.attendanceType ?? "كلي", status: x.status, notes: x.notes ?? "",
+    });
+    setEditing(x._id); setAdding(true);
+  };
+
   const save = async () => {
     if (!form.teacherName || !form.date) return;
-    await create({ ...form, month });
-    setAdding(false);
-    setForm({ ...form, teacherName: "", date: "", lesson: "", notes: "" });
+    if (editing) await update({ id: editing as any, ...form, month });
+    else await create({ ...form, month });
+    reset();
   };
 
   const printSchedule = () => printVisitsSchedule(visits ?? [], month, settings ?? {});
@@ -42,7 +59,7 @@ export default function Visits() {
         icon="footsteps"
         gradient={["#B0883A", "#D4B05C"]}
       >
-        <HeroBtn title="إضافة زيارة" icon="add" prominent onPress={() => setAdding(!adding)} />
+        <HeroBtn title={adding ? "إغلاق النموذج" : "إضافة زيارة"} icon={adding ? "close" : "add"} prominent onPress={() => adding ? reset() : setAdding(true)} />
         <HeroBtn title="طباعة الجدول" icon="print-outline" onPress={printSchedule} />
       </PageHero>
 
@@ -54,7 +71,7 @@ export default function Visits() {
 
       {adding && (
         <Card>
-          <H2>زيارة صفية جديدة — {month}</H2>
+          <H2>{editing ? `تعديل الزيارة — ${month}` : `زيارة صفية جديدة — ${month}`}</H2>
           <Select label="المعلمة" options={(teachers ?? []).map((t) => t.name)} value={form.teacherName} onChange={(v) => setForm({ ...form, teacherName: v })} />
           <Row>
             <View style={{ flex: 1 }}>
@@ -68,7 +85,10 @@ export default function Visits() {
           <Select label="هدف الزيارة" options={VISIT_PURPOSES} value={form.purpose} onChange={(v) => setForm({ ...form, purpose: v })} />
           <Select label="نوع الحضور" options={["كلي", "جزئي"]} value={form.attendanceType} onChange={(v) => setForm({ ...form, attendanceType: v })} />
           <Input label="ملاحظات" value={form.notes} onChangeText={(v) => setForm({ ...form, notes: v })} multiline />
-          <Button title="حفظ الزيارة" icon="checkmark" onPress={save} />
+          <Row>
+            <Button title={editing ? "حفظ التعديل" : "حفظ الزيارة"} icon="checkmark" onPress={save} />
+            {editing ? <Button title="إلغاء" variant="ghost" onPress={reset} /> : null}
+          </Row>
         </Card>
       )}
 
@@ -90,6 +110,7 @@ export default function Visits() {
               {x.status !== "تم" && (
                 <IconBtn name="checkmark-circle-outline" color={colors.success} onPress={() => update({ id: x._id, status: "تم" })} />
               )}
+              <IconBtn name="pencil-outline" color={colors.primary} onPress={() => startEdit(x)} />
               <IconBtn name="trash-outline" color={colors.danger} onPress={() => remove({ id: x._id })} />
             </Row>
           </Row>

@@ -23,6 +23,18 @@ export const createLeave = mutation({
   handler: async (ctx, args) => ctx.db.insert("leaveRegisters", args),
 });
 
+export const updateLeave = mutation({
+  args: {
+    id: v.id("leaveRegisters"),
+    date: v.optional(v.string()), day: v.optional(v.string()), term: v.optional(v.string()),
+    department: v.optional(v.string()), entries: v.optional(v.array(leaveEntry)),
+  },
+  handler: async (ctx, { id, ...rest }) => {
+    const patch = Object.fromEntries(Object.entries(rest).filter(([, val]) => val !== undefined));
+    await ctx.db.patch(id, patch);
+  },
+});
+
 export const removeLeave = mutation({
   args: { id: v.id("leaveRegisters") },
   handler: async (ctx, { id }) => ctx.db.delete(id),
@@ -52,6 +64,18 @@ export const createCover = mutation({
     department: v.optional(v.string()), entries: v.array(coverEntry),
   },
   handler: async (ctx, args) => ctx.db.insert("coverRegisters", args),
+});
+
+export const updateCover = mutation({
+  args: {
+    id: v.id("coverRegisters"),
+    date: v.optional(v.string()), day: v.optional(v.string()),
+    department: v.optional(v.string()), entries: v.optional(v.array(coverEntry)),
+  },
+  handler: async (ctx, { id, ...rest }) => {
+    const patch = Object.fromEntries(Object.entries(rest).filter(([, val]) => val !== undefined));
+    await ctx.db.patch(id, patch);
+  },
 });
 
 export const removeCover = mutation({

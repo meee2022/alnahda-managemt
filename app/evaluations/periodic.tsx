@@ -12,9 +12,11 @@ export default function PeriodicReports() {
   const teachers = useQuery(api.teachers.list, {});
   const settings = useQuery(api.admin.getSettings, {});
   const create = useMutation(api.evaluations.createPeriodic);
+  const update = useMutation(api.evaluations.updatePeriodic);
   const remove = useMutation(api.evaluations.removePeriodic);
 
   const [adding, setAdding] = useState(false);
+  const [editing, setEditing] = useState<string | null>(null);
   const [teacherName, setTeacherName] = useState("");
   const [month, setMonth] = useState("مايو");
   const [notes, setNotes] = useState("");
@@ -22,13 +24,27 @@ export default function PeriodicReports() {
 
   const allPractices = PERIODIC_DOMAINS.flatMap((d) => d.practices.map((p) => ({ domain: d.domain, practice: p })));
 
+  const reset = () => { setTeacherName(""); setMonth("مايو"); setNotes(""); setScores({}); setAdding(false); setEditing(null); };
+
+  const startEdit = (r: any) => {
+    setEditing(r._id); setAdding(false);
+    setTeacherName(r.teacherName ?? "");
+    setMonth(r.month ?? "مايو");
+    setNotes(r.generalNotes ?? "");
+    const m: Record<string, number> = {};
+    (r.scores ?? []).forEach((s: any) => { m[s.practice] = s.score; });
+    setScores(m);
+  };
+
   const save = async () => {
     if (!teacherName) return;
-    await create({
+    const payload = {
       teacherName, month, generalNotes: notes,
       scores: allPractices.map((x) => ({ domain: x.domain, practice: x.practice, score: scores[x.practice] ?? 0 })),
-    });
-    setAdding(false); setScores({}); setNotes("");
+    };
+    if (editing) await update({ id: editing as any, month: payload.month, generalNotes: payload.generalNotes, scores: payload.scores });
+    else await create(payload);
+    reset();
   };
 
   const printReport = (r: any) => printPeriodicReport(r, settings ?? {});
@@ -43,12 +59,12 @@ export default function PeriodicReports() {
         icon="clipboard"
         gradient={["#5A0C22", "#8A1538"]}
       >
-        <HeroBtn title={adding ? "إغلاق النموذج" : "تقرير دوري جديد"} icon={adding ? "close" : "add"} prominent onPress={() => setAdding(!adding)} />
+        <HeroBtn title={adding ? "إغلاق النموذج" : "تقرير دوري جديد"} icon={adding ? "close" : "add"} prominent onPress={() => (adding ? reset() : setAdding(true))} />
       </PageHero>
 
-      {adding && (
+      {(adding || editing) && (
         <Card>
-          <H2>تقرير دوري جديد</H2>
+          <H2>{editing ? "تعديل التقرير الدوري" : "تقرير دوري جديد"}</H2>
           <Select label="المعلمة" options={(teachers ?? []).map((t) => t.name)} value={teacherName} onChange={setTeacherName} />
           <Select label="الشهر" options={MONTHS} value={month} onChange={setMonth} />
           {PERIODIC_DOMAINS.map((d) => (
@@ -71,7 +87,10 @@ export default function PeriodicReports() {
           ))}
           <P muted style={{ fontSize: 12, marginBottom: 8 }}>مفتاح التقييم: 3 = مستكمل الأدلة • 2 = معظم الأدلة متوفرة • 1 = بعض الأدلة متوفرة</P>
           <Input label="ملاحظات عامة" value={notes} onChangeText={setNotes} multiline />
-          <Button title="حفظ التقرير" icon="checkmark" onPress={save} />
+          <Row style={{ gap: 10 }}>
+            <Button title={editing ? "حفظ التعديلات" : "حفظ التقرير"} icon="checkmark" onPress={save} />
+            {editing ? <Button title="إلغاء" variant="ghost" onPress={reset} /> : null}
+          </Row>
         </Card>
       )}
 
@@ -87,6 +106,7 @@ export default function PeriodicReports() {
             </View>
             <Row>
               <IconBtn name="print-outline" color={colors.primary} onPress={() => printReport(r)} />
+              <IconBtn name="pencil-outline" color={colors.primary} onPress={() => startEdit(r)} />
               <IconBtn name="trash-outline" color={colors.danger} onPress={() => remove({ id: r._id })} />
             </Row>
           </Row>

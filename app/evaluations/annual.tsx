@@ -13,9 +13,11 @@ export default function AnnualEvaluations() {
   const teachers = useQuery(api.teachers.list, {});
   const settings = useQuery(api.admin.getSettings, {});
   const create = useMutation(api.evaluations.createAnnual);
+  const update = useMutation(api.evaluations.updateAnnual);
   const remove = useMutation(api.evaluations.removeAnnual);
 
   const [adding, setAdding] = useState(false);
+  const [editing, setEditing] = useState<string | null>(null);
   const [teacherName, setTeacherName] = useState("");
   const [personalNo, setPersonalNo] = useState("");
   const [appointmentDate, setAppointmentDate] = useState("");
@@ -28,19 +30,50 @@ export default function AnnualEvaluations() {
   const maxTotal = ANNUAL_INDICATORS.reduce((s, i) => s + i.maxScore, 0);
   const pct = Math.round((total / maxTotal) * 100);
 
+  const reset = () => {
+    setAdding(false); setEditing(null); setScores({}); setNotes(""); setPenalties([]); setCourses([]);
+    setTeacherName(""); setPersonalNo(""); setAppointmentDate("");
+  };
+
+  const startEdit = (e: any) => {
+    setTeacherName(e.teacherName ?? "");
+    setPersonalNo(e.personalNo ?? "");
+    setAppointmentDate(e.appointmentDate ?? "");
+    setNotes(e.notes ?? "");
+    const s: Record<string, number> = {};
+    (e.indicators ?? []).forEach((ind: any) => { s[ind.code] = ind.score; });
+    setScores(s);
+    setPenalties((e.penalties ?? []).map((p: any) => ({ type: p.type ?? "", reason: p.reason ?? "", date: p.date ?? "" })));
+    setCourses((e.courses ?? []).map((c: any) => ({ name: c.name ?? "", place: c.place ?? "", duration: c.duration ?? "", date: c.date ?? "" })));
+    setEditing(e._id); setAdding(true);
+  };
+
   const save = async () => {
     if (!teacherName) return;
-    await create({
-      teacherName, personalNo, appointmentDate,
-      year: settings?.academicYear ?? "2025-2026",
-      penalties: penalties.filter((p) => p.type.trim()),
-      courses: courses.filter((c) => c.name.trim()),
-      indicators: ANNUAL_INDICATORS.map((i) => ({ domain: i.domain, indicator: i.indicator, code: i.code, maxScore: i.maxScore, score: scores[i.code] ?? i.maxScore })),
-      total: pct,
-      levelLabel: annualLevel(pct),
-      notes,
-    });
-    setAdding(false); setScores({}); setNotes(""); setPenalties([]); setCourses([]); setPersonalNo(""); setAppointmentDate("");
+    const indicators = ANNUAL_INDICATORS.map((i) => ({ domain: i.domain, indicator: i.indicator, code: i.code, maxScore: i.maxScore, score: scores[i.code] ?? i.maxScore }));
+    if (editing) {
+      await update({
+        id: editing as any,
+        penalties: penalties.filter((p) => p.type.trim()),
+        courses: courses.filter((c) => c.name.trim()),
+        indicators,
+        total: pct,
+        levelLabel: annualLevel(pct),
+        notes,
+      });
+    } else {
+      await create({
+        teacherName, personalNo, appointmentDate,
+        year: settings?.academicYear ?? "2025-2026",
+        penalties: penalties.filter((p) => p.type.trim()),
+        courses: courses.filter((c) => c.name.trim()),
+        indicators,
+        total: pct,
+        levelLabel: annualLevel(pct),
+        notes,
+      });
+    }
+    reset();
   };
 
   const printEval = (e: any) => printAnnualEvaluation(e, settings ?? {});
@@ -55,12 +88,12 @@ export default function AnnualEvaluations() {
         icon="ribbon"
         gradient={["#B0883A", "#D4B05C"]}
       >
-        <HeroBtn title={adding ? "إغلاق النموذج" : "تقييم سنوي جديد"} icon={adding ? "close" : "add"} prominent onPress={() => setAdding(!adding)} />
+        <HeroBtn title={adding ? "إغلاق النموذج" : "تقييم سنوي جديد"} icon={adding ? "close" : "add"} prominent onPress={() => (adding ? reset() : setAdding(true))} />
       </PageHero>
 
       {adding && (
         <Card>
-          <H2>تقييم أداء سنوي جديد</H2>
+          <H2>{editing ? "تعديل التقييم السنوي" : "تقييم أداء سنوي جديد"}</H2>
           <Select label="المعلمة" options={(teachers ?? []).map((t) => t.name)} value={teacherName} onChange={setTeacherName} />
           <Row style={{ gap: 10 }}>
             <View style={{ flex: 1 }}><Input label="الرقم الشخصي" value={personalNo} onChangeText={setPersonalNo} /></View>
@@ -119,7 +152,10 @@ export default function AnnualEvaluations() {
             </Row>
           </Card>
           <Input label="ملاحظات" value={notes} onChangeText={setNotes} multiline />
-          <Button title="حفظ التقييم" icon="checkmark" onPress={save} />
+          <Row>
+            <Button title={editing ? "حفظ التعديل" : "حفظ التقييم"} icon="checkmark" onPress={save} />
+            {editing ? <Button title="إلغاء" variant="ghost" onPress={reset} /> : null}
+          </Row>
         </Card>
       )}
 
@@ -138,6 +174,7 @@ export default function AnnualEvaluations() {
               </Row>
             </View>
             <Row>
+              <IconBtn name="pencil-outline" color={colors.primary} onPress={() => startEdit(e)} />
               <IconBtn name="print-outline" color={colors.primary} onPress={() => printEval(e)} />
               <IconBtn name="trash-outline" color={colors.danger} onPress={() => remove({ id: e._id })} />
             </Row>

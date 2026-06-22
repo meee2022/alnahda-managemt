@@ -17,11 +17,13 @@ export default function Performance() {
   const settings = useQuery(api.admin.getSettings, {});
   const bank = useQuery(api.performance.listBank, {});
   const create = useMutation(api.performance.create);
+  const update = useMutation(api.performance.update);
   const remove = useMutation(api.performance.remove);
   const addBank = useMutation(api.performance.addBank);
   const removeBank = useMutation(api.performance.removeBank);
 
   const [adding, setAdding] = useState(false);
+  const [editing, setEditing] = useState<string | null>(null);
   const [info, setInfo] = useState({
     date: "", day: "", subject: "اللغة العربية", unit: "", lessonTitle: "", visitType: "كلي",
     visitNumber: "", startTime: "", endTime: "", followMode: "مباشر",
@@ -45,25 +47,57 @@ export default function Performance() {
   const reset = () => {
     setInfo({ ...info, date: "", lessonTitle: "", unit: "", teacherName: "", employeeNo: "",
       generalRecommendations: "", nextSteps: "", trainingNeeds: "", additionalNotes: "" });
-    setScores({}); setRecs({}); setBankOpenFor(null); setAdding(false); draft.clear(); setRestored(true);
+    setScores({}); setRecs({}); setBankOpenFor(null); setAdding(false); setEditing(null); draft.clear(); setRestored(true);
+  };
+
+  const startEdit = (v: any) => {
+    setInfo({
+      date: v.date ?? "", day: v.day ?? "", subject: v.subject ?? "اللغة العربية", unit: v.unit ?? "",
+      lessonTitle: v.lessonTitle ?? "", visitType: v.visitType ?? "كلي", visitNumber: v.visitNumber ?? "",
+      startTime: v.startTime ?? "", endTime: v.endTime ?? "", followMode: v.followMode ?? "مباشر",
+      teacherName: v.teacherName ?? "", employeeNo: v.employeeNo ?? "", jobTitle: v.jobTitle ?? "معلم المرحلة التأسيسية أدبي",
+      nationality: v.nationality ?? "", specialization: v.specialization ?? "",
+      grade: v.grade ?? "الأول", section: v.section ?? "A", yearsTrack: v.yearsTrack ?? "", yearsTotal: v.yearsTotal ?? "",
+      deputyName: v.deputyName ?? "", feedbackAttendance: v.feedbackAttendance ?? "تم", deputyNotes: v.deputyNotes ?? "",
+      generalRecommendations: v.generalRecommendations ?? "", nextSteps: v.nextSteps ?? "",
+      trainingNeeds: v.trainingNeeds ?? "", additionalNotes: v.additionalNotes ?? "",
+      coordinatorName: v.coordinatorName ?? "", discussionTime: v.discussionTime ?? "",
+      teacherAttended: v.teacherAttended ?? "نعم", sendDate: v.sendDate ?? "",
+    });
+    const s: Record<string, number> = {}; const r: Record<string, string> = {};
+    (v.indicators ?? []).forEach((ind: any) => {
+      if (ind.score !== undefined && ind.score >= 0) s[ind.code] = ind.score;
+      if (ind.recommendation) r[ind.code] = ind.recommendation;
+    });
+    setScores(s); setRecs(r); setBankOpenFor(null);
+    setEditing(v._id); setRestored(true); setAdding(true);
   };
 
   const save = async () => {
     if (!info.teacherName || !info.date) return;
-    await create({
-      date: info.date, day: info.day, subject: info.subject, unit: info.unit, lessonTitle: info.lessonTitle,
-      visitType: info.visitType, visitNumber: info.visitNumber, startTime: info.startTime, endTime: info.endTime,
-      teacherName: info.teacherName, employeeNo: info.employeeNo, jobTitle: info.jobTitle,
-      nationality: info.nationality, specialization: info.specialization,
-      grade: info.grade, section: info.section, yearsTrack: info.yearsTrack, yearsTotal: info.yearsTotal,
-      followMode: info.followMode,
-      deputyName: info.deputyName, feedbackAttendance: info.feedbackAttendance, deputyNotes: info.deputyNotes,
-      indicators: PERF_ALL_CODES.map((code) => ({ code, score: scores[code] ?? -1, recommendation: recs[code] ?? "" })),
-      generalRecommendations: info.generalRecommendations, nextSteps: info.nextSteps,
-      trainingNeeds: info.trainingNeeds, additionalNotes: info.additionalNotes,
-      coordinatorName: info.coordinatorName || settings?.coordinator, discussionTime: info.discussionTime,
-      teacherAttended: info.teacherAttended, sendDate: info.sendDate,
-    });
+    const indicators = PERF_ALL_CODES.map((code) => ({ code, score: scores[code] ?? -1, recommendation: recs[code] ?? "" }));
+    if (editing) {
+      await update({
+        id: editing as any, indicators,
+        generalRecommendations: info.generalRecommendations, nextSteps: info.nextSteps,
+        trainingNeeds: info.trainingNeeds, additionalNotes: info.additionalNotes,
+      });
+    } else {
+      await create({
+        date: info.date, day: info.day, subject: info.subject, unit: info.unit, lessonTitle: info.lessonTitle,
+        visitType: info.visitType, visitNumber: info.visitNumber, startTime: info.startTime, endTime: info.endTime,
+        teacherName: info.teacherName, employeeNo: info.employeeNo, jobTitle: info.jobTitle,
+        nationality: info.nationality, specialization: info.specialization,
+        grade: info.grade, section: info.section, yearsTrack: info.yearsTrack, yearsTotal: info.yearsTotal,
+        followMode: info.followMode,
+        deputyName: info.deputyName, feedbackAttendance: info.feedbackAttendance, deputyNotes: info.deputyNotes,
+        indicators,
+        generalRecommendations: info.generalRecommendations, nextSteps: info.nextSteps,
+        trainingNeeds: info.trainingNeeds, additionalNotes: info.additionalNotes,
+        coordinatorName: info.coordinatorName || settings?.coordinator, discussionTime: info.discussionTime,
+        teacherAttended: info.teacherAttended, sendDate: info.sendDate,
+      });
+    }
     reset();
   };
 
@@ -102,7 +136,7 @@ export default function Performance() {
           ) : null}
           {/* المعلومات الأساسية */}
           <Card>
-            <H2>المعلومات الأساسية</H2>
+            <H2>{editing ? "تعديل استمارة الأداء" : "المعلومات الأساسية"}</H2>
             <Select label="اسم المعلم (الرباعي)" options={(teachers ?? []).map((t) => t.name)} value={info.teacherName}
               onChange={(v) => {
                 const t = (teachers ?? []).find((x) => x.name === v) as any;
@@ -237,7 +271,10 @@ export default function Performance() {
               <View style={{ flex: 1 }}><Select label="حضر/ت المعلم/ة المناقشة" options={["نعم", "لا"]} value={info.teacherAttended} onChange={(v) => setInfo({ ...info, teacherAttended: v })} /></View>
             </Row>
             <DateField label="تاريخ إرسال الاستمارة" value={info.sendDate} onChange={(v) => setInfo((p) => ({ ...p, sendDate: v }))} />
-            <Button title="حفظ الاستمارة" icon="checkmark" onPress={save} />
+            <Row>
+              <Button title={editing ? "حفظ التعديل" : "حفظ الاستمارة"} icon="checkmark" onPress={save} />
+              {editing ? <Button title="إلغاء" variant="ghost" onPress={reset} /> : null}
+            </Row>
           </Card>
         </>
       )}
@@ -262,6 +299,7 @@ export default function Performance() {
                 </View>
                 <Row>
                   <SourceFileBtn storageId={(v as any).sourceFileId} />
+                  <IconBtn name="pencil-outline" color={colors.primary} onPress={() => startEdit(v)} />
                   <IconBtn name="print-outline" color={colors.primary} onPress={() => printPerformanceVisit(v, settings ?? {})} />
                   <IconBtn name="trash-outline" color={colors.danger} onPress={() => remove({ id: v._id })} />
                 </Row>

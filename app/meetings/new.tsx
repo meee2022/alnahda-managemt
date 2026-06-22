@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { View, Text, Pressable } from "react-native";
 import { useLocalSearchParams, router } from "expo-router";
 import { useQuery, useMutation } from "convex/react";
@@ -9,10 +9,14 @@ import { DateField, TimeField } from "../../lib/pickers";
 import { colors, radius, fonts } from "../../lib/theme";
 
 export default function NewMeeting() {
-  const { type = "group" } = useLocalSearchParams<{ type?: string }>();
-  const isGroup = type === "group";
+  const { type = "group", id } = useLocalSearchParams<{ type?: string; id?: string }>();
   const create = useMutation(api.meetings.create);
+  const update = useMutation(api.meetings.update);
   const settings = useQuery(api.admin.getSettings, {});
+  const existing = useQuery(api.meetings.get, id ? { id: id as any } : "skip");
+  const [loaded, setLoaded] = useState(false);
+  // في وضع التعديل يُؤخذ النوع من المحضر المحمَّل، وإلا من رابط الإنشاء
+  const isGroup = id ? existing?.type === "group" : type === "group";
 
   const [form, setForm] = useState({
     number: "", date: "", time: "", place: "غرفة المدرسات",
@@ -42,23 +46,45 @@ export default function NewMeeting() {
   // تبدأ فارغة — المنسقة تختار البنود التي تريدها لكل اجتماع
   const [items, setItems] = useState<{ title: string; content: string }[]>([]);
 
+  // تعبئة النموذج من المحضر المحمَّل مرة واحدة عند وصول البيانات
+  useEffect(() => {
+    if (!id || loaded || !existing) return;
+    setForm({
+      number: existing.number ?? "",
+      date: existing.date ?? "",
+      time: existing.time ?? "",
+      place: existing.place ?? "",
+      leader: existing.leader ?? "",
+      attendees: existing.attendees ?? "",
+      absentees: existing.absentees ?? "",
+      teacherName: existing.teacherName ?? "",
+      goal: existing.goal ?? "",
+      recommendations: existing.recommendations ?? "",
+      followUp: existing.followUp ?? "",
+    });
+    setItems((existing.items ?? []).map((it) => ({ title: it.title, content: it.content })));
+    setLoaded(true);
+  }, [id, loaded, existing]);
+
   const addItem = (title: string) => setItems((p) => [...p, { title, content: "" }]);
   const available = BANK.filter((b) => !items.some((it) => it.title === b));
 
   const save = async () => {
     if (!form.date.trim()) return;
-    await create({
+    const payload = {
       type: isGroup ? "group" : "individual",
       ...form,
       items: items.filter((i) => i.title.trim() || i.content.trim()),
-    });
+    };
+    if (id) await update({ id: id as any, ...payload });
+    else await create(payload);
     router.back();
   };
 
   return (
     <Screen>
       <PageHero
-        title={isGroup ? "محضر اجتماع أكاديمي جديد" : "محضر اجتماع فردي جديد"}
+        title={id ? "تعديل المحضر" : isGroup ? "محضر اجتماع أكاديمي جديد" : "محضر اجتماع فردي جديد"}
         desc={`${settings?.school ?? ""} — يُحفظ ويُطبع بنفس النموذج الرسمي`}
         icon={isGroup ? "chatbubbles" : "person"}
         gradient={isGroup ? ["#5E0E24", "#9A1B3C"] : ["#5A0C22", "#8A1538"]}

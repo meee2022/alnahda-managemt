@@ -13,10 +13,26 @@ export default function Achievements() {
   const items = useQuery(api.reports.listAchievements, {});
   const settings = useQuery(api.admin.getSettings, {});
   const create = useMutation(api.reports.createAchievement);
+  const update = useMutation(api.reports.updateAchievement);
   const remove = useMutation(api.reports.removeAchievement);
 
   const [adding, setAdding] = useState(false);
+  const [editing, setEditing] = useState<string | null>(null);
   const [form, setForm] = useState({ month: "مايو", category: "أكاديمية", description: "" });
+
+  const reset = () => { setForm({ month: "مايو", category: "أكاديمية", description: "" }); setAdding(false); setEditing(null); };
+
+  const startEdit = (x: any) => {
+    setEditing(x._id); setAdding(true);
+    setForm({ month: x.month ?? "مايو", category: x.category ?? "أكاديمية", description: x.description ?? "" });
+  };
+
+  const save = async () => {
+    if (!form.description.trim()) return;
+    if (editing) await update({ id: editing as any, ...form });
+    else await create(form);
+    reset();
+  };
 
   const printSheet = () => printAchievementsSheet(items ?? [], form.month, settings ?? {});
 
@@ -30,22 +46,20 @@ export default function Achievements() {
         icon="trophy"
         gradient={["#B0883A", "#D4B05C"]}
       >
-        <HeroBtn title="إضافة إنجاز" icon="add" prominent onPress={() => setAdding(!adding)} />
+        <HeroBtn title="إضافة إنجاز" icon="add" prominent onPress={() => { if (adding || editing) reset(); else setAdding(true); }} />
         <HeroBtn title="طباعة النموذج" icon="print-outline" onPress={printSheet} />
       </PageHero>
 
-      {adding && (
+      {(adding || editing) && (
         <Card>
-          <H2>إنجاز جديد</H2>
+          <H2>{editing ? "تعديل إنجاز" : "إنجاز جديد"}</H2>
           <Select label="الشهر" options={MONTHS} value={form.month} onChange={(v) => setForm({ ...form, month: v })} />
           <Select label="التصنيف" options={CATS} value={form.category} onChange={(v) => setForm({ ...form, category: v })} />
           <Input label="وصف الإنجاز" value={form.description} onChangeText={(v) => setForm({ ...form, description: v })} multiline />
-          <Button title="حفظ" icon="checkmark" onPress={async () => {
-            if (!form.description.trim()) return;
-            await create(form);
-            setForm({ ...form, description: "" });
-            setAdding(false);
-          }} />
+          <Row>
+            <Button title={editing ? "حفظ التعديل" : "حفظ"} icon="checkmark" onPress={save} />
+            {editing ? <Button title="إلغاء" variant="ghost" onPress={reset} /> : null}
+          </Row>
         </Card>
       )}
 
@@ -62,7 +76,10 @@ export default function Achievements() {
                 <Badge label={x.month} tone="muted" />
               </Row>
             </View>
-            <IconBtn name="trash-outline" color={colors.danger} onPress={() => remove({ id: x._id })} />
+            <Row>
+              <IconBtn name="pencil-outline" color={colors.primary} onPress={() => startEdit(x)} />
+              <IconBtn name="trash-outline" color={colors.danger} onPress={() => remove({ id: x._id })} />
+            </Row>
           </Row>
         </Card>
         </AnimatedItem>

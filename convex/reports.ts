@@ -43,6 +43,14 @@ export const createAchievement = mutation({
   handler: async (ctx, args) => ctx.db.insert("achievements", args),
 });
 
+export const updateAchievement = mutation({
+  args: { id: v.id("achievements"), month: v.optional(v.string()), category: v.optional(v.string()), description: v.optional(v.string()) },
+  handler: async (ctx, { id, ...rest }) => {
+    const patch = Object.fromEntries(Object.entries(rest).filter(([, val]) => val !== undefined));
+    await ctx.db.patch(id, patch);
+  },
+});
+
 export const removeAchievement = mutation({
   args: { id: v.id("achievements") },
   handler: async (ctx, { id }) => ctx.db.delete(id),
@@ -68,6 +76,22 @@ export const createRecommendation = mutation({
     createdDate: v.string(),
   },
   handler: async (ctx, args) => ctx.db.insert("recommendations", { ...args, status: "جديدة" }),
+});
+
+export const updateRecommendation = mutation({
+  args: {
+    id: v.id("recommendations"),
+    source: v.optional(v.string()),
+    sourceLabel: v.optional(v.string()),
+    text: v.optional(v.string()),
+    assignee: v.optional(v.string()),
+    dueDate: v.optional(v.string()),
+    createdDate: v.optional(v.string()),
+  },
+  handler: async (ctx, { id, ...rest }) => {
+    const patch = Object.fromEntries(Object.entries(rest).filter(([, val]) => val !== undefined));
+    await ctx.db.patch(id, patch);
+  },
 });
 
 export const setRecommendationStatus = mutation({

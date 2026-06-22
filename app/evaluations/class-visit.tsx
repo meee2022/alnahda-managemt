@@ -16,12 +16,14 @@ export default function ClassVisit() {
   const teachers = useQuery(api.teachers.list, {});
   const settings = useQuery(api.admin.getSettings, {});
   const create = useMutation(api.classVisits.create);
+  const update = useMutation(api.classVisits.update);
   const remove = useMutation(api.classVisits.remove);
   const bank = useQuery(api.performance.listBank, {});
   const addBank = useMutation(api.performance.addBank);
   const removeBank = useMutation(api.performance.removeBank);
 
   const [adding, setAdding] = useState(false);
+  const [editing, setEditing] = useState<string | null>(null);
   const [form, setForm] = useState({
     teacherName: "", subject: "اللغة العربية", grade: "الأول", section: "A",
     date: "", lessonTopic: "", visitor: "", visitType: "كلية",
@@ -32,18 +34,35 @@ export default function ClassVisit() {
   const [followup, setFollowup] = useState<string[]>([]);
   const [recs, setRecs] = useState("");
 
-  const reset = () => { setForm({ teacherName: "", subject: "اللغة العربية", grade: "الأول", section: "A", date: "", lessonTopic: "", visitor: "", visitType: "كلية" }); setScores({}); setIndRecs({}); setBankOpenFor(null); setFollowup([]); setRecs(""); setAdding(false); };
+  const reset = () => { setForm({ teacherName: "", subject: "اللغة العربية", grade: "الأول", section: "A", date: "", lessonTopic: "", visitor: "", visitType: "كلية" }); setScores({}); setIndRecs({}); setBankOpenFor(null); setFollowup([]); setRecs(""); setAdding(false); setEditing(null); };
+
+  const startEdit = (v: any) => {
+    setEditing(v._id); setAdding(false); setBankOpenFor(null);
+    setForm({
+      teacherName: v.teacherName ?? "", subject: v.subject ?? "اللغة العربية",
+      grade: v.grade ?? "الأول", section: v.section ?? "A", date: v.date ?? "",
+      lessonTopic: v.lessonTopic ?? "", visitor: v.visitor ?? "", visitType: v.visitType ?? "كلية",
+    });
+    const sc: Record<string, number> = {};
+    const rc: Record<string, string> = {};
+    (v.scores ?? []).forEach((s: any) => { sc[s.code] = s.score; if (s.recommendation) rc[s.code] = s.recommendation; });
+    setScores(sc); setIndRecs(rc);
+    setFollowup([...(v.followup ?? [])]);
+    setRecs(v.recommendations ?? "");
+  };
 
   const bankFor = (code: string) => (bank ?? []).filter((b) => b.code === code || b.code === "عام");
 
   const save = async () => {
     if (!form.teacherName || !form.date) return;
-    await create({
+    const payload = {
       ...form,
       scores: ALL.map((code) => ({ code, score: scores[code] ?? -1, recommendation: indRecs[code] ?? "" })),
       followup,
       recommendations: recs,
-    });
+    };
+    if (editing) await update({ id: editing as any, ...payload });
+    else await create(payload);
     reset();
   };
 
@@ -68,9 +87,9 @@ export default function ClassVisit() {
         <HeroBtn title={adding ? "إغلاق النموذج" : "زيارة صفية جديدة"} icon={adding ? "close" : "add"} prominent onPress={() => (adding ? reset() : setAdding(true))} />
       </PageHero>
 
-      {adding && (
+      {(adding || editing) && (
         <Card>
-          <H2>المعلومات الأساسية</H2>
+          <H2>{editing ? "تعديل استمارة الزيارة" : "المعلومات الأساسية"}</H2>
           <Select label="اسم المعلم" options={(teachers ?? []).map((t) => t.name)} value={form.teacherName}
             onChange={(v) => {
               const t = (teachers ?? []).find((x) => x.name === v) as any;
@@ -159,7 +178,10 @@ export default function ClassVisit() {
           </Row>
 
           <Input label="ملاحظات وتوصيات عامّة" value={recs} onChangeText={setRecs} multiline />
-          <Button title="حفظ الاستمارة" icon="checkmark" onPress={save} />
+          <Row style={{ gap: 10 }}>
+            <Button title={editing ? "حفظ التعديلات" : "حفظ الاستمارة"} icon="checkmark" onPress={save} />
+            {editing ? <Button title="إلغاء" variant="ghost" onPress={reset} /> : null}
+          </Row>
         </Card>
       )}
 
@@ -184,6 +206,7 @@ export default function ClassVisit() {
                 <Row>
                   <SourceFileBtn storageId={(v as any).sourceFileId} />
                   <IconBtn name="print-outline" color={colors.primary} onPress={() => printClassVisit(v, settings ?? {})} />
+                  <IconBtn name="pencil-outline" color={colors.primary} onPress={() => startEdit(v)} />
                   <IconBtn name="trash-outline" color={colors.danger} onPress={() => remove({ id: v._id })} />
                 </Row>
               </Row>

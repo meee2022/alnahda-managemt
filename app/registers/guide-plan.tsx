@@ -15,9 +15,11 @@ export default function GuidePlan() {
   const teachers = useQuery(api.teachers.list, {});
   const settings = useQuery(api.admin.getSettings, {});
   const create = useMutation(api.guidePlans.create);
+  const update = useMutation(api.guidePlans.update);
   const remove = useMutation(api.guidePlans.remove);
 
   const [adding, setAdding] = useState(false);
+  const [editing, setEditing] = useState<string | null>(null);
   const [form, setForm] = useState({ teacherName: "", grade: "الأول", section: "A", date: "", notes: "" });
   const [rows, setRows] = useState<PlanRow[]>([emptyRow()]);
 
@@ -26,15 +28,26 @@ export default function GuidePlan() {
     setForm((p) => ({ ...p, teacherName: name, grade: t?.grade || p.grade, section: t?.section || p.section }));
   };
 
-  const save = async () => {
-    if (!form.teacherName) return;
-    await create({
-      ...form,
-      rows: rows.filter((r) => r.domain || r.actions || r.guideName),
-    });
+  const reset = () => {
     setAdding(false);
+    setEditing(null);
     setForm({ teacherName: "", grade: "الأول", section: "A", date: "", notes: "" });
     setRows([emptyRow()]);
+  };
+
+  const startEdit = (p: any) => {
+    setForm({ teacherName: p.teacherName ?? "", grade: p.grade ?? "الأول", section: p.section ?? "A", date: p.date ?? "", notes: p.notes ?? "" });
+    setRows((p.rows ?? []).length ? p.rows.map((r: any) => ({ ...r })) : [emptyRow()]);
+    setEditing(p._id);
+    setAdding(true);
+  };
+
+  const save = async () => {
+    if (!form.teacherName) return;
+    const cleanRows = rows.filter((r) => r.domain || r.actions || r.guideName);
+    if (editing) await update({ id: editing as any, ...form, rows: cleanRows });
+    else await create({ ...form, rows: cleanRows });
+    reset();
   };
 
   const print = (p: any) => printGuidePlan(p, settings ?? {});
@@ -47,12 +60,12 @@ export default function GuidePlan() {
         icon="git-network"
         gradient={["#5A0C22", "#8A1538"]}
       >
-        <HeroBtn title={adding ? "إغلاق النموذج" : "خطة جديدة"} icon={adding ? "close" : "add"} prominent onPress={() => setAdding(!adding)} />
+        <HeroBtn title={adding ? "إغلاق النموذج" : "خطة جديدة"} icon={adding ? "close" : "add"} prominent onPress={() => (adding ? reset() : setAdding(true))} />
       </PageHero>
 
       {adding && (
         <Card>
-          <H2>خطة متابعة جديدة</H2>
+          <H2>{editing ? "تعديل خطة المتابعة" : "خطة متابعة جديدة"}</H2>
           <Select label="المعلمة" options={(teachers ?? []).map((t) => t.name)} value={form.teacherName} onChange={pickTeacher} />
           <Row>
             <View style={{ flex: 1 }}><Select label="الصف" options={["الأول", "الثاني"]} value={form.grade} onChange={(v) => setForm({ ...form, grade: v })} /></View>
@@ -81,7 +94,10 @@ export default function GuidePlan() {
           <Button title="إضافة بند" icon="add" variant="outline" small onPress={() => setRows([...rows, emptyRow()])} style={{ marginBottom: 12 }} />
 
           <Input label="ملاحظات" value={form.notes} onChangeText={(v) => setForm({ ...form, notes: v })} multiline />
-          <Button title="حفظ الخطة" icon="checkmark" onPress={save} />
+          <Row>
+            <Button title={editing ? "حفظ التعديل" : "حفظ الخطة"} icon="checkmark" onPress={save} />
+            {editing ? <Button title="إلغاء" variant="ghost" onPress={reset} /> : null}
+          </Row>
         </Card>
       )}
 
@@ -100,6 +116,7 @@ export default function GuidePlan() {
             </View>
             <Row>
               <IconBtn name="print-outline" color={colors.primary} onPress={() => print(p)} />
+              <IconBtn name="pencil-outline" color={colors.primary} onPress={() => startEdit(p)} />
               <IconBtn name="trash-outline" color={colors.danger} onPress={() => remove({ id: p._id })} />
             </Row>
           </Row>

@@ -14,31 +14,69 @@ export default function Exams() {
   const exams = useQuery(api.academics.listExams, {});
   const settings = useQuery(api.admin.getSettings, {});
   const create = useMutation(api.academics.createExam);
+  const update = useMutation(api.academics.updateExam);
   const remove = useMutation(api.academics.removeExam);
 
   const [adding, setAdding] = useState(false);
+  const [editing, setEditing] = useState<string | null>(null);
   const [form, setForm] = useState({ title: "", subject: "اللغة العربية", term: "الفصل الأول", riseReasons: "", declineReasons: "", unmetStandards: "", remedialActions: "", enrichmentActions: "", coordinatorRecommendations: "" });
   const [rows, setRows] = useState<ExamRow[]>([emptyRow()]);
 
   const numOrUndef = (v: string) => (v.trim() === "" ? undefined : (parseInt(v) || 0));
+  const numStr = (n: number | undefined) => (n === undefined || n === null ? "" : String(n));
+
+  const reset = () => {
+    setForm({ title: "", subject: "اللغة العربية", term: "الفصل الأول", riseReasons: "", declineReasons: "", unmetStandards: "", remedialActions: "", enrichmentActions: "", coordinatorRecommendations: "" });
+    setRows([emptyRow()]);
+    setAdding(false); setEditing(null);
+  };
+
+  const startEdit = (e: any) => {
+    setForm({
+      title: e.title ?? "", subject: e.subject ?? "اللغة العربية", term: e.term ?? "الفصل الأول",
+      riseReasons: e.riseReasons ?? "", declineReasons: e.declineReasons ?? "", unmetStandards: e.unmetStandards ?? "",
+      remedialActions: e.remedialActions ?? "", enrichmentActions: e.enrichmentActions ?? "", coordinatorRecommendations: e.coordinatorRecommendations ?? "",
+    });
+    setRows((e.rows ?? []).length === 0 ? [emptyRow()] : e.rows.map((r: any) => ({
+      grade: r.grade, section: r.section,
+      passRate: numStr(r.passRate), achievementRate: numStr(r.achievementRate), addedValue: numStr(r.addedValue),
+      highCount: numStr(r.highCount), midCount: numStr(r.midCount), lowCount: numStr(r.lowCount), failCount: numStr(r.failCount),
+    })));
+    setEditing(e._id); setAdding(true);
+  };
 
   const save = async () => {
     if (!form.title.trim()) return;
-    await create({
-      ...form,
-      year: settings?.academicYear ?? "2025-2026",
-      rows: rows.filter((r) => r.passRate || r.achievementRate).map((r) => ({
-        grade: r.grade, section: r.section,
-        passRate: parseFloat(r.passRate) || 0,
-        achievementRate: parseFloat(r.achievementRate) || 0,
-        addedValue: parseFloat(r.addedValue) || 0,
-        highCount: numOrUndef(r.highCount),
-        midCount: numOrUndef(r.midCount),
-        lowCount: numOrUndef(r.lowCount),
-        failCount: numOrUndef(r.failCount),
-      })),
-    });
-    setAdding(false);
+    const builtRows = rows.filter((r) => r.passRate || r.achievementRate).map((r) => ({
+      grade: r.grade, section: r.section,
+      passRate: parseFloat(r.passRate) || 0,
+      achievementRate: parseFloat(r.achievementRate) || 0,
+      addedValue: parseFloat(r.addedValue) || 0,
+      highCount: numOrUndef(r.highCount),
+      midCount: numOrUndef(r.midCount),
+      lowCount: numOrUndef(r.lowCount),
+      failCount: numOrUndef(r.failCount),
+    }));
+    if (editing) {
+      await update({
+        id: editing as any,
+        title: form.title,
+        rows: builtRows,
+        riseReasons: form.riseReasons,
+        declineReasons: form.declineReasons,
+        unmetStandards: form.unmetStandards,
+        remedialActions: form.remedialActions,
+        enrichmentActions: form.enrichmentActions,
+        coordinatorRecommendations: form.coordinatorRecommendations,
+      });
+    } else {
+      await create({
+        ...form,
+        year: settings?.academicYear ?? "2025-2026",
+        rows: builtRows,
+      });
+    }
+    reset();
   };
 
   const printExam = (e: any) => printExamReport(e, settings ?? {});
@@ -53,12 +91,12 @@ export default function Exams() {
         icon="trending-up"
         gradient={["#5A0C22", "#8A1538"]}
       >
-        <HeroBtn title={adding ? "إغلاق النموذج" : "تقرير نتائج جديد"} icon={adding ? "close" : "add"} prominent onPress={() => setAdding(!adding)} />
+        <HeroBtn title={adding ? "إغلاق النموذج" : "تقرير نتائج جديد"} icon={adding ? "close" : "add"} prominent onPress={() => adding ? reset() : setAdding(true)} />
       </PageHero>
 
       {adding && (
         <Card>
-          <H2>تقرير نتائج اختبار جديد</H2>
+          <H2>{editing ? "تعديل تقرير النتائج" : "تقرير نتائج اختبار جديد"}</H2>
           <Input label="اسم التقرير (مثال: اختبار نهاية الفصل الأول)" value={form.title} onChangeText={(v) => setForm({ ...form, title: v })} />
           <Select label="المادة" options={["اللغة العربية", "التربية الإسلامية"]} value={form.subject} onChange={(v) => setForm({ ...form, subject: v })} />
           <Select label="الفصل" options={["الفصل الأول", "الفصل الثاني"]} value={form.term} onChange={(v) => setForm({ ...form, term: v })} />
@@ -99,7 +137,10 @@ export default function Exams() {
           <Input label="الإجراءات العلاجية المشتركة" value={form.remedialActions} onChangeText={(v) => setForm({ ...form, remedialActions: v })} multiline />
           <Input label="الإجراءات الإثرائية المشتركة" value={form.enrichmentActions} onChangeText={(v) => setForm({ ...form, enrichmentActions: v })} multiline />
           <Input label="توصيات المنسق" value={form.coordinatorRecommendations} onChangeText={(v) => setForm({ ...form, coordinatorRecommendations: v })} multiline />
-          <Button title="حفظ التقرير" icon="checkmark" onPress={save} />
+          <Row>
+            <Button title={editing ? "حفظ التعديل" : "حفظ التقرير"} icon="checkmark" onPress={save} />
+            {editing ? <Button title="إلغاء" variant="ghost" onPress={reset} /> : null}
+          </Row>
         </Card>
       )}
 
@@ -117,6 +158,7 @@ export default function Exams() {
               </View>
               <Row>
                 <IconBtn name="print-outline" color={colors.primary} onPress={() => printExam(e)} />
+                <IconBtn name="pencil-outline" color={colors.primary} onPress={() => startEdit(e)} />
                 <IconBtn name="trash-outline" color={colors.danger} onPress={() => remove({ id: e._id })} />
               </Row>
             </Row>

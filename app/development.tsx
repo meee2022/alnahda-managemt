@@ -18,10 +18,21 @@ export default function Development() {
   const removeTraining = useMutation(api.development.removeTraining);
   const createReading = useMutation(api.development.createReading);
   const removeReading = useMutation(api.development.removeReading);
+  const updateTraining = useMutation(api.development.updateTraining);
+  const updateReading = useMutation(api.development.updateReading);
 
   const [adding, setAdding] = useState(false);
-  const [tform, setTform] = useState({ teacherName: "", programName: "", date: "", month: "مايو", hours: "", type: "داخلي", category: "ورشة" });
-  const [rform, setRform] = useState({ teacherName: "", date: "", bookTitle: "", summary: "" });
+  const [editing, setEditing] = useState<string | null>(null);
+  const T0 = { teacherName: "", programName: "", date: "", month: "مايو", hours: "", type: "داخلي", category: "ورشة" };
+  const R0 = { teacherName: "", date: "", bookTitle: "", summary: "" };
+  const [tform, setTform] = useState({ ...T0 });
+  const [rform, setRform] = useState({ ...R0 });
+
+  const reset = () => { setTform({ ...T0 }); setRform({ ...R0 }); setAdding(false); setEditing(null); };
+  const startEditTraining = (t: any) => { setTform({ teacherName: t.teacherName ?? "", programName: t.programName ?? "", date: t.date ?? "", month: t.month ?? "مايو", hours: t.hours ?? "", type: t.type ?? "داخلي", category: t.category ?? "ورشة" }); setEditing(t._id); setAdding(true); };
+  const startEditReading = (r: any) => { setRform({ teacherName: r.teacherName ?? "", date: r.date ?? "", bookTitle: r.bookTitle ?? "", summary: r.summary ?? "" }); setEditing(r._id); setAdding(true); };
+  const saveTraining = async () => { if (!tform.teacherName || !tform.programName) return; if (editing) await updateTraining({ id: editing as any, ...tform }); else await createTraining(tform); reset(); };
+  const saveReading = async () => { if (!rform.bookTitle) return; if (editing) await updateReading({ id: editing as any, ...rform }); else await createReading(rform); reset(); };
 
   const printTeacherSheet = (teacherName: string) =>
     printTrainingSheet(teacherName, (trainings ?? []).filter((t) => t.teacherName === teacherName), settings ?? {});
@@ -46,7 +57,7 @@ export default function Development() {
 
       {adding && tab === "trainings" && (
         <Card>
-          <H2>برنامج تدريبي جديد</H2>
+          <H2>{editing ? "تعديل برنامج تدريبي" : "برنامج تدريبي جديد"}</H2>
           <Select label="المعلمة" options={(teachers ?? []).map((t) => t.name)} value={tform.teacherName} onChange={(v) => setTform({ ...tform, teacherName: v })} />
           <Input label="اسم البرنامج" value={tform.programName} onChangeText={(v) => setTform({ ...tform, programName: v })} />
           <DateField label="التاريخ" value={tform.date} onChange={(v) => setTform({ ...tform, date: v })} />
@@ -54,26 +65,24 @@ export default function Development() {
           <Input label="عدد الساعات" value={tform.hours} onChangeText={(v) => setTform({ ...tform, hours: v })} />
           <Select label="النوع" options={["داخلي", "خارجي"]} value={tform.type} onChange={(v) => setTform({ ...tform, type: v })} />
           <Select label="التصنيف" options={["ورشة", "مؤتمر", "درس مشاهدة", "بحث إجرائي", "مسابقة", "زيارة ميدانية"]} value={tform.category} onChange={(v) => setTform({ ...tform, category: v })} />
-          <Button title="حفظ" icon="checkmark" onPress={async () => {
-            if (!tform.teacherName || !tform.programName) return;
-            await createTraining(tform);
-            setAdding(false);
-          }} />
+          <Row>
+            <Button title={editing ? "حفظ التعديل" : "حفظ"} icon="checkmark" onPress={saveTraining} />
+            {editing ? <Button title="إلغاء" variant="ghost" onPress={reset} /> : null}
+          </Row>
         </Card>
       )}
 
       {adding && tab === "readings" && (
         <Card>
-          <H2>قراءة مهنية جديدة</H2>
+          <H2>{editing ? "تعديل قراءة مهنية" : "قراءة مهنية جديدة"}</H2>
           <Select label="الموظفة" options={[settings?.coordinator ?? "", ...(teachers ?? []).map((t) => t.name)]} value={rform.teacherName} onChange={(v) => setRform({ ...rform, teacherName: v })} />
           <DateField label="التاريخ" value={rform.date} onChange={(v) => setRform({ ...rform, date: v })} />
           <Input label="عنوان الكتاب" value={rform.bookTitle} onChangeText={(v) => setRform({ ...rform, bookTitle: v })} />
           <Input label="ماذا استفدت من الكتاب" value={rform.summary} onChangeText={(v) => setRform({ ...rform, summary: v })} multiline />
-          <Button title="حفظ" icon="checkmark" onPress={async () => {
-            if (!rform.bookTitle) return;
-            await createReading(rform);
-            setAdding(false);
-          }} />
+          <Row>
+            <Button title={editing ? "حفظ التعديل" : "حفظ"} icon="checkmark" onPress={saveReading} />
+            {editing ? <Button title="إلغاء" variant="ghost" onPress={reset} /> : null}
+          </Row>
         </Card>
       )}
 
@@ -91,6 +100,7 @@ export default function Development() {
               </View>
               <Row>
                 <IconBtn name="print-outline" color={colors.primary} onPress={() => printTeacherSheet(t.teacherName)} />
+                <IconBtn name="pencil-outline" color={colors.primary} onPress={() => startEditTraining(t)} />
                 <IconBtn name="trash-outline" color={colors.danger} onPress={() => removeTraining({ id: t._id })} />
               </Row>
             </Row>
@@ -107,6 +117,7 @@ export default function Development() {
               </View>
               <Row>
                 <IconBtn name="print-outline" color={colors.primary} onPress={() => printReading(r, settings ?? {})} />
+                <IconBtn name="pencil-outline" color={colors.primary} onPress={() => startEditReading(r)} />
                 <IconBtn name="trash-outline" color={colors.danger} onPress={() => removeReading({ id: r._id })} />
               </Row>
             </Row>
