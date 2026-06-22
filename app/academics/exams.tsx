@@ -7,9 +7,13 @@ import { colors, fonts, radius } from "../../lib/theme";
 import { setExportMode } from "../../lib/print";
 import { printExamReport } from "../../lib/printTemplates";
 
-type ExamRow = { grade: string; section: string; passRate: string; achievementRate: string; addedValue: string; highCount: string; midCount: string; lowCount: string; failCount: string };
+type ExamRow = { subject: string; section: string; passRate: string; achievementRate: string; addedValue: string; highCount: string; midCount: string; lowCount: string; failCount: string };
 
-const emptyRow = (): ExamRow => ({ grade: "الأول", section: "A", passRate: "", achievementRate: "", addedValue: "", highCount: "", midCount: "", lowCount: "", failCount: "" });
+const emptyRow = (): ExamRow => ({ subject: "اللغة العربية", section: "A", passRate: "", achievementRate: "", addedValue: "", highCount: "", midCount: "", lowCount: "", failCount: "" });
+
+const SUBJECTS = ["اللغة العربية", "التربية الإسلامية"];
+const TITLE_PRESETS = ["اختبار نهاية الفصل الأول", "اختبار منتصف الفصل الأول", "اختبار نهاية الفصل الثاني", "اختبار منتصف الفصل الثاني"];
+const TITLE_OTHER = "اسم آخر (كتابة يدوية)";
 
 export default function Exams() {
   const exams = useQuery(api.academics.listExams, {});
@@ -20,26 +24,30 @@ export default function Exams() {
 
   const [adding, setAdding] = useState(false);
   const [editing, setEditing] = useState<string | null>(null);
-  const [form, setForm] = useState({ title: "", subject: "اللغة العربية", term: "الفصل الأول", riseReasons: "", declineReasons: "", unmetStandards: "", remedialActions: "", enrichmentActions: "", coordinatorRecommendations: "" });
+  const [form, setForm] = useState({ title: "", grade: "الأول", riseReasons: "", declineReasons: "", unmetStandards: "", remedialActions: "", enrichmentActions: "", coordinatorRecommendations: "" });
+  const [customTitle, setCustomTitle] = useState(false);
   const [rows, setRows] = useState<ExamRow[]>([emptyRow()]);
 
   const numOrUndef = (v: string) => (v.trim() === "" ? undefined : (parseInt(v) || 0));
   const numStr = (n: number | undefined) => (n === undefined || n === null ? "" : String(n));
 
   const reset = () => {
-    setForm({ title: "", subject: "اللغة العربية", term: "الفصل الأول", riseReasons: "", declineReasons: "", unmetStandards: "", remedialActions: "", enrichmentActions: "", coordinatorRecommendations: "" });
+    setForm({ title: "", grade: "الأول", riseReasons: "", declineReasons: "", unmetStandards: "", remedialActions: "", enrichmentActions: "", coordinatorRecommendations: "" });
+    setCustomTitle(false);
     setRows([emptyRow()]);
     setAdding(false); setEditing(null);
   };
 
   const startEdit = (e: any) => {
+    const title = e.title ?? "";
     setForm({
-      title: e.title ?? "", subject: e.subject ?? "اللغة العربية", term: e.term ?? "الفصل الأول",
+      title, grade: e.grade ?? e.rows?.[0]?.grade ?? "الأول",
       riseReasons: e.riseReasons ?? "", declineReasons: e.declineReasons ?? "", unmetStandards: e.unmetStandards ?? "",
       remedialActions: e.remedialActions ?? "", enrichmentActions: e.enrichmentActions ?? "", coordinatorRecommendations: e.coordinatorRecommendations ?? "",
     });
+    setCustomTitle(!!title && !TITLE_PRESETS.includes(title));
     setRows((e.rows ?? []).length === 0 ? [emptyRow()] : e.rows.map((r: any) => ({
-      grade: r.grade, section: r.section,
+      subject: r.subject ?? e.subject ?? "اللغة العربية", section: r.section,
       passRate: numStr(r.passRate), achievementRate: numStr(r.achievementRate), addedValue: numStr(r.addedValue),
       highCount: numStr(r.highCount), midCount: numStr(r.midCount), lowCount: numStr(r.lowCount), failCount: numStr(r.failCount),
     })));
@@ -49,7 +57,7 @@ export default function Exams() {
   const save = async () => {
     if (!form.title.trim()) return;
     const builtRows = rows.filter((r) => r.passRate || r.achievementRate).map((r) => ({
-      grade: r.grade, section: r.section,
+      grade: form.grade, subject: r.subject, section: r.section,
       passRate: parseFloat(r.passRate) || 0,
       achievementRate: parseFloat(r.achievementRate) || 0,
       addedValue: parseFloat(r.addedValue) || 0,
@@ -62,6 +70,7 @@ export default function Exams() {
       await update({
         id: editing as any,
         title: form.title,
+        grade: form.grade,
         rows: builtRows,
         riseReasons: form.riseReasons,
         declineReasons: form.declineReasons,
@@ -98,23 +107,39 @@ export default function Exams() {
       {adding && (
         <Card>
           <H2>{editing ? "تعديل تقرير النتائج" : "تقرير نتائج اختبار جديد"}</H2>
-          <Input label="اسم التقرير (مثال: اختبار نهاية الفصل الأول)" value={form.title} onChangeText={(v) => setForm({ ...form, title: v })} />
-          <Select label="المادة" options={["اللغة العربية", "التربية الإسلامية"]} value={form.subject} onChange={(v) => setForm({ ...form, subject: v })} />
-          <Select label="الفصل" options={["الفصل الأول", "الفصل الثاني"]} value={form.term} onChange={(v) => setForm({ ...form, term: v })} />
+          <Select
+            label="اسم التقرير"
+            options={[...TITLE_PRESETS, TITLE_OTHER]}
+            value={customTitle ? TITLE_OTHER : form.title}
+            onChange={(v) => {
+              if (v === TITLE_OTHER) { setCustomTitle(true); setForm({ ...form, title: "" }); }
+              else { setCustomTitle(false); setForm({ ...form, title: v }); }
+            }}
+          />
+          {customTitle && (
+            <Input label="اكتب اسم التقرير" value={form.title} onChangeText={(v) => setForm({ ...form, title: v })} />
+          )}
+          <Select label="الصف" options={["الأول", "الثاني"]} value={form.grade} onChange={(v) => setForm({ ...form, grade: v })} />
+          <P muted style={{ fontSize: 12.5, marginTop: -2 }}>الصف الأول يمكن أن يشمل المادتين (عربي + شرعية)؛ كل شعبة لها مادتها، والجدول المطبوع يُقسّم تلقائياً.</P>
 
           <H2>نتائج الشعب</H2>
           {rows.map((r, idx) => (
             <Card key={idx} style={{ backgroundColor: colors.bg, marginBottom: 8 }}>
               <Row style={{ justifyContent: "space-between" }}>
                 <P muted>شعبة {idx + 1}</P>
-                <IconBtn name="close-circle-outline" color={colors.danger} onPress={() => setRows(rows.filter((_, i) => i !== idx))} />
+                <Row>
+                  <IconBtn name="copy-outline" color={colors.primary} onPress={() => setRows([...rows.slice(0, idx + 1), { ...r }, ...rows.slice(idx + 1)])} />
+                  <IconBtn name="close-circle-outline" color={colors.danger} onPress={() => setRows(rows.filter((_, i) => i !== idx))} />
+                </Row>
               </Row>
               <Row>
                 <View style={{ flex: 1 }}>
-                  <Select label="الصف" options={["الأول", "الثاني"]} value={r.grade} onChange={(v) => setRows(rows.map((x, i) => i === idx ? { ...x, grade: v } : x))} />
+                  <Select label="المادة" options={SUBJECTS} value={r.subject} onChange={(v) => setRows(rows.map((x, i) => i === idx ? { ...x, subject: v } : x))} />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Select label="الشعبة" options={["A", "B", "C", "D", "E"]} value={r.section} onChange={(v) => setRows(rows.map((x, i) => i === idx ? { ...x, section: v } : x))} />
                 </View>
               </Row>
-              <Select label="الشعبة" options={["A", "B", "C", "D", "E"]} value={r.section} onChange={(v) => setRows(rows.map((x, i) => i === idx ? { ...x, section: v } : x))} />
               <Row>
                 <View style={{ flex: 1 }}><Input label="نسبة النجاح %" value={r.passRate} keyboardType="numeric" onChangeText={(v) => setRows(rows.map((x, i) => i === idx ? { ...x, passRate: v } : x))} /></View>
                 <View style={{ flex: 1 }}><Input label="نسبة التحصيل %" value={r.achievementRate} keyboardType="numeric" onChangeText={(v) => setRows(rows.map((x, i) => i === idx ? { ...x, achievementRate: v } : x))} /></View>
@@ -155,7 +180,12 @@ export default function Exams() {
             <Row style={{ justifyContent: "space-between" }}>
               <View style={{ flex: 1 }}>
                 <H2>{e.title}</H2>
-                <Row><Badge label={e.subject} tone="primary" /><Badge label={e.term} tone="muted" /></Row>
+                <Row>
+                  <Badge label={`الصف ${e.grade ?? e.rows?.[0]?.grade ?? ""}`} tone="primary" />
+                  {Array.from(new Set(e.rows.map((r: any) => r.subject ?? e.subject).filter(Boolean))).map((s: any) => (
+                    <Badge key={s} label={s} tone="muted" />
+                  ))}
+                </Row>
               </View>
               <Row>
                 <ExportMenu run={(m) => { setExportMode(m, `تقرير نتائج - ${e.title ?? ""}`); printExam(e); }} />
@@ -168,7 +198,7 @@ export default function Exams() {
               {e.rows.map((r: any, i: number) => (
                 <View key={i} style={{ marginBottom: 8 }}>
                   <Row style={{ justifyContent: "space-between" }}>
-                    <Text style={st.barLabel}>{r.grade} {r.section}</Text>
+                    <Text style={st.barLabel}>{r.subject ? `${r.subject} — ` : ""}{r.section}</Text>
                     <Text style={st.barValue}>{r.achievementRate}% {r.addedValue !== 0 ? `(${r.addedValue > 0 ? "+" : ""}${r.addedValue}%)` : ""}</Text>
                   </Row>
                   <View style={st.barTrack}>

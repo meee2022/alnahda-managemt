@@ -128,26 +128,61 @@ function TodayBoard() {
 }
 
 // تذكيرات سريعة على الرئيسية (من التنبيهات الذكية)
+const ALERT_TONE: Record<string, { color: string; soft: string; icon: keyof typeof Ionicons.glyphMap }> = {
+  danger: { color: colors.danger, soft: colors.dangerSoft, icon: "alert-circle" },
+  warn: { color: colors.warning, soft: colors.warningSoft, icon: "warning" },
+  info: { color: colors.primary, soft: colors.primarySoft, icon: "information-circle" },
+};
+const alertTone = (level: string) => ALERT_TONE[level] ?? ALERT_TONE.info;
+
 function HomeAlerts() {
   const data = useQuery(api.analytics.teacherStats, {}) as any;
+  const { width } = useWindowDimensions();
+  const wide = width > 720;
   const alerts = data?.alerts ?? [];
   if (!alerts.length) return null;
-  const top = alerts.slice(0, 4);
+  const top = alerts.slice(0, wide ? 6 : 4);
+  const more = alerts.length - top.length;
   return (
-    <Pressable onPress={() => router.push("/reports/stats" as any)} style={styles.today}>
-      <View style={styles.todayHead}>
-        <View style={[styles.todayIcon, { backgroundColor: colors.warning }]}><Ionicons name="notifications" size={18} color="#fff" /></View>
-        <Text style={styles.todayTitle}>تذكيرات تحتاج انتباهك ({alerts.length})</Text>
-      </View>
-      {top.map((a: any, i: number) => (
-        <View key={i} style={{ flexDirection: "row", alignItems: "center", gap: 7, paddingVertical: 4 }}>
-          <Ionicons name={a.level === "danger" ? "alert-circle" : a.level === "warn" ? "warning" : "information-circle"} size={15}
-            color={a.level === "danger" ? colors.danger : a.level === "warn" ? colors.warning : colors.textMuted} />
-          <Text style={{ flex: 1, fontFamily: fonts.regular, fontSize: 12.5, color: colors.textSecondary, textAlign: "right" }} numberOfLines={1}>{a.name} — {a.text}</Text>
+    <View style={styles.today}>
+      <View style={styles.alertHead}>
+        <View style={styles.todayHead}>
+          <View style={[styles.todayIcon, { backgroundColor: colors.warning }]}><Ionicons name="notifications" size={18} color="#fff" /></View>
+          <Text style={styles.todayTitle}>تذكيرات تحتاج انتباهك</Text>
         </View>
-      ))}
-      {alerts.length > top.length ? <Text style={{ fontFamily: fonts.medium, fontSize: 11.5, color: colors.primary, textAlign: "left", marginTop: 4 }}>عرض الكل ←</Text> : null}
-    </Pressable>
+        <View style={styles.alertCount}><Text style={styles.alertCountTxt}>{alerts.length}</Text></View>
+      </View>
+      <View style={styles.alertGrid}>
+        {top.map((a: any, i: number) => {
+          const t = alertTone(a.level);
+          return (
+            <Pressable
+              key={i}
+              onPress={() => router.push("/reports/stats" as any)}
+              style={({ hovered }: any) => [
+                styles.alertItem,
+                { backgroundColor: t.soft, width: wide ? "48.6%" : "100%" },
+                hovered && { borderColor: t.color },
+              ]}
+            >
+              <View style={[styles.alertIcon, { backgroundColor: t.color }]}>
+                <Ionicons name={t.icon} size={14} color="#fff" />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.alertName} numberOfLines={1}>{a.name}</Text>
+                <Text style={styles.alertText} numberOfLines={1}>{a.text}</Text>
+              </View>
+            </Pressable>
+          );
+        })}
+      </View>
+      {more > 0 ? (
+        <Pressable onPress={() => router.push("/reports/stats" as any)} style={styles.alertMore}>
+          <Text style={styles.alertMoreTxt}>عرض كل التذكيرات ({more} أخرى)</Text>
+          <Ionicons name="arrow-back" size={14} color={colors.primary} />
+        </Pressable>
+      ) : null}
+    </View>
   );
 }
 
@@ -366,6 +401,28 @@ const styles = StyleSheet.create({
   todayLbl: { fontFamily: fonts.semibold, fontSize: 12.5, color: colors.textSecondary, textAlign: "right", marginBottom: 4 },
   todayName: { fontFamily: fonts.regular, fontSize: 11.5, color: colors.textMuted, textAlign: "right" },
   todayEmpty: { fontFamily: fonts.medium, fontSize: 12.5, color: colors.textMuted, textAlign: "center", marginTop: 12 },
+  alertHead: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 12 },
+  alertCount: {
+    minWidth: 26, height: 24, borderRadius: 999, paddingHorizontal: 8,
+    backgroundColor: colors.warningSoft, alignItems: "center", justifyContent: "center",
+  },
+  alertCountTxt: { fontFamily: fonts.bold, fontSize: 12.5, color: colors.warning },
+  alertGrid: { flexDirection: "row", flexWrap: "wrap", gap: 9 },
+  alertItem: {
+    flexDirection: "row", alignItems: "center", gap: 10,
+    borderRadius: radius.md, paddingVertical: 10, paddingHorizontal: 12,
+    borderWidth: 1, borderColor: "transparent",
+    ...(Platform.OS === "web" ? { transitionDuration: "150ms" as any, cursor: "pointer" as any } : {}),
+  },
+  alertIcon: { width: 28, height: 28, borderRadius: 9, alignItems: "center", justifyContent: "center" },
+  alertName: { fontFamily: fonts.semibold, fontSize: 12.5, color: colors.text, textAlign: "right" },
+  alertText: { fontFamily: fonts.regular, fontSize: 11.5, color: colors.textSecondary, textAlign: "right", marginTop: 1 },
+  alertMore: {
+    flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 6,
+    marginTop: 12, paddingVertical: 8, borderRadius: radius.md, backgroundColor: colors.primaryTint,
+    ...(Platform.OS === "web" ? { cursor: "pointer" as any } : {}),
+  },
+  alertMoreTxt: { fontFamily: fonts.semibold, fontSize: 12, color: colors.primary },
   stat: {
     backgroundColor: colors.card, borderRadius: radius.lg,
     paddingVertical: 16, paddingHorizontal: 16, borderWidth: 1, borderColor: colors.border,
@@ -375,7 +432,7 @@ const styles = StyleSheet.create({
   statIcon: { width: 40, height: 40, borderRadius: 13, alignItems: "center", justifyContent: "center" },
   statValue: { fontFamily: fonts.bold, fontSize: 28, color: colors.text, textAlign: "right", lineHeight: 32 },
   statLabel: { fontFamily: fonts.regular, fontSize: 12, color: colors.textMuted, textAlign: "right", marginTop: 2 },
-  statAccent: { position: "absolute", right: 0, bottom: 0, height: 3, width: 44, borderTopLeftRadius: 3 },
+  statAccent: { position: "absolute", left: 0, right: 0, bottom: 0, height: 3, opacity: 0.85 },
   groupHead: { flexDirection: "row", alignItems: "center", justifyContent: "flex-start", gap: 9, marginBottom: 12 },
   groupBar: { width: 22, height: 4, borderRadius: 2, backgroundColor: colors.gold },
   groupLabel: { fontFamily: fonts.bold, fontSize: 15.5, color: colors.text, textAlign: "right" },

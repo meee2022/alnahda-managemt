@@ -421,50 +421,52 @@ export function printWrittenWorkSheet(
 // 7) التقرير الكمي الوصفي لنتائج الاختبارات — مطابق للملف الأصلي
 // ====================================================================
 export function printExamReport(e: any, s: Settings) {
-  const grades = Array.from(new Set(e.rows.map((r: any) => r.grade))) as string[];
-  const tables = grades
-    .map((g) => {
-      const rows = e.rows.filter((r: any) => r.grade === g);
+  const grade = e.grade ?? e.rows?.[0]?.grade ?? "";
+  // المادة لكل شعبة (مع التوافق للتقارير القديمة التي تحمل المادة على مستوى التقرير)
+  const subjectOf = (r: any) => r.subject ?? e.subject ?? "";
+  const subjects = Array.from(new Set(e.rows.map(subjectOf))) as string[];
+  const tables = subjects
+    .map((subj) => {
+      const rows = e.rows.filter((r: any) => subjectOf(r) === subj);
       const hasCounts = rows.some((r: any) => r.highCount != null || r.midCount != null || r.lowCount != null || r.failCount != null);
       const cnt = (v: any) => (v == null ? "" : v);
       const sum = (k: string) => rows.reduce((a: number, r: any) => a + (r[k] ?? 0), 0);
+      // متوسط النِسب عبر الشُعب (الجمع لا معنى له مع النسب المئوية)
+      const avg = (k: string) => {
+        const vals = rows.map((r: any) => r[k]).filter((v: any) => v != null && v !== "");
+        if (!vals.length) return "";
+        const m = vals.reduce((a: number, b: any) => a + Number(b), 0) / vals.length;
+        return (Math.round(m * 10) / 10).toString().replace(/\.0$/, "");
+      };
+      const head = `الصف ${esc(grade)}${subj ? ` — ${esc(subj)}` : ""}`;
       const countRows = hasCounts ? `
     <tr><td class="b">عدد الطلبة ذوي الأداء المرتفع .</td>${rows.map((r: any) => `<td class="c">${cnt(r.highCount)}</td>`).join("")}<td class="c b">${sum("highCount")}</td></tr>
     <tr><td class="b">عدد الطلبة ذوي الأداء المتوسط .</td>${rows.map((r: any) => `<td class="c">${cnt(r.midCount)}</td>`).join("")}<td class="c b">${sum("midCount")}</td></tr>
     <tr><td class="b">عدد الطلبة ذوي الأداء المتدني .</td>${rows.map((r: any) => `<td class="c">${cnt(r.lowCount)}</td>`).join("")}<td class="c b">${sum("lowCount")}</td></tr>
     <tr><td class="b">عدد الطلبة الراسبين .</td>${rows.map((r: any) => `<td class="c">${cnt(r.failCount)}</td>`).join("")}<td class="c b">${sum("failCount")}</td></tr>` : "";
-      return `
-  <table>
-    <tr><th style="width:30%">الصف ${esc(g)} بالبنود</th>${rows.map((r: any) => `<th>المرحلة الدراسية<br/>${esc(g)} ${r.section}</th>`).join("")}${hasCounts ? '<th>المجموع</th>' : ''}</tr>
-    <tr><td class="b">نسبة النجاح في الاختبار .</td>${rows.map((r: any) => `<td class="c">${r.passRate}%</td>`).join("")}${hasCounts ? '<td></td>' : ''}</tr>
-    <tr><td class="b">نسبة التحصيل الأكاديمي.</td>${rows.map((r: any) => `<td class="c">${r.achievementRate}%</td>`).join("")}${hasCounts ? '<td></td>' : ''}</tr>
-    <tr><td class="b">القيمة المضافة للتحصيل الأكاديمي .</td>${rows.map((r: any) => `<td class="c">${r.addedValue}%</td>`).join("")}${hasCounts ? '<td></td>' : ''}</tr>
-    ${countRows}
-  </table>`;
-    })
-    .join("");
-
-  // أعلى/أقل نسبة تحصيل لكل صف
-  const summary = grades
-    .map((g) => {
-      const rows = e.rows.filter((r: any) => r.grade === g);
-      if (!rows.length) return "";
+      // أعلى/أقل نسبة تحصيل لهذه المادة — أسفل جدولها مباشرة
       const max = rows.reduce((a: any, b: any) => (a.achievementRate >= b.achievementRate ? a : b));
       const min = rows.reduce((a: any, b: any) => (a.achievementRate <= b.achievementRate ? a : b));
-      return `<tr><td class="b">أعلى نسبة تحصيل أكاديمي الصف ${esc(g)}</td><td class="c">( ${max.achievementRate}% ) الصف ${esc(g)} ${max.section}</td></tr>
-      <tr><td class="b">أقل نسبة تحصيل أكاديمي الصف ${esc(g)}</td><td class="c">( ${min.achievementRate}% ) الصف ${esc(g)} ${min.section}</td></tr>`;
+      const summary = `
+  <table>
+    <tr><td class="b" style="width:50%">أعلى نسبة تحصيل أكاديمي${subj ? ` (${esc(subj)})` : ""}</td><td class="c">( ${max.achievementRate}% ) الصف ${esc(grade)} ${max.section}</td></tr>
+    <tr><td class="b">أقل نسبة تحصيل أكاديمي${subj ? ` (${esc(subj)})` : ""}</td><td class="c">( ${min.achievementRate}% ) الصف ${esc(grade)} ${min.section}</td></tr>
+  </table>`;
+      return `
+  <table>
+    <tr><th style="width:30%">${head} بالبنود</th>${rows.map((r: any) => `<th>المرحلة الدراسية<br/>الصف ${esc(grade)} ${r.section}</th>`).join("")}${hasCounts ? '<th>المجموع</th>' : ''}</tr>
+    <tr><td class="b">نسبة النجاح في الاختبار .</td>${rows.map((r: any) => `<td class="c">${r.passRate}%</td>`).join("")}${hasCounts ? `<td class="c b">${avg("passRate")}%</td>` : ''}</tr>
+    <tr><td class="b">نسبة التحصيل الأكاديمي.</td>${rows.map((r: any) => `<td class="c">${r.achievementRate}%</td>`).join("")}${hasCounts ? `<td class="c b">${avg("achievementRate")}%</td>` : ''}</tr>
+    <tr><td class="b">القيمة المضافة للتحصيل الأكاديمي .</td>${rows.map((r: any) => `<td class="c">${r.addedValue}%</td>`).join("")}${hasCounts ? `<td class="c b">${avg("addedValue")}%</td>` : ''}</tr>
+    ${countRows}
+  </table>${summary}`;
     })
     .join("");
 
-  const gradeLabel = grades.length === 1
-    ? `الصف ${esc(grades[0])}`
-    : grades.length > 1
-      ? `الصفوف ${grades.map((g) => esc(g)).join(" و")}`
-      : "";
+  const gradeLabel = grade ? `الصف ${esc(grade)}` : "";
   const body = `
-  <table><tr><th>تقرير كمي وصفي لقراءة نتائج ${esc(e.title)} لقسم المسار الأدبي ( ${esc(e.subject)} )${gradeLabel ? ` — ${gradeLabel}` : ""}<br/>للعام الأكاديمي ${esc(e.year)}</th></tr></table>
+  <table><tr><th>تقرير كمي وصفي لقراءة نتائج ${esc(e.title)} لقسم المسار الأدبي${gradeLabel ? ` — ${gradeLabel}` : ""}<br/>للعام الأكاديمي ${esc(e.year)}</th></tr></table>
   ${tables}
-  <table>${summary}</table>
   <table>
     <tr><td class="b" style="width:25%">أسباب ارتفاع نتائج الطلبة</td><td>${esc(e.riseReasons) || dotted(2)}</td></tr>
     <tr><td class="b">أسباب انخفاض نتائج الطلبة</td><td>${esc(e.declineReasons) || dotted(2)}</td></tr>

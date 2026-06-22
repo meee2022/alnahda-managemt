@@ -2,7 +2,8 @@ import { query, mutation } from "./_generated/server";
 import { v } from "convex/values";
 
 const examRow = v.object({
-  grade: v.string(),
+  grade: v.optional(v.string()),
+  subject: v.optional(v.string()),
   section: v.string(),
   passRate: v.number(),
   achievementRate: v.number(),
@@ -22,8 +23,9 @@ export const listExams = query({
 export const createExam = mutation({
   args: {
     title: v.string(),
-    subject: v.string(),
-    term: v.string(),
+    subject: v.optional(v.string()),
+    grade: v.optional(v.string()),
+    term: v.optional(v.string()),
     year: v.string(),
     rows: v.array(examRow),
     riseReasons: v.optional(v.string()),
@@ -41,6 +43,8 @@ export const updateExam = mutation({
   args: {
     id: v.id("examResults"),
     title: v.optional(v.string()),
+    grade: v.optional(v.string()),
+    subject: v.optional(v.string()),
     rows: v.optional(v.array(examRow)),
     riseReasons: v.optional(v.string()),
     declineReasons: v.optional(v.string()),

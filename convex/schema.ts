@@ -252,11 +252,13 @@ export default defineSchema({
   // نتائج الاختبارات لكل شعبة (التقرير الوصفي والكمي)
   examResults: defineTable({
     title: v.string(), // اسم التقرير/الاختبار
-    subject: v.string(),
-    term: v.string(),
+    subject: v.optional(v.string()), // للتوافق مع التقارير القديمة (المادة الآن لكل شعبة)
+    grade: v.optional(v.string()), // الصف (الأول/الثاني) — على مستوى التقرير
+    term: v.optional(v.string()),
     year: v.string(),
     rows: v.array(v.object({
-      grade: v.string(),
+      grade: v.optional(v.string()), // للتوافق القديم
+      subject: v.optional(v.string()), // المادة لكل شعبة (عربي/شرعية)
       section: v.string(),
       passRate: v.number(),
       achievementRate: v.number(),

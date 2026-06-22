@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { View, Text } from "react-native";
 import { useQuery, useMutation } from "convex/react";
+import { useLocalSearchParams } from "expo-router";
 import { api } from "../convex/_generated/api";
 import { Screen, Card, H2, P, Input, Button, Loading, Empty, Row, IconBtn, Badge, Select, PageHero, HeroBtn, ExportMenu, AnimatedItem } from "../lib/ui";
 import { colors, fonts } from "../lib/theme";
@@ -8,8 +9,8 @@ import { printTeachersSheet } from "../lib/printTemplates";
 import { setExportMode } from "../lib/print";
 
 const EMPTY = {
-  name: "", jobTitle: "معلم المرحلة التأسيسية أدبي", employeeNumber: "", nationality: "قطري",
-  specialization: "", subject: "اللغة العربية", grade: "الأول", section: "A",
+  name: "", jobTitle: "معلم المرحلة التأسيسية أدبي", employeeNumber: "", nationalId: "", nationality: "قطري",
+  specialization: "", subject: "", grade: "الأول", section: "A",
   yearsTrack: "", yearsTotal: "", followMode: "مباشر", phone: "",
   email: "", license: "", level: "",
 };
@@ -28,10 +29,12 @@ export default function Teachers() {
     if (typeof window !== "undefined") window.alert(`تم: أضيفت ${r.added} معلمة وحُدّثت ${r.updated} من إجمالي ${r.total}.`);
   };
 
+  const params = useLocalSearchParams<{ edit?: string }>();
   const [adding, setAdding] = useState(false);
   const [editing, setEditing] = useState<string | null>(null);
   const [expanded, setExpanded] = useState<string | null>(null);
   const [form, setForm] = useState({ ...EMPTY });
+  const handledEdit = React.useRef<string | null>(null);
 
   const reset = () => { setForm({ ...EMPTY }); setAdding(false); setEditing(null); };
 
@@ -45,13 +48,21 @@ export default function Teachers() {
   const startEdit = (t: any) => {
     setEditing(t._id); setAdding(false);
     setForm({
-      name: t.name ?? "", jobTitle: t.jobTitle ?? "", employeeNumber: t.employeeNumber ?? "",
-      nationality: t.nationality ?? "", specialization: t.specialization ?? "", subject: t.subject ?? "اللغة العربية",
+      name: t.name ?? "", jobTitle: t.jobTitle ?? "", employeeNumber: t.employeeNumber ?? "", nationalId: t.nationalId ?? "",
+      nationality: t.nationality ?? "", specialization: t.specialization ?? "", subject: t.subject ?? "",
       grade: t.grade ?? "الأول", section: t.section ?? "A", yearsTrack: t.yearsTrack ?? "",
       yearsTotal: t.yearsTotal ?? "", followMode: t.followMode ?? "مباشر", phone: t.phone ?? "",
       email: t.email ?? "", license: t.license ?? "", level: t.level ?? "",
     });
   };
+
+  // فتح تعديل معلمة مباشرة عند القدوم من صفحة التصنيف (?edit=<id>)
+  React.useEffect(() => {
+    if (params.edit && teachers && handledEdit.current !== params.edit) {
+      const t = teachers.find((x: any) => x._id === params.edit);
+      if (t) { handledEdit.current = params.edit as string; startEdit(t); }
+    }
+  }, [params.edit, teachers]);
 
   const printList = () => printTeachersSheet(teachers ?? [], settings ?? {});
 
@@ -83,14 +94,14 @@ export default function Teachers() {
           <H2>{editing ? "تعديل بيانات معلمة" : "إضافة معلمة جديدة"}</H2>
           <Input label="الاسم الرباعي" value={form.name} onChangeText={(v) => setForm({ ...form, name: v })} />
           <Row style={{ gap: 10 }}>
-            <View style={{ flex: 1 }}><Input label="الرقم الوظيفي" value={form.employeeNumber} onChangeText={(v) => setForm({ ...form, employeeNumber: v })} /></View>
+            <View style={{ flex: 1 }}><Input label="الرقم الوظيفي" value={form.employeeNumber} onChangeText={(v) => setForm({ ...form, employeeNumber: v })} keyboardType="numeric" /></View>
+            <View style={{ flex: 1 }}><Input label="الرقم الشخصي" value={form.nationalId} onChangeText={(v) => setForm({ ...form, nationalId: v })} keyboardType="numeric" /></View>
+          </Row>
+          <Row style={{ gap: 10 }}>
             <View style={{ flex: 1 }}><Input label="الجنسية" value={form.nationality} onChangeText={(v) => setForm({ ...form, nationality: v })} /></View>
           </Row>
           <Input label="المسمى الوظيفي" value={form.jobTitle} onChangeText={(v) => setForm({ ...form, jobTitle: v })} />
           <Input label="التخصص" value={form.specialization} onChangeText={(v) => setForm({ ...form, specialization: v })} />
-          <Row style={{ gap: 10 }}>
-            <View style={{ flex: 1 }}><Select label="المادة" options={["اللغة العربية", "التربية الإسلامية"]} value={form.subject} onChange={(v) => setForm({ ...form, subject: v })} /></View>
-          </Row>
           <Row style={{ gap: 10 }}>
             <View style={{ flex: 1 }}><Select label="الصف" options={["الأول", "الثاني"]} value={form.grade} onChange={(v) => setForm({ ...form, grade: v })} /></View>
             <View style={{ flex: 1 }}><Select label="الشعبة" options={["A", "B", "C", "D", "E"]} value={form.section} onChange={(v) => setForm({ ...form, section: v })} /></View>

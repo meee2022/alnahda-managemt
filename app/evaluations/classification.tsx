@@ -2,7 +2,8 @@ import React, { useState } from "react";
 import { View, Text, Pressable, StyleSheet } from "react-native";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "../../convex/_generated/api";
-import { Screen, Card, H2, P, Button, Loading, Row, Badge, Select, PageHero, HeroBtn, ExportMenu } from "../../lib/ui";
+import { useRouter } from "expo-router";
+import { Screen, Card, H2, P, Button, Loading, Row, Badge, Select, PageHero, HeroBtn, ExportMenu, IconBtn } from "../../lib/ui";
 import { colors, fonts, radius } from "../../lib/theme";
 import { TEACHER_CATEGORIES } from "../../lib/forms";
 import { printTeacherClassification } from "../../lib/printTemplates";
@@ -24,6 +25,7 @@ export default function Classification() {
   const classifications = useQuery(api.classVisits.listClassifications, {});
   const settings = useQuery(api.admin.getSettings, {});
   const setClass = useMutation(api.classVisits.setClassification);
+  const router = useRouter();
   const [term, setTerm] = useState("الفصل الدراسي الثاني");
 
   if (teachers === undefined || classifications === undefined) return <Loading />;
@@ -60,11 +62,14 @@ export default function Classification() {
 
       {/* تعيين كل معلمة لفئة */}
       <Card>
-        <Row style={{ justifyContent: "space-between", alignItems: "flex-end", marginBottom: 4 }}>
+        <Row style={{ justifyContent: "space-between", alignItems: "center", marginBottom: 4 }}>
           <H2 style={{ marginBottom: 0 }}>تعيين المعلمات للفئات</H2>
-          <P muted style={{ fontSize: 12.5 }}>
-            {classifications.length} / {teachers.length} مُصنَّفة
-          </P>
+          <Row style={{ gap: 8, alignItems: "center" }}>
+            <P muted style={{ fontSize: 12.5 }}>
+              {classifications.length} / {teachers.length} مُصنَّفة
+            </P>
+            <ExportMenu run={(m) => { setExportMode(m, "تصنيف الأداء"); printSheet(); }} />
+          </Row>
         </Row>
         <View style={{ marginTop: 8 }}>
           {teachers.map((t, idx) => {
@@ -86,6 +91,7 @@ export default function Classification() {
                       <Text style={styles.tStatusMuted}>لم تُصنَّف بعد</Text>
                     )}
                   </View>
+                  <IconBtn name="pencil-outline" color={colors.primary} onPress={() => router.push(`/teachers?edit=${t._id}`)} />
                 </Row>
                 <Row style={{ flexWrap: "wrap", gap: 6, marginTop: 9 }}>
                   {TEACHER_CATEGORIES.map((c) => {
