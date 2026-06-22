@@ -22,10 +22,11 @@ export default function PeriodicReports() {
   const [month, setMonth] = useState("مايو");
   const [notes, setNotes] = useState("");
   const [scores, setScores] = useState<Record<string, number>>({});
+  const [noteByPractice, setNoteByPractice] = useState<Record<string, string>>({});
 
   const allPractices = PERIODIC_DOMAINS.flatMap((d) => d.practices.map((p) => ({ domain: d.domain, practice: p })));
 
-  const reset = () => { setTeacherName(""); setMonth("مايو"); setNotes(""); setScores({}); setAdding(false); setEditing(null); };
+  const reset = () => { setTeacherName(""); setMonth("مايو"); setNotes(""); setScores({}); setNoteByPractice({}); setAdding(false); setEditing(null); };
 
   const startEdit = (r: any) => {
     setEditing(r._id); setAdding(false);
@@ -33,15 +34,16 @@ export default function PeriodicReports() {
     setMonth(r.month ?? "مايو");
     setNotes(r.generalNotes ?? "");
     const m: Record<string, number> = {};
-    (r.scores ?? []).forEach((s: any) => { m[s.practice] = s.score; });
-    setScores(m);
+    const n: Record<string, string> = {};
+    (r.scores ?? []).forEach((s: any) => { m[s.practice] = s.score; if (s.note) n[s.practice] = s.note; });
+    setScores(m); setNoteByPractice(n);
   };
 
   const save = async () => {
     if (!teacherName) return;
     const payload = {
       teacherName, month, generalNotes: notes,
-      scores: allPractices.map((x) => ({ domain: x.domain, practice: x.practice, score: scores[x.practice] ?? 0 })),
+      scores: allPractices.map((x) => ({ domain: x.domain, practice: x.practice, score: scores[x.practice] ?? 0, note: noteByPractice[x.practice] || undefined })),
     };
     if (editing) await update({ id: editing as any, month: payload.month, generalNotes: payload.generalNotes, scores: payload.scores });
     else await create(payload);
@@ -72,17 +74,20 @@ export default function PeriodicReports() {
             <View key={d.domain} style={{ marginBottom: 10 }}>
               <Text style={styles.domain}>{d.domain}</Text>
               {d.practices.map((p) => (
-                <Row key={p} style={{ justifyContent: "space-between", paddingVertical: 6, borderBottomWidth: 1, borderBottomColor: colors.border }}>
-                  <P style={{ flex: 1, fontSize: 13 }}>{p}</P>
-                  <Row>
-                    {[1, 2, 3].map((n) => (
-                      <Pressable key={n} onPress={() => setScores({ ...scores, [p]: n })}
-                        style={[styles.scoreBtn, scores[p] === n && { backgroundColor: colors.primary, borderColor: colors.primary }]}>
-                        <Text style={[styles.scoreText, scores[p] === n && { color: colors.white }]}>{n}</Text>
-                      </Pressable>
-                    ))}
+                <View key={p} style={{ paddingVertical: 6, borderBottomWidth: 1, borderBottomColor: colors.border }}>
+                  <Row style={{ justifyContent: "space-between" }}>
+                    <P style={{ flex: 1, fontSize: 13 }}>{p}</P>
+                    <Row>
+                      {[1, 2, 3].map((n) => (
+                        <Pressable key={n} onPress={() => setScores({ ...scores, [p]: n })}
+                          style={[styles.scoreBtn, scores[p] === n && { backgroundColor: colors.primary, borderColor: colors.primary }]}>
+                          <Text style={[styles.scoreText, scores[p] === n && { color: colors.white }]}>{n}</Text>
+                        </Pressable>
+                      ))}
+                    </Row>
                   </Row>
-                </Row>
+                  <Input placeholder="ملاحظة على هذا البند (اختياري)" value={noteByPractice[p] ?? ""} onChangeText={(v) => setNoteByPractice({ ...noteByPractice, [p]: v })} />
+                </View>
               ))}
             </View>
           ))}

@@ -245,8 +245,13 @@ export function Chip({ label, active, onPress, color }: { label: string; active?
 }
 
 export function Select({
-  label, options, value, onChange,
-}: { label?: string; options: string[]; value?: string; onChange: (v: string) => void }) {
+  label, options, value, onChange, searchable, placeholder,
+}: { label?: string; options: string[]; value?: string; onChange: (v: string) => void; searchable?: boolean; placeholder?: string }) {
+  // القوائم الطويلة (مثل أسماء المعلمات) تتحوّل تلقائياً لمنتقي بحث أنيق
+  const asSearch = searchable ?? options.length > 7;
+  if (asSearch) {
+    return <SearchSelect label={label} options={options} value={value} onChange={onChange} placeholder={placeholder} />;
+  }
   return (
     <View style={{ marginBottom: 14 }}>
       {label ? <Label>{label}</Label> : null}
@@ -258,6 +263,94 @@ export function Select({
     </View>
   );
 }
+
+// منتقي بحث منسدل — للقوائم الطويلة (أسماء المعلمات/الطالبات…)
+export function SearchSelect({
+  label, options, value, onChange, placeholder,
+}: { label?: string; options: string[]; value?: string; onChange: (v: string) => void; placeholder?: string }) {
+  const [open, setOpen] = React.useState(false);
+  const [q, setQ] = React.useState("");
+  const filtered = q.trim() ? options.filter((o) => o.includes(q.trim())) : options;
+  return (
+    <View style={{ marginBottom: 14 }}>
+      {label ? <Label>{label}</Label> : null}
+      <Pressable style={selStyles.btn} onPress={() => setOpen(true)}>
+        <View style={selStyles.btnInner}>
+          <Ionicons name="search-outline" size={18} color={colors.primary} />
+          <Text style={[selStyles.val, !value && selStyles.placeholder]} numberOfLines={1}>
+            {value || placeholder || "اختاري…"}
+          </Text>
+        </View>
+        <Ionicons name="chevron-down" size={18} color={colors.textMuted} />
+      </Pressable>
+
+      <Modal visible={open} transparent animationType="fade" onRequestClose={() => setOpen(false)}>
+        <Pressable style={selStyles.backdrop} onPress={() => setOpen(false)}>
+          <Pressable style={selStyles.sheet} onPress={(ev) => ev.stopPropagation()}>
+            <Text style={selStyles.sheetTitle}>{label || "اختاري"}</Text>
+            <View style={selStyles.searchWrap}>
+              <Ionicons name="search-outline" size={18} color={colors.textMuted} />
+              <TextInput
+                value={q}
+                onChangeText={setQ}
+                placeholder="ابحثي بالاسم…"
+                placeholderTextColor={colors.textMuted}
+                style={selStyles.searchInput}
+                autoFocus
+              />
+            </View>
+            <ScrollView style={{ marginTop: 10, maxHeight: 360 }} keyboardShouldPersistTaps="handled">
+              {filtered.length === 0 ? (
+                <Text style={selStyles.noRes}>لا توجد نتائج</Text>
+              ) : (
+                filtered.map((o) => {
+                  const sel = o === value;
+                  return (
+                    <Pressable
+                      key={o}
+                      style={[selStyles.opt, sel && selStyles.optSel]}
+                      onPress={() => { onChange(o); setOpen(false); setQ(""); }}
+                    >
+                      <Text style={[selStyles.optTxt, sel && selStyles.optTxtSel]}>{o}</Text>
+                      {sel ? <Ionicons name="checkmark-circle" size={20} color={colors.primary} /> : null}
+                    </Pressable>
+                  );
+                })
+              )}
+            </ScrollView>
+          </Pressable>
+        </Pressable>
+      </Modal>
+    </View>
+  );
+}
+
+const selStyles = StyleSheet.create({
+  btn: {
+    flexDirection: "row", alignItems: "center", justifyContent: "space-between",
+    backgroundColor: colors.primaryTint, borderWidth: 1, borderColor: colors.border,
+    borderRadius: radius.md, paddingHorizontal: 14, paddingVertical: 13,
+  },
+  btnInner: { flexDirection: "row", alignItems: "center", gap: 10, flex: 1 },
+  val: { fontFamily: fonts.semibold, fontSize: 15, color: colors.text, flex: 1 },
+  placeholder: { color: colors.textMuted, fontFamily: fonts.regular },
+  backdrop: { flex: 1, backgroundColor: "#0008", alignItems: "center", justifyContent: "center", padding: 20 },
+  sheet: { backgroundColor: "#fff", borderRadius: 16, padding: 18, width: "100%", maxWidth: 460, maxHeight: "82%" },
+  sheetTitle: { fontFamily: fonts.bold, fontSize: 18, color: colors.text, marginBottom: 12 },
+  searchWrap: {
+    flexDirection: "row", alignItems: "center", gap: 8, backgroundColor: colors.bg,
+    borderWidth: 1, borderColor: colors.border, borderRadius: radius.md, paddingHorizontal: 12, paddingVertical: 4,
+  },
+  searchInput: { flex: 1, fontFamily: fonts.regular, fontSize: 15, color: colors.text, paddingVertical: 9, textAlign: "right", outlineStyle: "none" } as any,
+  noRes: { textAlign: "center", color: colors.textMuted, paddingVertical: 18, fontFamily: fonts.regular },
+  opt: {
+    flexDirection: "row", alignItems: "center", justifyContent: "space-between",
+    paddingVertical: 13, paddingHorizontal: 14, borderRadius: radius.sm, marginBottom: 4, backgroundColor: colors.bg,
+  },
+  optSel: { backgroundColor: colors.primarySoft },
+  optTxt: { fontFamily: fonts.medium, fontSize: 15, color: colors.text },
+  optTxtSel: { fontFamily: fonts.bold, color: colors.primary },
+});
 
 export function Badge({ label, tone = "primary" }: { label: string; tone?: "primary" | "accent" | "success" | "warning" | "danger" | "muted" | "gold" }) {
   const map = {

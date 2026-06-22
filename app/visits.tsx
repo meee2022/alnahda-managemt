@@ -7,13 +7,15 @@ import { colors } from "../lib/theme";
 import { printVisitsSchedule } from "../lib/printTemplates";
 import { setExportMode } from "../lib/print";
 import { VISIT_PURPOSES } from "../lib/forms";
-import { DateField } from "../lib/pickers";
+import { DateField, arabicMonthName } from "../lib/pickers";
 
 const MONTHS = ["سبتمبر", "أكتوبر", "نوفمبر", "ديسمبر", "يناير", "فبراير", "مارس", "إبريل", "مايو", "يونيو"];
+const normType = (t?: string) => (t === "كلية" ? "كلي" : t === "جزئية" ? "جزئي" : t ?? "");
 
 export default function Visits() {
   const [month, setMonth] = useState("مايو");
   const visits = useQuery(api.visits.list, { month });
+  const classVisits = useQuery(api.classVisits.list, {});
   const teachers = useQuery(api.teachers.list, {});
   const settings = useQuery(api.admin.getSettings, {});
   const create = useMutation(api.visits.create);
@@ -50,7 +52,20 @@ export default function Visits() {
     reset();
   };
 
-  const printSchedule = () => printVisitsSchedule(visits ?? [], month, settings ?? {});
+  // صفوف تلقائية من الزيارات الصفية المقيّمة لنفس الشهر (تُعبّأ ذاتياً دون إدخال يدوي)
+  const planned = visits ?? [];
+  const derived = (classVisits ?? [])
+    .filter((cv: any) => arabicMonthName(cv.date) === month)
+    .filter((cv: any) => !planned.some((p: any) => p.teacherName === cv.teacherName && p.date === cv.date))
+    .map((cv: any) => ({
+      _id: "cv_" + cv._id, _derived: true,
+      teacherName: cv.teacherName, grade: cv.grade, section: cv.section, date: cv.date,
+      subject: cv.subject, lesson: cv.lessonTopic ?? "", purpose: "زيارة صفية مقيّمة",
+      attendanceType: normType(cv.visitType), status: "تم",
+    }));
+  const combined = [...planned, ...derived];
+
+  const printSchedule = () => printVisitsSchedule(combined, month, settings ?? {});
 
   return (
     <Screen>
@@ -93,20 +108,22 @@ export default function Visits() {
         </Card>
       )}
 
-      {visits === undefined ? <Loading /> : visits.length === 0 ? (
+      {visits === undefined ? <Loading /> : combined.length === 0 ? (
         <Empty text={`لا توجد زيارات في ${month}`} actionTitle="إضافة زيارة" onAction={() => setAdding(true)} icon="footsteps-outline" />
-      ) : visits.map((x, xi) => (
+      ) : combined.map((x: any, xi: number) => (
         <AnimatedItem key={x._id} index={xi}>
         <Card style={{ paddingVertical: 12 }}>
           <Row style={{ justifyContent: "space-between" }}>
             <View style={{ flex: 1 }}>
               <P style={{ color: colors.text, fontSize: 15 }}>{x.teacherName} — {x.grade} / {x.section}</P>
               <P muted>{x.subject}{x.lesson ? ` • ${x.lesson}` : ""} • {x.date}</P>
-              <Row style={{ marginTop: 4 }}>
+              <Row style={{ marginTop: 4, flexWrap: "wrap" }}>
                 <Badge label={x.status} tone={x.status === "تم" ? "success" : "warning"} />
                 {x.attendanceType ? <Badge label={x.attendanceType} tone="muted" /> : null}
+                {x._derived ? <Badge label="تلقائي من تقييم الزيارة" tone="accent" /> : null}
               </Row>
             </View>
+            {x._derived ? null : (
             <Row>
               {x.status !== "تم" && (
                 <IconBtn name="checkmark-circle-outline" color={colors.success} onPress={() => update({ id: x._id, status: "تم" })} />
@@ -114,6 +131,7 @@ export default function Visits() {
               <IconBtn name="pencil-outline" color={colors.primary} onPress={() => startEdit(x)} />
               <IconBtn name="trash-outline" color={colors.danger} onPress={() => remove({ id: x._id })} />
             </Row>
+            )}
           </Row>
         </Card>
         </AnimatedItem>

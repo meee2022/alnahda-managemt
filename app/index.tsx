@@ -189,9 +189,6 @@ export default function Dashboard() {
             ))}
           </View>
           <View style={[styles.heroGold, { pointerEvents: "none" }]} />
-          <View style={[styles.heroLeaf, { pointerEvents: "none" }]}>
-            <Ionicons name="leaf" size={20} color="rgba(255,255,255,0.9)" />
-          </View>
           <View style={{ flex: 1 }}>
             <View style={styles.eyebrowRow}>
               <View style={styles.eyebrowDot} />
@@ -337,7 +334,7 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(201,154,46,0.18)",
   },
   heroLeaf: {
-    position: "absolute", left: 22, top: 22, width: 40, height: 40, borderRadius: 13,
+    position: "absolute", left: 22, bottom: 22, width: 40, height: 40, borderRadius: 13,
     alignItems: "center", justifyContent: "center",
     backgroundColor: "rgba(255,255,255,0.12)", borderWidth: 1, borderColor: "rgba(255,255,255,0.2)",
   },

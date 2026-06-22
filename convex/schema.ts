@@ -337,6 +337,7 @@ export default defineSchema({
     text: v.string(),
     assignee: v.optional(v.string()),
     dueDate: v.optional(v.string()),
+    dueTime: v.optional(v.string()), // وقت الاستحقاق (اختياري)
     status: v.string(), // جديدة | قيد التنفيذ | منفذة
     createdDate: v.string(),
   }).index("by_status", ["status"]),
@@ -382,6 +383,16 @@ export default defineSchema({
       notes: v.optional(v.string()),
     })),
   }).index("by_date", ["date"]),
+
+  // جدول حصص المعلمات (لكل معلمة حصة في يوم معين)
+  timetable: defineTable({
+    teacherName: v.string(),
+    day: v.string(), // السبت | الأحد | الاثنين | الثلاثاء | الأربعاء | الخميس
+    period: v.string(), // "1" .. "8"
+    className: v.string(), // "الأول/أ" مثلاً
+    subject: v.optional(v.string()),
+  }).index("by_teacher_day", ["teacherName", "day"])
+    .index("by_day", ["day"]),
 
   // خطة متابعة توصيات (موجه تربوي) — تُستخدم عند تكرار مؤشرات لم تتوفر لها أدلة في الزيارات الصفية
   guidePlans: defineTable({

@@ -2,9 +2,11 @@ import React, { useState } from "react";
 import { View } from "react-native";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "../convex/_generated/api";
-import { Screen, Card, H2, P, Input, Button, Loading, Empty, Row, IconBtn, Badge, Select, Chip, PageHero, HeroBtn, AnimatedItem } from "../lib/ui";
+import { Screen, Card, H2, P, Input, Button, Loading, Empty, Row, IconBtn, Badge, Select, Chip, PageHero, HeroBtn, AnimatedItem, ExportMenu } from "../lib/ui";
 import { colors } from "../lib/theme";
-import { DateField } from "../lib/pickers";
+import { DateField, TimeField } from "../lib/pickers";
+import { setExportMode } from "../lib/print";
+import { printRecommendations } from "../lib/printTemplates";
 
 const STATUSES = ["الكل", "جديدة", "قيد التنفيذ", "منفذة"];
 const SOURCES = ["مديرة المدرسة", "النائبة الأكاديمية", "النائبة الإدارية", "الموجه التربوي", "المنسقة", "لجنة الاعتماد"];
@@ -12,6 +14,7 @@ const SOURCES = ["مديرة المدرسة", "النائبة الأكاديمي
 export default function Recommendations() {
   const [filter, setFilter] = useState("الكل");
   const items = useQuery(api.reports.listRecommendations, filter === "الكل" ? {} : { status: filter });
+  const settings = useQuery(api.admin.getSettings, {});
   const create = useMutation(api.reports.createRecommendation);
   const update = useMutation(api.reports.updateRecommendation);
   const setStatus = useMutation(api.reports.setRecommendationStatus);
@@ -19,16 +22,16 @@ export default function Recommendations() {
 
   const [adding, setAdding] = useState(false);
   const [editing, setEditing] = useState<string | null>(null);
-  const [form, setForm] = useState({ source: "المنسقة", text: "", assignee: "", dueDate: "", createdDate: "" });
+  const [form, setForm] = useState({ source: "المنسقة", text: "", assignee: "", dueDate: "", dueTime: "", createdDate: "" });
 
-  const reset = () => { setForm({ source: "المنسقة", text: "", assignee: "", dueDate: "", createdDate: "" }); setAdding(false); setEditing(null); };
+  const reset = () => { setForm({ source: "المنسقة", text: "", assignee: "", dueDate: "", dueTime: "", createdDate: "" }); setAdding(false); setEditing(null); };
   const startEdit = (x: any) => {
-    setForm({ source: x.source, text: x.text, assignee: x.assignee ?? "", dueDate: x.dueDate ?? "", createdDate: x.createdDate ?? "" });
+    setForm({ source: x.source, text: x.text, assignee: x.assignee ?? "", dueDate: x.dueDate ?? "", dueTime: x.dueTime ?? "", createdDate: x.createdDate ?? "" });
     setEditing(x._id); setAdding(true);
   };
   const save = async () => {
     if (!form.text.trim()) return;
-    if (editing) await update({ id: editing as any, source: form.source, text: form.text, assignee: form.assignee, dueDate: form.dueDate });
+    if (editing) await update({ id: editing as any, source: form.source, text: form.text, assignee: form.assignee, dueDate: form.dueDate, dueTime: form.dueTime });
     else await create({ ...form, createdDate: new Date().toLocaleDateString("ar-EG") });
     reset();
   };
@@ -42,6 +45,7 @@ export default function Recommendations() {
         gradient={["#5A0C22", "#8A1538"]}
       >
         <HeroBtn title={adding ? "إغلاق النموذج" : "إضافة توصية"} icon={adding ? "close" : "add"} prominent onPress={() => adding ? reset() : setAdding(true)} />
+        <ExportMenu heroTitle="تصدير التوصيات" run={(m) => { setExportMode(m, "متابعة التوصيات"); printRecommendations(items ?? [], settings ?? {}); }} />
       </PageHero>
 
       <Card>
@@ -56,7 +60,10 @@ export default function Recommendations() {
           <Select label="المصدر" options={SOURCES} value={form.source} onChange={(v) => setForm({ ...form, source: v })} />
           <Input label="نص التوصية" value={form.text} onChangeText={(v) => setForm({ ...form, text: v })} multiline />
           <Input label="المكلّفة بالتنفيذ" value={form.assignee} onChangeText={(v) => setForm({ ...form, assignee: v })} />
-          <DateField label="تاريخ الاستحقاق" value={form.dueDate} onChange={(v) => setForm({ ...form, dueDate: v })} />
+          <Row style={{ gap: 10 }}>
+            <View style={{ flex: 1 }}><DateField label="تاريخ الاستحقاق" value={form.dueDate} onChange={(v) => setForm({ ...form, dueDate: v })} /></View>
+            <View style={{ flex: 1 }}><TimeField label="الوقت (اختياري)" value={form.dueTime} onChange={(v) => setForm({ ...form, dueTime: v })} /></View>
+          </Row>
           <Row>
             <Button title={editing ? "حفظ التعديل" : "حفظ"} icon="checkmark" onPress={save} />
             {editing ? <Button title="إلغاء" variant="ghost" onPress={reset} /> : null}
@@ -73,7 +80,7 @@ export default function Recommendations() {
           <Row style={{ marginTop: 6, flexWrap: "wrap" }}>
             <Badge label={x.source} tone="accent" />
             {x.assignee ? <Badge label={x.assignee} tone="muted" /> : null}
-            {x.dueDate ? <Badge label={`حتى ${x.dueDate}`} tone="warning" /> : null}
+            {x.dueDate ? <Badge label={`حتى ${x.dueDate}${x.dueTime ? ` · ${x.dueTime}` : ""}`} tone="warning" /> : null}
             <Badge label={x.status} tone={x.status === "منفذة" ? "success" : x.status === "قيد التنفيذ" ? "warning" : "danger"} />
           </Row>
           <Row style={{ marginTop: 8, justifyContent: "space-between" }}>

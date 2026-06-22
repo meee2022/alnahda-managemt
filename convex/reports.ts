@@ -73,6 +73,7 @@ export const createRecommendation = mutation({
     text: v.string(),
     assignee: v.optional(v.string()),
     dueDate: v.optional(v.string()),
+    dueTime: v.optional(v.string()),
     createdDate: v.string(),
   },
   handler: async (ctx, args) => ctx.db.insert("recommendations", { ...args, status: "جديدة" }),
@@ -86,6 +87,7 @@ export const updateRecommendation = mutation({
     text: v.optional(v.string()),
     assignee: v.optional(v.string()),
     dueDate: v.optional(v.string()),
+    dueTime: v.optional(v.string()),
     createdDate: v.optional(v.string()),
   },
   handler: async (ctx, { id, ...rest }) => {

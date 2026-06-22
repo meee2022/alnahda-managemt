@@ -342,6 +342,16 @@ export function printPeriodicReport(r: any, s: Settings) {
   <table>
     <tr><th style="width:33%">1</th><th style="width:33%">2</th><th>3</th></tr>
     <tr><td class="c">مستكمل الأدلة</td><td class="c">معظم الأدلة متوفرة</td><td class="c">بعض الأدلة متوفرة</td></tr>
+  </table>
+  <table style="margin-top:18px">
+    <tr>
+      <th style="width:50%;text-align:center">توقيع المعلمة</th>
+      <th style="width:50%;text-align:center">توقيع المنسقة</th>
+    </tr>
+    <tr>
+      <td style="height:50px"></td>
+      <td style="height:50px"></td>
+    </tr>
   </table>`;
   return printHtml(officialPage(body, { s }));
 }
@@ -446,14 +456,19 @@ export function printExamReport(e: any, s: Settings) {
     })
     .join("");
 
+  const gradeLabel = grades.length === 1
+    ? `الصف ${esc(grades[0])}`
+    : grades.length > 1
+      ? `الصفوف ${grades.map((g) => esc(g)).join(" و")}`
+      : "";
   const body = `
-  <table><tr><th>تقرير كمي وصفي لقراءة نتائج ${esc(e.title)} لقسم المسار الأدبي ( ${esc(e.subject)} )<br/>للعام الأكاديمي ${esc(e.year)}</th></tr></table>
+  <table><tr><th>تقرير كمي وصفي لقراءة نتائج ${esc(e.title)} لقسم المسار الأدبي ( ${esc(e.subject)} )${gradeLabel ? ` — ${gradeLabel}` : ""}<br/>للعام الأكاديمي ${esc(e.year)}</th></tr></table>
   ${tables}
+  <table>${summary}</table>
   <table>
     <tr><td class="b" style="width:25%">أسباب ارتفاع نتائج الطلبة</td><td>${esc(e.riseReasons) || dotted(2)}</td></tr>
     <tr><td class="b">أسباب انخفاض نتائج الطلبة</td><td>${esc(e.declineReasons) || dotted(2)}</td></tr>
   </table>
-  <table>${summary}</table>
   <table>
     <tr><th>التقرير الوصفي للنتائج</th></tr>
     <tr><td class="b">تحديد المعايير / المهارات المشتركة غير المحققة وأسباب التدني.</td></tr>
@@ -521,22 +536,23 @@ export function printVisitsSchedule(visits: any[], month: string, s: Settings) {
       (x, i) => `<tr>
       <td class="c">${i + 1}</td><td>${esc(x.teacherName)}</td><td class="c">${esc(x.grade)} /${esc(x.section)}</td>
       <td class="c">${esc(x.date)}</td><td>${esc(x.subject)}</td><td>${esc(x.lesson)}</td>
+      <td class="c">${esc(x.attendanceType)}</td>
       <td>${esc(x.purpose)}</td>
     </tr>`
     )
     .join("");
   const empty = Array.from({ length: Math.max(0, 8 - visits.length) }, () =>
-    `<tr><td style="height:26px"></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>`).join("");
+    `<tr><td style="height:26px"></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>`).join("");
   const body = `
   <table>
-    <tr><th colspan="7">الجدول الشهري لزيارات المنسق لقسم ${esc(s.department)}</th></tr>
+    <tr><th colspan="8">الجدول الشهري لزيارات المنسق لقسم ${esc(s.department)}</th></tr>
     <tr>
-      <td class="b" style="width:12%">اسم المدرسة</td><td colspan="4">${esc(s.school)}</td>
+      <td class="b" style="width:12%">اسم المدرسة</td><td colspan="5">${esc(s.school)}</td>
       <td class="b" style="width:8%">الشهر</td><td>${esc(month)}</td>
     </tr>
     <tr>
-      <th style="width:4%">م</th><th style="width:18%">اسم المعلم</th><th style="width:9%">الصف</th><th style="width:9%">التاريخ</th>
-      <th style="width:14%">المادة</th><th style="width:18%">عنوان الدرس</th>
+      <th style="width:4%">م</th><th style="width:17%">اسم المعلم</th><th style="width:8%">الصف</th><th style="width:9%">التاريخ</th>
+      <th style="width:13%">المادة</th><th style="width:16%">عنوان الدرس</th><th style="width:8%">النوع<br/><span class="note">(كلي/جزئي)</span></th>
       <th>هدف الزيارة<br/><span class="note">(زيارة تشخيصية – قياس أثر – متابعة توصيات – متابعة أداء الطلبة ....)</span></th>
     </tr>
     ${rows}${empty}
@@ -1009,6 +1025,34 @@ export function printStudentsSkillSheet(students: any[], grade: string, section:
     </tr>
     ${rows}
   </table>`;
+  return printHtml(officialPage(body, { landscape: true, s }));
+}
+
+// ====================================================================
+// متابعة التوصيات — جدول رسمي لكل التوصيات وحالتها
+// ====================================================================
+export function printRecommendations(items: any[], s: Settings) {
+  const rows = (items ?? []).map((x: any, i: number) => `
+    <tr>
+      <td class="c">${i + 1}</td>
+      <td>${esc(x.source)}</td>
+      <td>${esc(x.text)}</td>
+      <td class="c">${esc(x.assignee)}</td>
+      <td class="c">${esc(x.dueDate)}${x.dueTime ? ` — ${esc(x.dueTime)}` : ""}</td>
+      <td class="c">${esc(x.status)}</td>
+    </tr>`).join("");
+  const empty = (items ?? []).length === 0 ? `<tr><td colspan="6" class="c">لا توجد توصيات</td></tr>` : "";
+  const body = `
+  <div class="title">متابعة التوصيات — ${esc(s.department) || "قسم المسار الأدبي"}</div>
+  <div class="subtitle">${esc(s.school)} — العام الأكاديمي ${esc(s.academicYear)}</div>
+  <table>
+    <tr>
+      <th style="width:4%">م</th><th style="width:16%">المصدر</th><th>نص التوصية</th>
+      <th style="width:16%">المكلّفة بالتنفيذ</th><th style="width:16%">تاريخ الاستحقاق</th><th style="width:10%">الحالة</th>
+    </tr>
+    ${rows}${empty}
+  </table>
+  <div class="sigrow"><span>منسقة القسم: ${esc(s.coordinator)}</span><span>التوقيع:</span></div>`;
   return printHtml(officialPage(body, { landscape: true, s }));
 }
 

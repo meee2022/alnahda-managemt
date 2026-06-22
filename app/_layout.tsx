@@ -134,7 +134,9 @@ function TopNav() {
   const { open, isOpen } = useDrawer();
   const { loggedIn } = useAuth();
   const pathname = usePathname();
+  const { width } = useWindowDimensions();
   if (!loggedIn || pathname === "/login") return null;
+  if (width <= 720) return null; // على الجوال نكتفي بالشريط السفلي — لا تكرار للتنقل
   const onMain = TOP_HREFS.some((h) => isTabActive(pathname, h));
 
   const Pill = ({ label, icon, active, onPress }: any) => (

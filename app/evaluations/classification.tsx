@@ -3,10 +3,21 @@ import { View, Text, Pressable, StyleSheet } from "react-native";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import { Screen, Card, H2, P, Button, Loading, Row, Badge, Select, PageHero, HeroBtn, ExportMenu } from "../../lib/ui";
-import { colors, fonts } from "../../lib/theme";
+import { colors, fonts, radius } from "../../lib/theme";
 import { TEACHER_CATEGORIES } from "../../lib/forms";
 import { printTeacherClassification } from "../../lib/printTemplates";
 import { setExportMode } from "../../lib/print";
+
+// لون مميّز لكل فئة (ضمن هوية الموقع)
+const CAT_TONE: Record<string, { color: string; soft: string }> = {
+  "تطوير ذاتي": { color: colors.success, soft: colors.successSoft },
+  "دعم عام": { color: colors.goldDark, soft: colors.goldSoft },
+  "دعم مكثف": { color: colors.warning, soft: colors.warningSoft },
+  "مستجد": { color: colors.primary, soft: colors.primarySoft },
+};
+const toneOf = (key: string) => CAT_TONE[key] ?? { color: colors.textSecondary, soft: colors.bg };
+const initials = (name: string) =>
+  name.trim().split(/\s+/).slice(0, 2).map((w) => w[0]).join("");
 
 export default function Classification() {
   const teachers = useQuery(api.teachers.list, {});
@@ -49,23 +60,59 @@ export default function Classification() {
 
       {/* تعيين كل معلمة لفئة */}
       <Card>
-        <H2>تعيين المعلمات للفئات</H2>
-        {teachers.map((t) => (
-          <View key={t._id} style={styles.teacherRow}>
-            <P style={{ color: colors.text, marginBottom: 6 }}>{t.name}</P>
-            <Row style={{ flexWrap: "wrap", gap: 6 }}>
-              {TEACHER_CATEGORIES.map((c) => {
-                const on = catOf(t.name) === c.key;
-                return (
-                  <Pressable key={c.key} onPress={() => setClass({ teacherName: t.name, category: c.key, term })}
-                    style={[styles.catChip, on && { backgroundColor: colors.primary, borderColor: colors.primary }]}>
-                    <Text style={[styles.catTxt, on && { color: "#fff" }]}>{c.label}</Text>
-                  </Pressable>
-                );
-              })}
-            </Row>
-          </View>
-        ))}
+        <Row style={{ justifyContent: "space-between", alignItems: "flex-end", marginBottom: 4 }}>
+          <H2 style={{ marginBottom: 0 }}>تعيين المعلمات للفئات</H2>
+          <P muted style={{ fontSize: 12.5 }}>
+            {classifications.length} / {teachers.length} مُصنَّفة
+          </P>
+        </Row>
+        <View style={{ marginTop: 8 }}>
+          {teachers.map((t, idx) => {
+            const cur = catOf(t.name);
+            const curTone = cur ? toneOf(cur) : null;
+            return (
+              <View key={t._id} style={[styles.teacherRow, idx === 0 && { borderTopWidth: 0 }]}>
+                <Row style={{ gap: 11, alignItems: "center" }}>
+                  <View style={[styles.avatar, { backgroundColor: curTone ? curTone.color : colors.borderStrong }]}>
+                    <Text style={styles.avatarTxt}>{initials(t.name)}</Text>
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.tName}>{t.name}</Text>
+                    {cur ? (
+                      <Text style={[styles.tStatus, { color: curTone!.color }]}>
+                        ● {TEACHER_CATEGORIES.find((c) => c.key === cur)?.label}
+                      </Text>
+                    ) : (
+                      <Text style={styles.tStatusMuted}>لم تُصنَّف بعد</Text>
+                    )}
+                  </View>
+                </Row>
+                <Row style={{ flexWrap: "wrap", gap: 6, marginTop: 9 }}>
+                  {TEACHER_CATEGORIES.map((c) => {
+                    const on = cur === c.key;
+                    const tone = toneOf(c.key);
+                    const short = c.label.replace(/^فئة\s+/, "");
+                    return (
+                      <Pressable
+                        key={c.key}
+                        onPress={() => setClass({ teacherName: t.name, category: c.key, term })}
+                        style={[
+                          styles.catChip,
+                          on
+                            ? { backgroundColor: tone.color, borderColor: tone.color }
+                            : { backgroundColor: tone.soft, borderColor: tone.soft },
+                        ]}
+                      >
+                        {on ? null : <View style={[styles.dot, { backgroundColor: tone.color }]} />}
+                        <Text style={[styles.catTxt, on ? { color: "#fff" } : { color: tone.color }]}>{short}</Text>
+                      </Pressable>
+                    );
+                  })}
+                </Row>
+              </View>
+            );
+          })}
+        </View>
       </Card>
 
       {/* عرض الفئات بمعاييرها وإجراءاتها */}
@@ -91,8 +138,17 @@ export default function Classification() {
 }
 
 const styles = StyleSheet.create({
-  teacherRow: { paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: colors.border },
-  catChip: { borderWidth: 1.5, borderColor: colors.border, borderRadius: 999, paddingHorizontal: 12, paddingVertical: 6 },
-  catTxt: { fontFamily: fonts.medium, fontSize: 12, color: colors.textSecondary },
+  teacherRow: { paddingVertical: 13, borderTopWidth: 1, borderTopColor: colors.border },
+  avatar: { width: 40, height: 40, borderRadius: 20, alignItems: "center", justifyContent: "center" },
+  avatarTxt: { fontFamily: fonts.bold, fontSize: 14, color: "#fff" },
+  tName: { fontFamily: fonts.semibold, fontSize: 14.5, color: colors.text },
+  tStatus: { fontFamily: fonts.medium, fontSize: 12, marginTop: 1 },
+  tStatusMuted: { fontFamily: fonts.regular, fontSize: 12, color: colors.textMuted, marginTop: 1 },
+  catChip: {
+    flexDirection: "row", alignItems: "center", gap: 6,
+    borderWidth: 1, borderRadius: 999, paddingHorizontal: 13, paddingVertical: 7,
+  },
+  dot: { width: 7, height: 7, borderRadius: 4 },
+  catTxt: { fontFamily: fonts.semibold, fontSize: 12.5 },
   lbl: { fontFamily: fonts.semibold, fontSize: 13, color: colors.accent, textAlign: "right", marginTop: 8, marginBottom: 2 },
 });

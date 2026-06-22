@@ -30,6 +30,11 @@ export function monthKeyOf(value?: string): string | null {
   const p = parse(value);
   return p ? `${p.y}-${p.m}` : null;
 }
+// اسم الشهر بالعربية من تاريخ (لمطابقة الجداول الشهرية)
+export function arabicMonthName(value?: string): string | null {
+  const p = parse(value);
+  return p ? MONTHS_AR[p.m] : null;
+}
 // اليوم السابق مباشرةً (نفس الصيغة العربية)
 export function prevDay(value?: string): string | null {
   const p = parse(value);
