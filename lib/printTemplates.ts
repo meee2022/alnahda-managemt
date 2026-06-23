@@ -530,6 +530,50 @@ export function printGuidePlan(p: any, s: Settings) {
 }
 
 // ====================================================================
+// 7c) خطة تطوير المعلمة حسب فئتها (تطوير ذاتي / دعم...) — بنود الفئة الرسمية
+// ====================================================================
+export function printDevPlan(p: any, s: Settings) {
+  const rows = (p.rows ?? []).length
+    ? p.rows.map((r: any, i: number) => `<tr>
+        <td class="c">${i + 1}</td>
+        <td>${esc(r.action)}</td>
+        <td>${esc(r.mechanism)}</td>
+        <td class="c">${esc(r.period)}</td>
+        <td>${esc(r.indicator)}</td>
+      </tr>`).join("")
+    : Array.from({ length: 4 }, (_, i) => `<tr><td class="c">${i + 1}</td><td style="height:30px"></td><td></td><td></td><td></td></tr>`).join("");
+  const body = `
+  <table><tr><th colspan="4">خطة تطوير المعلمة — ${esc(s.department)}</th></tr>
+    <tr>
+      <td class="b" style="width:13%">اسم المدرسة</td><td>${esc(s.school)}</td>
+      <td class="b" style="width:13%">العام الأكاديمي</td><td>${esc(s.academicYear)}</td>
+    </tr>
+    <tr>
+      <td class="b">اسم المعلمة</td><td>${esc(p.teacherName)}</td>
+      <td class="b">الصف / الشعبة</td><td>${esc(p.grade)} ${esc(p.section)}</td>
+    </tr>
+    <tr>
+      <td class="b">فئة الأداء</td><td>${esc(p.category)}</td>
+      <td class="b">تاريخ الخطة</td><td>${esc(p.date)}</td>
+    </tr>
+  </table>
+  ${p.criteria ? `<table><tr><td class="b" style="width:13%">معايير الفئة</td><td>${esc(p.criteria)}</td></tr></table>` : ""}
+  <table>
+    <tr>
+      <th style="width:5%">م</th><th style="width:34%">الإجراء / البند</th>
+      <th style="width:26%">آلية التنفيذ</th><th style="width:13%">الفترة الزمنية</th><th>مؤشر الأداء / الأثر</th>
+    </tr>
+    ${rows}
+  </table>
+  ${p.notes ? `<table><tr><td class="b" style="width:13%">ملاحظات</td><td>${esc(p.notes)}</td></tr></table>` : ""}
+  <table>
+    <tr><th style="width:33%">توقيع المعلمة</th><th style="width:33%">توقيع المنسقة</th><th>توقيع النائبة الأكاديمية</th></tr>
+    <tr><td style="height:40px"></td><td>${esc(s.coordinator)}</td><td>${esc(s.academicDeputy)}</td></tr>
+  </table>`;
+  return printHtml(officialPage(body, { s }));
+}
+
+// ====================================================================
 // 8) الجدول الشهري لزيارات المنسق — مطابق لملف "مايو"
 // ====================================================================
 export function printVisitsSchedule(visits: any[], month: string, s: Settings) {

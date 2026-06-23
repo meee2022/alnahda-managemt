@@ -65,6 +65,7 @@ export const NAV: Group[] = [
       { label: "مساعد التوصيات", icon: "sparkles", href: "/assistant" },
       { label: "رفع وتحليل استمارة", icon: "cloud-upload", href: "/import" },
       { label: "التطوير المهني", icon: "library", href: "/development" },
+      { label: "خطة تطوير المعلمة", icon: "trail-sign", href: "/development-plan" },
       { label: "التقرير الشهري", icon: "document-text", href: "/reports/monthly" },
       { label: "الإنجازات", icon: "trophy", href: "/reports/achievements" },
       { label: "لوحة التحكم", icon: "options", href: "/admin" },

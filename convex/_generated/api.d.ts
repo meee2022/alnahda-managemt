@@ -14,6 +14,7 @@ import type * as ai from "../ai.js";
 import type * as aiExtract from "../aiExtract.js";
 import type * as analytics from "../analytics.js";
 import type * as classVisits from "../classVisits.js";
+import type * as devPlans from "../devPlans.js";
 import type * as development from "../development.js";
 import type * as evaluations from "../evaluations.js";
 import type * as files from "../files.js";
@@ -43,6 +44,7 @@ declare const fullApi: ApiFromModules<{
   aiExtract: typeof aiExtract;
   analytics: typeof analytics;
   classVisits: typeof classVisits;
+  devPlans: typeof devPlans;
   development: typeof development;
   evaluations: typeof evaluations;
   files: typeof files;

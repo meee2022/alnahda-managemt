@@ -413,4 +413,21 @@ export default defineSchema({
     })),
     notes: v.optional(v.string()),
   }),
+
+  // خطة تطوير المعلمة حسب فئتها (تطوير ذاتي / دعم...) — بنود الفئة الرسمية قابلة للتعديل
+  devPlans: defineTable({
+    teacherName: v.string(),
+    category: v.optional(v.string()), // فئة الأداء (تطوير ذاتي / دعم مكثف...)
+    grade: v.optional(v.string()),
+    section: v.optional(v.string()),
+    date: v.optional(v.string()),
+    criteria: v.optional(v.string()), // معايير الفئة (تُملأ تلقائياً)
+    rows: v.array(v.object({
+      action: v.optional(v.string()), // الإجراء / البند
+      mechanism: v.optional(v.string()), // آلية التنفيذ
+      period: v.optional(v.string()), // الفترة الزمنية
+      indicator: v.optional(v.string()), // مؤشر الأداء / الأثر
+    })),
+    notes: v.optional(v.string()),
+  }),
 });
