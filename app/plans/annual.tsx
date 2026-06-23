@@ -7,6 +7,7 @@ import { colors } from "../../lib/theme";
 import { DateField } from "../../lib/pickers";
 import { printAnnualPlan } from "../../lib/printTemplates";
 import { setExportMode } from "../../lib/print";
+import { ANNUAL_PLAN_PRESET } from "../../lib/forms";
 
 export default function AnnualPlan() {
   const rows = useQuery(api.plans.listAnnual, {});
@@ -19,6 +20,17 @@ export default function AnnualPlan() {
   const [form, setForm] = useState({ domain: "", actions: "", executor: "المنسق", deadline: "", evidence: "", followup: "", followupDate: "" });
 
   const reset = () => { setForm({ domain: "", actions: "", executor: "المنسق", deadline: "", evidence: "", followup: "", followupDate: "" }); setAdding(false); setEditing(null); };
+
+  // تعبئة الخطة بالمجالات والبنود الرسمية من الخطة التشغيلية — تُضاف للموجود، وتعدّلينها كما تشائين
+  const loadPreset = async () => {
+    if (typeof window !== "undefined" && !window.confirm(`إضافة ${ANNUAL_PLAN_PRESET.length} مجالات رسمية من الخطة التشغيلية؟ ستُضاف كبنود جاهزة تعدّلينها وتكمّلينها.`)) return;
+    const base = rows?.length ?? 0;
+    const year = settings?.academicYear ?? "2025-2026";
+    for (let i = 0; i < ANNUAL_PLAN_PRESET.length; i++) {
+      const p = ANNUAL_PLAN_PRESET[i];
+      await upsert({ year, order: base + i + 1, followup: "", followupDate: "", ...p });
+    }
+  };
 
   const save = async () => {
     if (!form.domain.trim() || !form.actions.trim()) return;
@@ -42,6 +54,7 @@ export default function AnnualPlan() {
         gradient={["#5E0E24", "#9A1B3C"]}
       >
         <HeroBtn title={adding || editing ? "إغلاق النموذج" : "إضافة مجال"} icon={adding || editing ? "close" : "add"} prominent onPress={() => (adding || editing ? reset() : setAdding(true))} />
+        <HeroBtn title="تعبئة من النموذج الرسمي" icon="sparkles" onPress={loadPreset} />
         <ExportMenu heroTitle="تصدير الخطة" run={(m) => { setExportMode(m, "الخطة السنوية"); printAnnualPlan(rows, settings ?? {}); }} />
       </PageHero>
 
