@@ -6,6 +6,7 @@ import { Screen, Card, H2, P, Input, Button, Loading, Empty, Row, IconBtn, Badge
 import { colors } from "../../lib/theme";
 import { printAgenda } from "../../lib/printTemplates";
 import { setExportMode } from "../../lib/print";
+import { AGENDA_PRESET_TERM1 } from "../../lib/forms";
 
 const TERMS = ["الفصل الدراسي الأول", "الفصل الدراسي الثاني"];
 
@@ -21,6 +22,16 @@ export default function Agenda() {
   const [form, setForm] = useState({ period: "", meetings: "", visitsCol: "", reportsCol: "", events: "", notes: "" });
 
   const reset = () => { setForm({ period: "", meetings: "", visitsCol: "", reportsCol: "", events: "", notes: "" }); setAdding(false); setEditing(null); };
+
+  // تعبئة فترات الفصل الأول من جدول الأعمال الرسمي — تُضاف للموجود وتعدّلينها
+  const loadPreset = async () => {
+    if (typeof window !== "undefined" && !window.confirm(`إضافة ${AGENDA_PRESET_TERM1.length} فترات جاهزة من جدول الأعمال الرسمي للفصل الأول؟ تعدّلينها وتكمّلينها.`)) return;
+    const base = entries?.length ?? 0;
+    const year = settings?.academicYear ?? "2025-2026";
+    for (let i = 0; i < AGENDA_PRESET_TERM1.length; i++) {
+      await upsert({ year, term, order: base + i + 1, ...AGENDA_PRESET_TERM1[i] });
+    }
+  };
 
   const save = async () => {
     if (!form.period.trim()) return;
@@ -45,6 +56,7 @@ export default function Agenda() {
         gradient={["#B0883A", "#D4B05C"]}
       >
         <HeroBtn title={adding || editing ? "إغلاق النموذج" : "إضافة فترة"} icon={adding || editing ? "close" : "add"} prominent onPress={() => (adding || editing ? reset() : setAdding(true))} />
+        {term === TERMS[0] ? <HeroBtn title="تعبئة من الجدول الرسمي" icon="sparkles" onPress={loadPreset} /> : null}
         <ExportMenu heroTitle="تصدير الجدول" run={(m) => { setExportMode(m, "جدول الأعمال"); printAgenda(entries, term, settings ?? {}); }} />
       </PageHero>
 
