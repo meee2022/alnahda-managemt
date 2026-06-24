@@ -15,6 +15,7 @@ const SOURCES = ["مديرة المدرسة", "النائبة الأكاديمي
 export default function Recommendations() {
   const [filter, setFilter] = useState("الكل");
   const items = useQuery(api.reports.listRecommendations, filter === "الكل" ? {} : { status: filter });
+  const recurring = useQuery(api.classVisits.recurringFollowups, {});
   const settings = useQuery(api.admin.getSettings, {});
   const create = useMutation(api.reports.createRecommendation);
   const update = useMutation(api.reports.updateRecommendation);
@@ -54,6 +55,23 @@ export default function Recommendations() {
           {STATUSES.map((s) => <Chip key={s} label={s} active={filter === s} onPress={() => setFilter(s)} color={colors.accent} />)}
         </Row>
       </Card>
+
+      {(recurring ?? []).filter((r: any) => !(items ?? []).some((it: any) => (it.text ?? "").includes(r.item))).length > 0 && (
+        <Card style={{ backgroundColor: colors.goldSoft, borderColor: colors.gold, borderWidth: 1 }}>
+          <H2>مقترحات من الزيارات الصفية</H2>
+          <P muted style={{ fontSize: 12.5, marginBottom: 8 }}>بنود متابعة تكرّرت في زيارتين فأكثر — اضغطي لإنشاء توصية جاهزة:</P>
+          {(recurring ?? []).filter((r: any) => !(items ?? []).some((it: any) => (it.text ?? "").includes(r.item))).map((r: any, i: number) => (
+            <Row key={i} style={{ justifyContent: "space-between", alignItems: "center", paddingVertical: 6, borderBottomWidth: 1, borderBottomColor: colors.border }}>
+              <View style={{ flex: 1 }}>
+                <P style={{ fontSize: 13 }}>{r.teacherName} — {r.item}</P>
+                <Badge label={`تكرر ${r.count} مرات`} tone="muted" />
+              </View>
+              <Button title="إنشاء توصية" icon="add" small variant="outline"
+                onPress={() => { setForm({ source: "الموجه التربوي", text: `متابعة بند متكرر: ${r.item}`, assignee: r.teacherName, dueDate: "", dueTime: "", createdDate: "" }); setEditing(null); setAdding(true); }} />
+            </Row>
+          ))}
+        </Card>
+      )}
 
       {adding && (
         <Card>

@@ -56,6 +56,23 @@ export default function LeaveRegister() {
     return c;
   };
 
+  // آخر استئذان مسجّل لهذه المعلمة (تلميح مساعد)
+  const lastLeave = (teacherName: string): { date: string; reason: string } | null => {
+    if (!teacherName) return null;
+    let best: { date: string; reason: string } | null = null;
+    for (const r of list ?? []) {
+      if (r._id === editing) continue;
+      for (const e of r.entries ?? []) {
+        if (nameMatch(e.teacherName, teacherName)) {
+          const tCur = parseDate(r.date)?.getTime() ?? 0;
+          const tBest = best ? (parseDate(best.date)?.getTime() ?? 0) : -1;
+          if (!best || tCur > tBest) best = { date: r.date, reason: e.reason ?? "" };
+        }
+      }
+    }
+    return best;
+  };
+
   // عدد استئذانات المعلمة في نفس الأسبوع (الأحد→السبت) — لا يشمل السجل الجاري تعديله
   const weekCount = (teacherName: string): number => {
     if (!teacherName || !date) return 0;
@@ -185,6 +202,11 @@ export default function LeaveRegister() {
                         ℹ️ استأذنت {mc} {mc === 1 ? "مرة" : "مرات"} هذا الشهر.
                       </Text>
                     ) : null}
+                    {(() => { const ll = lastLeave(e.teacherName); return ll ? (
+                      <Text style={{ fontFamily: fonts.medium, fontSize: 11.5, color: colors.textMuted, textAlign: "right", marginBottom: 6 }}>
+                        🕘 آخر استئذان: {ll.date}{ll.reason ? ` (${ll.reason})` : ""}
+                      </Text>
+                    ) : null; })()}
                   </>
                 );
               })()}

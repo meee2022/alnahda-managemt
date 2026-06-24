@@ -12,6 +12,27 @@ export const get = query({
   handler: async (ctx, { id }) => ctx.db.get(id),
 });
 
+// بنود المتابعة المتكررة (ظهرت في زيارتين فأكثر لنفس المعلمة) — لاقتراح إنشاء توصية
+export const recurringFollowups = query({
+  args: {},
+  handler: async (ctx) => {
+    const all = await ctx.db.query("classVisits").collect();
+    const map: Record<string, Record<string, number>> = {};
+    for (const v of all) {
+      for (const f of (v.followup ?? [])) {
+        (map[v.teacherName] ??= {})[f] = ((map[v.teacherName] ?? {})[f] ?? 0) + 1;
+      }
+    }
+    const out: { teacherName: string; item: string; count: number }[] = [];
+    for (const [teacher, items] of Object.entries(map)) {
+      for (const [item, count] of Object.entries(items)) {
+        if (count >= 2) out.push({ teacherName: teacher, item, count });
+      }
+    }
+    return out.sort((a, b) => b.count - a.count);
+  },
+});
+
 export const create = mutation({
   args: {
     teacherName: v.string(),
