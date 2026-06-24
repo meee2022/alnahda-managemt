@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { View, Text, Pressable, StyleSheet } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import { useRouter } from "expo-router";
@@ -23,6 +24,7 @@ const initials = (name: string) =>
 export default function Classification() {
   const teachers = useQuery(api.teachers.list, {});
   const classifications = useQuery(api.classVisits.listClassifications, {});
+  const stats = useQuery(api.analytics.teacherStats, {});
   const settings = useQuery(api.admin.getSettings, {});
   const setClass = useMutation(api.classVisits.setClassification);
   const router = useRouter();
@@ -31,6 +33,9 @@ export default function Classification() {
   if (teachers === undefined || classifications === undefined) return <Loading />;
 
   const catOf = (name: string) => classifications.find((c) => c.teacherName === name)?.category ?? "";
+  // اقتراح الفئة تلقائياً حسب آخر نسبة تقييم سنوي مسجّلة للمعلمة
+  const scoreOf = (name: string) => ((stats as any)?.rows ?? []).find((r: any) => r.name === name)?.lastAnnualScore ?? null;
+  const suggestCat = (score: number | null) => (score == null ? null : score >= 85 ? "تطوير ذاتي" : score >= 70 ? "دعم عام" : "دعم مكثف");
 
   const assignments: Record<string, string[]> = {};
   for (const cat of TEACHER_CATEGORIES) assignments[cat.key] = [];
@@ -115,6 +120,21 @@ export default function Classification() {
                     );
                   })}
                 </Row>
+                {(() => {
+                  const sc = scoreOf(t.name);
+                  const sug = suggestCat(sc);
+                  if (!sug || sug === cur) return null;
+                  const tone = toneOf(sug);
+                  return (
+                    <Pressable onPress={() => setClass({ teacherName: t.name, category: sug, term })}
+                      style={{ flexDirection: "row", alignItems: "center", gap: 6, marginTop: 8 }}>
+                      <Ionicons name="sparkles" size={13} color={tone.color} />
+                      <Text style={[styles.suggest, { color: tone.color }]}>
+                        مقترح حسب آخر تقييم ({sc}%): {TEACHER_CATEGORIES.find((c) => c.key === sug)?.label} — اضغطي للتطبيق
+                      </Text>
+                    </Pressable>
+                  );
+                })()}
               </View>
             );
           })}
@@ -156,5 +176,6 @@ const styles = StyleSheet.create({
   },
   dot: { width: 7, height: 7, borderRadius: 4 },
   catTxt: { fontFamily: fonts.semibold, fontSize: 12.5 },
+  suggest: { fontFamily: fonts.medium, fontSize: 12, flex: 1, textAlign: "right" },
   lbl: { fontFamily: fonts.semibold, fontSize: 13, color: colors.accent, textAlign: "right", marginTop: 8, marginBottom: 2 },
 });
