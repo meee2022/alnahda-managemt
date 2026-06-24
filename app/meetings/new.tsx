@@ -7,6 +7,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { Screen, Card, H2, Input, Button, Row, IconBtn, P, PageHero } from "../../lib/ui";
 import { DateField, TimeField } from "../../lib/pickers";
 import { colors, radius, fonts } from "../../lib/theme";
+import { AiSuggest } from "../../lib/aiSuggest";
 
 export default function NewMeeting() {
   const { type = "group", id } = useLocalSearchParams<{ type?: string; id?: string }>();
@@ -188,7 +189,11 @@ export default function NewMeeting() {
 
       <Card>
         <Input label="التوصيات" value={form.recommendations} onChangeText={(v) => setForm({ ...form, recommendations: v })} multiline />
+        <AiSuggest prompt={`توصيات اجتماع قسم المسار الأدبي${form.goal ? ` حول: ${form.goal}` : ""}.`}
+          onResult={(t) => setForm((p) => ({ ...p, recommendations: p.recommendations ? p.recommendations + "\n" + t : t }))} />
         <Input label="متابعة التوصيات / خطوات قادمة" value={form.followUp} onChangeText={(v) => setForm({ ...form, followUp: v })} multiline />
+        <AiSuggest prompt={`خطوات متابعة عملية لتنفيذ توصيات اجتماع القسم${form.goal ? ` حول: ${form.goal}` : ""}.`}
+          onResult={(t) => setForm((p) => ({ ...p, followUp: p.followUp ? p.followUp + "\n" + t : t }))} />
       </Card>
 
       <Card>

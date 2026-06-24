@@ -7,6 +7,7 @@ import { colors } from "../lib/theme";
 import { DateField, TimeField } from "../lib/pickers";
 import { setExportMode } from "../lib/print";
 import { printRecommendations } from "../lib/printTemplates";
+import { AiSuggest } from "../lib/aiSuggest";
 
 const STATUSES = ["الكل", "جديدة", "قيد التنفيذ", "منفذة"];
 const SOURCES = ["مديرة المدرسة", "النائبة الأكاديمية", "النائبة الإدارية", "الموجه التربوي", "المنسقة", "لجنة الاعتماد"];
@@ -59,6 +60,8 @@ export default function Recommendations() {
           <H2>{editing ? "تعديل التوصية" : "توصية جديدة"}</H2>
           <Select label="المصدر" options={SOURCES} value={form.source} onChange={(v) => setForm({ ...form, source: v })} />
           <Input label="نص التوصية" value={form.text} onChangeText={(v) => setForm({ ...form, text: v })} multiline />
+          <AiSuggest prompt={`توصية تربوية رسمية موجزة من ${form.source} لقسم المسار الأدبي${form.text ? ` حول: ${form.text}` : ""}.`}
+            onResult={(t) => setForm((p) => ({ ...p, text: p.text ? p.text + "\n" + t : t }))} />
           <Input label="المكلّفة بالتنفيذ" value={form.assignee} onChangeText={(v) => setForm({ ...form, assignee: v })} />
           <Row style={{ gap: 10 }}>
             <View style={{ flex: 1 }}><DateField label="تاريخ الاستحقاق" value={form.dueDate} onChange={(v) => setForm({ ...form, dueDate: v })} /></View>

@@ -7,6 +7,7 @@ import { DateField } from "../../lib/pickers";
 import { colors, fonts } from "../../lib/theme";
 import { printWrittenWorkSheet } from "../../lib/printTemplates";
 import { setExportMode } from "../../lib/print";
+import { AiSuggest } from "../../lib/aiSuggest";
 
 const KEY = ["0 ضعيف", "1 مقبول", "2 جيد", "3 متميز"];
 
@@ -133,6 +134,8 @@ export default function WrittenWork() {
                 <ScoreRow label="التعزيز" value={qz.reinforcement} onChange={(n) => setQz({ ...qz, reinforcement: n })} />
 
                 <Input label="التغذية الراجعة" value={feedback} onChangeText={setFeedback} multiline />
+                <AiSuggest prompt={`تغذية راجعة موجزة وبنّاءة للطالبة ${s.name} في ${subject} بناءً على درجاتها (الاستمرارية ${scores.continuity}، الدقة ${scores.accuracy}، التعزيز ${scores.reinforcement}، التصويب ${scores.correction} من 3).`}
+                  onResult={(t) => setFeedback((p) => (p ? p + "\n" + t : t))} />
                 <Button title="حفظ المتابعة" icon="checkmark" small onPress={() => save(s.name)} />
               </View>
             )}

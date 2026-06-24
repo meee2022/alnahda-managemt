@@ -6,6 +6,7 @@ import { Screen, Card, H2, P, Input, Button, Loading, Empty, Row, IconBtn, Badge
 import { colors } from "../../lib/theme";
 import { printAchievementPlan } from "../../lib/printTemplates";
 import { setExportMode } from "../../lib/print";
+import { AiSuggest } from "../../lib/aiSuggest";
 
 const STAGES = [
   "المرحلة الأولى: مرحلة التخطيط وجمع البيانات",
@@ -55,12 +56,18 @@ export default function AchievementPlan() {
           <H2>{editing ? "تعديل هدف" : "هدف جديد في الخطة"}</H2>
           <Select label="المرحلة" options={STAGES} value={form.stage} onChange={(v) => setForm({ ...form, stage: v })} />
           <Input label="الهدف" value={form.goal} onChangeText={(v) => setForm({ ...form, goal: v })} multiline />
+          <AiSuggest prompt={`هدف ذكي (SMART) لخطة التحصيل الأكاديمي ضمن «${form.stage}» لقسم المسار الأدبي.`}
+            onResult={(t) => setForm((p) => ({ ...p, goal: p.goal ? p.goal + "\n" + t : t }))} />
           <Input label="الإجراءات" value={form.actions} onChangeText={(v) => setForm({ ...form, actions: v })} multiline />
+          <AiSuggest prompt={`إجراءات تنفيذية لتحقيق الهدف: «${form.goal || "رفع التحصيل الأكاديمي"}» ضمن ${form.stage}.`}
+            onResult={(t) => setForm((p) => ({ ...p, actions: p.actions ? p.actions + "\n" + t : t }))} />
           <Row style={{ gap: 10 }}>
             <View style={{ flex: 1 }}><Input label="مسؤول التنفيذ" value={form.responsible} onChangeText={(v) => setForm({ ...form, responsible: v })} /></View>
             <View style={{ flex: 1 }}><Input label="الإطار الزمني" value={form.timeframe} onChangeText={(v) => setForm({ ...form, timeframe: v })} /></View>
           </Row>
           <Input label="المؤشرات والأدلة" value={form.indicators} onChangeText={(v) => setForm({ ...form, indicators: v })} multiline />
+          <AiSuggest prompt={`مؤشرات أداء وأدلة قابلة للقياس للهدف: «${form.goal || "رفع التحصيل الأكاديمي"}».`}
+            onResult={(t) => setForm((p) => ({ ...p, indicators: p.indicators ? p.indicators + "\n" + t : t }))} />
           <Input label="التنفيذ" value={form.execution} onChangeText={(v) => setForm({ ...form, execution: v })} />
           <Button title="حفظ" icon="checkmark" onPress={save} />
         </Card>
