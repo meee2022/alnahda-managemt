@@ -5,7 +5,7 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
-import { colors, radius, shadow, fonts } from "./theme";
+import { colors, radius, shadow, fonts, gradients } from "./theme";
 
 // غلاف ظهور ناعم — مرئي افتراضياً (لو الحركة ما اشتغلتش يفضل المحتوى ظاهر، مش يختفي)
 // نستخدم حركة CSS على الويب عبر react-native-web؛ على المنصات الأخرى يظهر العنصر مباشرة.
@@ -474,6 +474,111 @@ export function ExportMenu({ run, color = colors.primary, heroTitle, heroIcon }:
     </>
   );
 }
+
+// ── جدول بيانات مرتّب — رأس عنابي متدرّج بنص ذهبي + صفوف متناوبة ──────
+export type Col<T> = {
+  key: string;
+  label: string;
+  width?: number;          // عرض ثابت (px) — يُترك فارغاً للتمدّد (flex)
+  flex?: number;           // نسبة التمدّد (افتراضي 1)
+  align?: "right" | "center" | "left";
+  render?: (row: T, index: number) => React.ReactNode; // محتوى مخصّص (شارة مثلاً)
+};
+
+export function DataTable<T extends Record<string, any>>({
+  columns, data, minWidth = 0, emptyText = "لا توجد بيانات",
+}: {
+  columns: Col<T>[];
+  data: T[];
+  minWidth?: number;       // أقل عرض قبل ظهور تمرير أفقي
+  emptyText?: string;
+}) {
+  const { width: winW } = useWindowDimensions();
+  // على الشاشات العريضة يملأ الجدول العرض كاملاً بلا تمرير؛ على الضيّقة يظهر تمرير أفقي
+  const wide = !minWidth || winW >= minWidth + 24;
+
+  const cellBase = (c: Col<T>): ViewStyle =>
+    c.width ? { width: c.width } : { flex: c.flex ?? 1 };
+  const alignText = (c: Col<T>): TextStyle => ({
+    textAlign: c.align ?? "right",
+  });
+
+  const table = (
+    <View style={[tbl.wrap, minWidth ? (wide ? { width: "100%" as any } : { minWidth }) : null]}>
+      {/* الرأس */}
+      <LinearGradient
+        colors={gradients.heroDeep}
+        start={{ x: 1, y: 0 }}
+        end={{ x: 0, y: 1 }}
+        style={tbl.head}
+      >
+        {columns.map((c) => (
+          <View key={c.key} style={cellBase(c)}>
+            <Text style={[tbl.headTxt, alignText(c)]} numberOfLines={1}>{c.label}</Text>
+          </View>
+        ))}
+      </LinearGradient>
+
+      {/* الصفوف */}
+      {data.length === 0 ? (
+        <Text style={tbl.empty}>{emptyText}</Text>
+      ) : (
+        data.map((row, i) => (
+          <Pressable
+            key={row.id ?? row._id ?? i}
+            style={({ hovered }: any) => [
+              tbl.row,
+              i % 2 === 1 && { backgroundColor: "rgba(245,237,216,0.45)" },
+              hovered && { backgroundColor: "rgba(201,169,110,0.14)" },
+              i === data.length - 1 && { borderBottomWidth: 0 },
+            ]}
+          >
+            {columns.map((c) => (
+              <View key={c.key} style={cellBase(c)}>
+                {c.render ? (
+                  <View style={{ alignItems: c.align === "center" ? "center" : c.align === "left" ? "flex-start" : "flex-end" }}>
+                    {c.render(row, i)}
+                  </View>
+                ) : (
+                  <Text style={[tbl.cell, alignText(c)]} numberOfLines={2}>
+                    {row[c.key] ?? "—"}
+                  </Text>
+                )}
+              </View>
+            ))}
+          </Pressable>
+        ))
+      )}
+    </View>
+  );
+
+  // تمرير أفقي فقط على الشاشات الأضيق من الحد الأدنى
+  if (minWidth && !wide) {
+    return (
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={tbl.scroll} contentContainerStyle={{ flexGrow: 1 }}>
+        {table}
+      </ScrollView>
+    );
+  }
+  return table;
+}
+
+const tbl = StyleSheet.create({
+  scroll: { borderRadius: radius.lg, alignSelf: "stretch", width: "100%", ...shadow.card } as any,
+  wrap: {
+    borderRadius: radius.lg, overflow: "hidden", borderWidth: 1, borderColor: colors.border,
+    backgroundColor: colors.card, ...shadow.card,
+  },
+  head: { flexDirection: "row", alignItems: "center", paddingHorizontal: 14, paddingVertical: 12, gap: 10 },
+  headTxt: { fontFamily: fonts.bold, fontSize: 11.5, color: "#EBD9B4", letterSpacing: 0.2 },
+  row: {
+    flexDirection: "row", alignItems: "center", paddingHorizontal: 14, paddingVertical: 12, gap: 10,
+    borderBottomWidth: 1, borderBottomColor: "rgba(28,16,8,0.06)",
+    ...(Platform.OS === "web" ? { transitionDuration: "150ms" as any } : {}),
+  },
+  cell: { fontFamily: fonts.medium, fontSize: 13, color: colors.text },
+  empty: { fontFamily: fonts.regular, fontSize: 13, color: colors.textMuted, textAlign: "center", paddingVertical: 22 },
+});
 
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: colors.bg },
