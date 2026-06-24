@@ -6,7 +6,6 @@ import { Screen, Card, H2, P, Input, Button, Loading, Empty, Row, IconBtn, Badge
 import { colors } from "../../lib/theme";
 import { printCurriculumPlan } from "../../lib/printTemplates";
 import { setExportMode } from "../../lib/print";
-import { CURRICULUM_PRESET_G2_T2 } from "../../lib/forms";
 
 function pickFile(): Promise<File | null> {
   return new Promise((resolve) => {
@@ -38,13 +37,6 @@ export default function Curriculum() {
   const [upErr, setUpErr] = useState<string | null>(null);
   const aiOn = settings?.aiEnabled === "true" || !!settings?.anthropicApiKey;
   const upBusy = upStage !== "idle";
-
-  // تعبئة الخطة الرسمية الجاهزة (الصف الثاني / الفصل الثاني)
-  const loadPreset = async () => {
-    if (typeof window !== "undefined" && !window.confirm(`تعبئة ${CURRICULUM_PRESET_G2_T2.length} أسبوعاً من الخطة الرسمية للصف الثاني/الفصل الثاني؟ (سيُستبدل المحتوى الحالي لهذا الصف والفصل)`)) return;
-    const r = await bulkUpsertWeeks({ grade, term, replace: true, weeks: CURRICULUM_PRESET_G2_T2 });
-    setUpMsg(`تم تحميل ${r.count} أسبوعاً من الخطة الرسمية.`);
-  };
 
   // رفع ملف خطة الوزارة (PDF/صورة) وقراءته بالذكاء وتعبئته
   const handleUpload = async () => {
@@ -109,7 +101,6 @@ export default function Curriculum() {
       >
         <HeroBtn title={adding ? "إغلاق النموذج" : "إضافة أسبوع"} icon={adding ? "close" : "add"} prominent onPress={() => adding ? reset() : setAdding(true)} />
         <HeroBtn title="رفع خطة الوزارة" icon="cloud-upload" onPress={handleUpload} />
-        {grade === "الثاني" && term === "الفصل الثاني" ? <HeroBtn title="تعبئة من الخطة الرسمية" icon="sparkles" onPress={loadPreset} /> : null}
         <ExportMenu heroTitle="تصدير الخطة" run={(m) => { setExportMode(m, "الخطة الفصلية"); printPlan(); }} />
       </PageHero>
 
@@ -120,7 +111,7 @@ export default function Curriculum() {
           {["الفصل الأول", "الفصل الثاني"].map((t) => <Chip key={t} label={t} active={term === t} onPress={() => setTerm(t)} color={colors.accent} />)}
         </Row>
         <P muted style={{ fontSize: 12.5, marginTop: 8 }}>
-          ارفعي خطة الوزارة (PDF أو صورة) وسيقرأها الذكاء الاصطناعي ويملأ الأسابيع تلقائياً، أو استخدمي «تعبئة من الخطة الرسمية» للصف الثاني.
+          ارفعي خطة الوزارة (PDF أو صورة) وسيقرأها الذكاء الاصطناعي ويملأ الأسابيع تلقائياً. الصفحة فارغة حتى ترفعي الخطة.
         </P>
         {!aiOn ? <P style={{ fontSize: 12, color: colors.warning, marginTop: 4 }}>لرفع ملف الوزارة فعّلي مفتاح Anthropic API من مساعد التوصيات.</P> : null}
         {upBusy ? <Badge label={upStage === "uploading" ? "جارٍ الرفع…" : upStage === "extracting" ? "جارٍ القراءة بالذكاء…" : "جارٍ الحفظ…"} tone="primary" /> : null}
