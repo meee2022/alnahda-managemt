@@ -1,11 +1,23 @@
 import React, { useState } from "react";
-import { View } from "react-native";
-import { useQuery, useMutation } from "convex/react";
+import { View, Platform } from "react-native";
+import { useQuery, useMutation, useAction } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import { Screen, Card, H2, P, Input, Button, Loading, Empty, Row, IconBtn, Badge, Select, Chip, PageHero, HeroBtn, ExportMenu, AnimatedItem } from "../../lib/ui";
 import { colors } from "../../lib/theme";
 import { printCurriculumPlan } from "../../lib/printTemplates";
 import { setExportMode } from "../../lib/print";
+import { CURRICULUM_PRESET_G2_T2 } from "../../lib/forms";
+
+function pickFile(): Promise<File | null> {
+  return new Promise((resolve) => {
+    if (Platform.OS !== "web" || typeof document === "undefined") return resolve(null);
+    const input = document.createElement("input");
+    input.type = "file";
+    input.accept = "application/pdf,image/png,image/jpeg,image/jpg,image/webp";
+    input.onchange = () => resolve(input.files && input.files[0] ? input.files[0] : null);
+    input.click();
+  });
+}
 
 export default function Curriculum() {
   const [grade, setGrade] = useState("الثاني");
@@ -14,10 +26,53 @@ export default function Curriculum() {
   const settings = useQuery(api.admin.getSettings, {});
   const upsert = useMutation(api.academics.upsertWeek);
   const remove = useMutation(api.academics.removeWeek);
+  const bulkUpsertWeeks = useMutation(api.academics.bulkUpsertWeeks);
+  const generateUploadUrl = useMutation(api.files.generateUploadUrl);
+  const extractCurriculum = useAction(api.aiExtract.extractCurriculum);
 
   const [adding, setAdding] = useState(false);
   const [editing, setEditing] = useState<string | null>(null);
   const [form, setForm] = useState({ weekNumber: "", unit: "", arabicLessons: "", islamicLessons: "" });
+  const [upStage, setUpStage] = useState<"idle" | "uploading" | "extracting" | "saving">("idle");
+  const [upMsg, setUpMsg] = useState<string | null>(null);
+  const [upErr, setUpErr] = useState<string | null>(null);
+  const aiOn = settings?.aiEnabled === "true" || !!settings?.anthropicApiKey;
+  const upBusy = upStage !== "idle";
+
+  // تعبئة الخطة الرسمية الجاهزة (الصف الثاني / الفصل الثاني)
+  const loadPreset = async () => {
+    if (typeof window !== "undefined" && !window.confirm(`تعبئة ${CURRICULUM_PRESET_G2_T2.length} أسبوعاً من الخطة الرسمية للصف الثاني/الفصل الثاني؟ (سيُستبدل المحتوى الحالي لهذا الصف والفصل)`)) return;
+    const r = await bulkUpsertWeeks({ grade, term, replace: true, weeks: CURRICULUM_PRESET_G2_T2 });
+    setUpMsg(`تم تحميل ${r.count} أسبوعاً من الخطة الرسمية.`);
+  };
+
+  // رفع ملف خطة الوزارة (PDF/صورة) وقراءته بالذكاء وتعبئته
+  const handleUpload = async () => {
+    setUpErr(null); setUpMsg(null);
+    const file = await pickFile();
+    if (!file) return;
+    const mediaType = file.type || (file.name.toLowerCase().endsWith(".pdf") ? "application/pdf" : "image/jpeg");
+    try {
+      setUpStage("uploading");
+      const url = await generateUploadUrl();
+      const up = await fetch(url, { method: "POST", headers: { "Content-Type": mediaType }, body: file });
+      const { storageId: sid } = await up.json();
+
+      setUpStage("extracting");
+      const r = await extractCurriculum({ storageId: sid as any, mediaType });
+      if (!r.ok) { setUpErr(r.error ?? "تعذّر التحليل."); setUpStage("idle"); return; }
+      const wks = (r.data?.weeks ?? []) as any[];
+      if (wks.length === 0) { setUpErr("لم يتم العثور على أسابيع في الملف. تأكدي من وضوح الصورة."); setUpStage("idle"); return; }
+
+      setUpStage("saving");
+      const res = await bulkUpsertWeeks({ grade, term, replace: true, weeks: wks });
+      setUpMsg(`تم استيراد ${res.count} أسبوعاً من ملف الخطة المرفوع للصف ${grade} / ${term}.`);
+      setUpStage("idle");
+    } catch (e: any) {
+      setUpErr(`خطأ: ${String(e?.message ?? e).slice(0, 160)}`);
+      setUpStage("idle");
+    }
+  };
 
   const reset = () => {
     setForm({ weekNumber: "", unit: "", arabicLessons: "", islamicLessons: "" });
@@ -53,6 +108,8 @@ export default function Curriculum() {
         gradient={["#5E0E24", "#9A1B3C"]}
       >
         <HeroBtn title={adding ? "إغلاق النموذج" : "إضافة أسبوع"} icon={adding ? "close" : "add"} prominent onPress={() => adding ? reset() : setAdding(true)} />
+        <HeroBtn title="رفع خطة الوزارة" icon="cloud-upload" onPress={handleUpload} />
+        {grade === "الثاني" && term === "الفصل الثاني" ? <HeroBtn title="تعبئة من الخطة الرسمية" icon="sparkles" onPress={loadPreset} /> : null}
         <ExportMenu heroTitle="تصدير الخطة" run={(m) => { setExportMode(m, "الخطة الفصلية"); printPlan(); }} />
       </PageHero>
 
@@ -62,6 +119,13 @@ export default function Curriculum() {
           <View style={{ width: 12 }} />
           {["الفصل الأول", "الفصل الثاني"].map((t) => <Chip key={t} label={t} active={term === t} onPress={() => setTerm(t)} color={colors.accent} />)}
         </Row>
+        <P muted style={{ fontSize: 12.5, marginTop: 8 }}>
+          ارفعي خطة الوزارة (PDF أو صورة) وسيقرأها الذكاء الاصطناعي ويملأ الأسابيع تلقائياً، أو استخدمي «تعبئة من الخطة الرسمية» للصف الثاني.
+        </P>
+        {!aiOn ? <P style={{ fontSize: 12, color: colors.warning, marginTop: 4 }}>لرفع ملف الوزارة فعّلي مفتاح Anthropic API من مساعد التوصيات.</P> : null}
+        {upBusy ? <Badge label={upStage === "uploading" ? "جارٍ الرفع…" : upStage === "extracting" ? "جارٍ القراءة بالذكاء…" : "جارٍ الحفظ…"} tone="primary" /> : null}
+        {upMsg ? <P style={{ fontSize: 12.5, color: colors.success, marginTop: 4 }}>{upMsg}</P> : null}
+        {upErr ? <P style={{ fontSize: 12.5, color: colors.danger, marginTop: 4 }}>{upErr}</P> : null}
       </Card>
 
       {adding && (

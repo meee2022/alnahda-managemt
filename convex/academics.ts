@@ -104,6 +104,37 @@ export const removeWeek = mutation({
   handler: async (ctx, { id }) => ctx.db.delete(id),
 });
 
+// إدراج/تحديث دفعة أسابيع للخطة الفصلية (للتعبئة من النموذج الرسمي أو رفع ملف الوزارة)
+// replace=true يحذف أسابيع نفس الصف/الفصل أولاً لتجنّب التكرار
+export const bulkUpsertWeeks = mutation({
+  args: {
+    grade: v.string(),
+    term: v.string(),
+    replace: v.optional(v.boolean()),
+    weeks: v.array(v.object({
+      weekNumber: v.number(),
+      unit: v.optional(v.string()),
+      arabicLessons: v.optional(v.string()),
+      islamicLessons: v.optional(v.string()),
+      arabicNotes: v.optional(v.string()),
+      islamicNotes: v.optional(v.string()),
+    })),
+  },
+  handler: async (ctx, { grade, term, replace, weeks }) => {
+    if (replace) {
+      const existing = (await ctx.db.query("curriculumWeeks").collect()).filter((w) => w.grade === grade && w.term === term);
+      for (const w of existing) await ctx.db.delete(w._id);
+    }
+    let count = 0;
+    for (const w of weeks) {
+      if (!w.weekNumber) continue;
+      await ctx.db.insert("curriculumWeeks", { grade, term, arabicDone: false, islamicDone: false, ...w });
+      count++;
+    }
+    return { count };
+  },
+});
+
 // ===== متابعة الأعمال الكتابية =====
 export const listWrittenWork = query({
   args: { grade: v.optional(v.string()), section: v.optional(v.string()), subject: v.optional(v.string()) },

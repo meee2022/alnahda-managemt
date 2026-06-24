@@ -106,6 +106,81 @@ const TIMETABLE_TOOL = {
   },
 };
 
+// مخطط استخراج الخطة الفصلية (متابعة تنفيذ الخطة) من ملف الوزارة (PDF/صورة)
+const CURRICULUM_TOOL = {
+  name: "submit_curriculum",
+  description: "أعد كل أسابيع الخطة الفصلية المستخرجة من المستند، أسبوعاً لكل صف في الجدول.",
+  input_schema: {
+    type: "object",
+    properties: {
+      grade: { type: "string", description: "الصف (مثل: الأول / الثاني) إن ورد" },
+      term: { type: "string", description: "الفصل الدراسي (الفصل الأول / الفصل الثاني) إن ورد" },
+      weeks: {
+        type: "array",
+        description: "كل أسبوع في الخطة بدروسه",
+        items: {
+          type: "object",
+          properties: {
+            weekNumber: { type: "number", description: "رقم الأسبوع كرقم (مثل 1، 2، 12)" },
+            unit: { type: "string", description: "اسم الوحدة الدراسية" },
+            arabicLessons: { type: "string", description: "دروس اللغة العربية لهذا الأسبوع كما وردت، مفصولة بـ / " },
+            islamicLessons: { type: "string", description: "دروس التربية الإسلامية لهذا الأسبوع كما وردت، مفصولة بـ / " },
+            arabicNotes: { type: "string", description: "ملاحظات عمود اللغة العربية (إجازة، تأجيل...) إن وردت" },
+            islamicNotes: { type: "string", description: "ملاحظات عمود التربية الإسلامية إن وردت" },
+          },
+          required: ["weekNumber"],
+        },
+      },
+    },
+    required: ["weeks"],
+  },
+};
+
+export const extractCurriculum = action({
+  args: { storageId: v.id("_storage"), mediaType: v.string() },
+  handler: async (ctx, { storageId, mediaType }): Promise<{ ok: boolean; data?: any; error?: string }> => {
+    const settings: Record<string, string> = await ctx.runQuery(api.admin.getSettings, {});
+    const apiKey = settings.anthropicApiKey || process.env.ANTHROPIC_API_KEY;
+    if (!apiKey) return { ok: false, error: "لم يتم إدخال مفتاح Anthropic API. فعّليه من مساعد التوصيات أولاً." };
+
+    const blob = await ctx.storage.get(storageId);
+    if (!blob) return { ok: false, error: "تعذّر قراءة الملف المرفوع." };
+    const base64 = (globalThis as any).Buffer.from(await blob.arrayBuffer()).toString("base64");
+
+    const isPdf = mediaType === "application/pdf";
+    const sourceBlock = isPdf
+      ? { type: "document", source: { type: "base64", media_type: "application/pdf", data: base64 } }
+      : { type: "image", source: { type: "base64", media_type: mediaType, data: base64 } };
+
+    const sys = `أنتِ مساعدة دقيقة لمنسقة قسم المسار الأدبي. مهمتك قراءة جدول «متابعة تنفيذ الخطة الفصلية» (صورة أو PDF) واستخراج كل أسبوع فيه. لكل أسبوع: رقمه، الوحدة، دروس اللغة العربية، دروس التربية الإسلامية، وأي ملاحظات (إجازات، تأجيل اختبارات...). انسخي الدروس حرفياً كما وردت وافصلي بينها بـ " / ". أعيدي رقم الأسبوع كرقم فقط. لا تختلقي أي درس؛ اتركي الحقل فارغاً إن لم يرد. ثم استدعي الأداة submit_curriculum بكل الأسابيع.`;
+
+    try {
+      const res = await fetch("https://api.anthropic.com/v1/messages", {
+        method: "POST",
+        headers: { "content-type": "application/json", "x-api-key": apiKey, "anthropic-version": "2023-06-01" },
+        body: JSON.stringify({
+          model: "claude-sonnet-4-6",
+          max_tokens: 16000,
+          system: sys,
+          tools: [CURRICULUM_TOOL],
+          tool_choice: { type: "tool", name: CURRICULUM_TOOL.name },
+          messages: [{ role: "user", content: [sourceBlock, { type: "text", text: "استخرجي كل أسابيع الخطة الفصلية بدروسها كاملة." }] }],
+        }),
+      });
+      if (!res.ok) {
+        const t = await res.text();
+        return { ok: false, error: `خطأ من Claude API (${res.status}): ${t.slice(0, 200)}` };
+      }
+      const data: any = await res.json();
+      const toolUse = (data?.content ?? []).find((b: any) => b.type === "tool_use");
+      if (!toolUse) return { ok: false, error: "لم يُرجع النموذج بيانات منظّمة." };
+      return { ok: true, data: toolUse.input };
+    } catch (e: any) {
+      return { ok: false, error: `فشل الاتصال: ${String(e?.message ?? e).slice(0, 200)}` };
+    }
+  },
+});
+
 export const extractTimetable = action({
   args: { storageId: v.id("_storage"), mediaType: v.string() },
   handler: async (ctx, { storageId, mediaType }): Promise<{ ok: boolean; data?: any; error?: string }> => {
