@@ -32,8 +32,8 @@
       "dir": "rtl",
       "display": "standalone",
       "orientation": "portrait",
-      "themeColor": "#8A1538",
-      "backgroundColor": "#F7F2E9",
+      "themeColor": "#5C1523",
+      "backgroundColor": "#FCF9F2",
       "description": "منصة إدارة قسم المسار الأدبي — مدرسة النهضة الابتدائية للبنات",
       "startUrl": "/"
     },

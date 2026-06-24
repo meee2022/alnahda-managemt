@@ -72,7 +72,7 @@ export default function MonthlyReports() {
         title="التقرير الشهري للمنسقة"
         desc="استمارة التقرير الشهري للنائبة الأكاديمية — 27 مجالاً فرعياً"
         icon="document-text"
-        gradient={["#5A0C22", "#8A1538"]}
+        gradient={["#3B0A14", "#5C1523"]}
       >
         <HeroBtn title={(adding || editing) ? "إغلاق النموذج" : "تقرير شهري جديد"} icon={(adding || editing) ? "close" : "add"} prominent onPress={() => { if (adding || editing) reset(); else setAdding(true); }} />
       </PageHero>

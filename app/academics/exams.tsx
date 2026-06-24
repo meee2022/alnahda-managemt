@@ -99,7 +99,7 @@ export default function Exams() {
         title="التحصيل الأكاديمي"
         desc="نتائج الاختبارات بالشعب — نسب النجاح والتحصيل والقيمة المضافة برسوم بيانية"
         icon="trending-up"
-        gradient={["#5A0C22", "#8A1538"]}
+        gradient={["#3B0A14", "#5C1523"]}
       >
         <HeroBtn title={adding ? "إغلاق النموذج" : "تقرير نتائج جديد"} icon={adding ? "close" : "add"} prominent onPress={() => adding ? reset() : setAdding(true)} />
       </PageHero>

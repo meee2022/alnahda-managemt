@@ -61,7 +61,7 @@ export default function PeriodicReports() {
         title="التقرير الدوري للمعلمات"
         desc="تقييم شهري بمقياس 1-3 على أربعة مجالات — يُطبع بنفس الاستمارة الرسمية"
         icon="clipboard"
-        gradient={["#5A0C22", "#8A1538"]}
+        gradient={["#3B0A14", "#5C1523"]}
       >
         <HeroBtn title={adding ? "إغلاق النموذج" : "تقرير دوري جديد"} icon={adding ? "close" : "add"} prominent onPress={() => (adding ? reset() : setAdding(true))} />
       </PageHero>

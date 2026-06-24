@@ -59,7 +59,7 @@ export default function SearchScreen() {
 
   return (
     <Screen>
-      <PageHero title="بحث سريع" desc="ابحثي عن معلمة أو قسم وانتقلي إليه بضغطة" icon="search" gradient={["#5E0E24", "#9A1B3C"]} />
+      <PageHero title="بحث سريع" desc="ابحثي عن معلمة أو قسم وانتقلي إليه بضغطة" icon="search" gradient={["#4A0F1B", "#5C1523"]} />
       <Card>
         <Input placeholder="اكتبي اسم معلمة أو قسم…" value={q} onChangeText={setQ} autoFocus />
       </Card>

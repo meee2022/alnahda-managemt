@@ -69,7 +69,7 @@ export default function WrittenWork() {
         title="الأعمال الكتابية"
         desc={`متابعة تصحيح أعمال الطالبات — ${subject} / الصف ${grade} ${section}`}
         icon="create"
-        gradient={["#B0883A", "#D4B05C"]}
+        gradient={["#A8853A", "#DFC48E"]}
       >
         <ExportMenu heroTitle="تصدير الاستمارة" run={(m) => { setExportMode(m, "متابعة الأعمال الكتابية"); printSheet(); }} />
       </PageHero>

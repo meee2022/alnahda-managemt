@@ -6,7 +6,8 @@ import { MINISTRY_LOGO } from "./letterhead";
 
 type Settings = Record<string, string | undefined>;
 
-const MAROON = "#8A1538"; // العنابي الرسمي (دولة قطر)
+const MAROON = "#5C1523"; // العنابي الأساسي (هوية موحّدة)
+const GOLD = "#C9A96E"; // الذهبي الأساسي
 
 const DEFAULT_VISION = "متعلم ريادي لتنمية مستدامة.";
 const DEFAULT_MISSION =
@@ -1326,7 +1327,7 @@ export function printTeacherStats(rows: any[], totals: any, s: Settings) {
 export function printTeacherDossier(d: any, s: Settings) {
   const t = d.teacher ?? {};
   const sect = (title: string, rows: string[], headers: string[]) => `
-    <div class="subtitle" style="margin-top:12px;">${title} <span style="color:#8A1538">(${rows.length})</span></div>
+    <div class="subtitle" style="margin-top:12px;">${title} <span style="color:${MAROON}">(${rows.length})</span></div>
     ${rows.length ? `<table><tr>${headers.map((h) => `<th>${h}</th>`).join("")}</tr>${rows.join("")}</table>` : `<p style="color:#888;font-size:12px;">لا يوجد.</p>`}`;
 
   const leaveRows = (d.leaves ?? []).map((x: any) => `<tr><td class="c">${esc(x.date)}</td><td class="c">${esc(x.day) || ""}</td><td>${esc(x.reason)}</td><td class="c">${esc(x.fromTime) || ""} - ${esc(x.toTime) || ""}</td></tr>`);

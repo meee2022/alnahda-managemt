@@ -51,7 +51,7 @@ export default function Classification() {
         title="تصنيف أداء المعلمين"
         desc="تصنيف كل معلمة وفق فئات الأداء الأربع — بالمعايير والإجراءات الرسمية"
         icon="git-branch"
-        gradient={["#B0883A", "#D4B05C"]}
+        gradient={["#A8853A", "#DFC48E"]}
       >
         <ExportMenu heroTitle="تصدير التصنيف" run={(m) => { setExportMode(m, "تصنيف الأداء"); printSheet(); }} />
       </PageHero>

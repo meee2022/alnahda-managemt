@@ -4,7 +4,7 @@ import { router } from "expo-router";
 import { useQuery } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import { Ionicons } from "@expo/vector-icons";
-import { Screen, Card, H2, P, Loading, Empty, Row, Badge, Button, IconBtn, PageHero, HeroBtn, AnimatedItem, ExportMenu } from "../../lib/ui";
+import { Screen, Card, H2, P, Loading, Empty, Row, Badge, Button, IconBtn, PageHero, HeroBtn, AnimatedItem, ExportMenu, DataTable, type Col } from "../../lib/ui";
 import { colors, fonts, shadow } from "../../lib/theme";
 import { printTeacherStats } from "../../lib/printTemplates";
 import { setExportMode } from "../../lib/print";
@@ -66,7 +66,7 @@ export default function Stats() {
         title="الإحصائيات والتقارير"
         desc="صورة فورية لكل معلمة — استئذان، احتياط، زيارات، تقييم — تُحسب تلقائياً"
         icon="stats-chart"
-        gradient={["#5E0E24", "#9A1B3C"]}
+        gradient={["#4A0F1B", "#5C1523"]}
       >
         <ExportMenu heroTitle="تصدير التقرير" run={(m) => { setExportMode(m, "تقرير إحصائيات المعلمات"); printTeacherStats(rows, totals, settings ?? {}); }} />
       </PageHero>
@@ -138,6 +138,32 @@ export default function Stats() {
         );
       })()}
 
+      {/* جدول ملخّص مرتّب لكل المعلمات */}
+      {rows.length > 0 && (
+        <Card>
+          <H2>جدول ملخّص المعلمات</H2>
+          <DataTable
+            minWidth={760}
+            data={rows}
+            columns={[
+              { key: "name", label: "المعلمة", flex: 1.6, align: "right" },
+              { key: "grade", label: "الصف", width: 90, align: "center",
+                render: (r: any) => r.grade ? <Badge label={`${r.grade}${r.section ? " " + r.section : ""}`} tone="muted" /> : <Text style={{ color: colors.textMuted }}>—</Text> },
+              { key: "leaveCount", label: "استئذان", width: 72, align: "center" },
+              { key: "absences", label: "غياب", width: 64, align: "center" },
+              { key: "coversDone", label: "احتياط", width: 72, align: "center" },
+              { key: "classVisitCount", label: "زيارة صفية", width: 90, align: "center" },
+              { key: "perfCount", label: "متابعة أداء", width: 96, align: "center" },
+              { key: "rating", label: "التقييم", width: 96, align: "center",
+                render: (r: any) => r.lastAnnualScore != null
+                  ? <Badge label={`${r.lastAnnualScore}%`} tone={r.lastAnnualScore >= 90 ? "success" : "primary"} />
+                  : <Text style={{ color: colors.textMuted }}>—</Text> },
+            ] as Col<any>[]}
+          />
+        </Card>
+      )}
+
+      {rows.length > 0 && <H2>تفاصيل كل معلمة</H2>}
       {rows.length === 0 ? (
         <Empty text="لا توجد بيانات بعد — أدخلي السجلات والاستمارات وستظهر الإحصائيات تلقائياً" icon="stats-chart-outline" />
       ) : rows.map((r: any, i: number) => (

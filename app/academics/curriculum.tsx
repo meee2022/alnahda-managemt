@@ -97,7 +97,7 @@ export default function Curriculum() {
         title="الخطة الفصلية"
         desc={`متابعة تنفيذ دروس اللغة العربية والتربية الإسلامية — الصف ${grade} / ${term}`}
         icon="calendar"
-        gradient={["#5E0E24", "#9A1B3C"]}
+        gradient={["#4A0F1B", "#5C1523"]}
       >
         <HeroBtn title={adding ? "إغلاق النموذج" : "إضافة أسبوع"} icon={adding ? "close" : "add"} prominent onPress={() => adding ? reset() : setAdding(true)} />
         <HeroBtn title="رفع خطة الوزارة" icon="cloud-upload" onPress={handleUpload} />

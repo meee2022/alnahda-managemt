@@ -44,7 +44,7 @@ export default function Recommendations() {
         title="متابعة التوصيات"
         desc="توصيات المديرة والنائبات والموجهين — من الرصد حتى التنفيذ"
         icon="checkmark-done"
-        gradient={["#5A0C22", "#8A1538"]}
+        gradient={["#3B0A14", "#5C1523"]}
       >
         <HeroBtn title={adding ? "إغلاق النموذج" : "إضافة توصية"} icon={adding ? "close" : "add"} prominent onPress={() => adding ? reset() : setAdding(true)} />
         <ExportMenu heroTitle="تصدير التوصيات" run={(m) => { setExportMode(m, "متابعة التوصيات"); printRecommendations(items ?? [], settings ?? {}); }} />

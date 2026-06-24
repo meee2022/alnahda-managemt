@@ -66,7 +66,7 @@ export default function Students() {
         title="الطالبات"
         desc={`الصف ${grade} / ${section} — قياس مستوى مهارة القراءة والكتابة`}
         icon="school"
-        gradient={["#5A0C22", "#8A1538"]}
+        gradient={["#3B0A14", "#5C1523"]}
       >
         <HeroBtn title="إضافة طالبة" icon="add" prominent onPress={() => { reset(); setAdding(true); }} />
         <HeroBtn title="استيراد من ملف (CSV)" icon="cloud-upload-outline" onPress={importCsv} />

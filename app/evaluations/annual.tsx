@@ -88,7 +88,7 @@ export default function AnnualEvaluations() {
         title="تقييم الأداء السنوي"
         desc="استمارة الوزارة الرسمية — 34 مؤشراً والدرجة تُحسب تلقائياً من 100"
         icon="ribbon"
-        gradient={["#B0883A", "#D4B05C"]}
+        gradient={["#A8853A", "#DFC48E"]}
       >
         <HeroBtn title={adding ? "إغلاق النموذج" : "تقييم سنوي جديد"} icon={adding ? "close" : "add"} prominent onPress={() => (adding ? reset() : setAdding(true))} />
       </PageHero>

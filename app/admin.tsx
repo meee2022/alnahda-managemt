@@ -65,7 +65,7 @@ export default function Admin() {
         title="لوحة التحكم"
         desc="بيانات المدرسة والقسم والأسماء الرسمية — تنعكس تلقائياً على كل الاستمارات والمطبوعات"
         icon="options"
-        gradient={["#5E0E24", "#9A1B3C"]}
+        gradient={["#4A0F1B", "#5C1523"]}
       />
 
       <Card>

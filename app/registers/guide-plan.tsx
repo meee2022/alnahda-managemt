@@ -59,7 +59,7 @@ export default function GuidePlan() {
         title="خطة متابعة توصيات الموجه"
         desc="تُستخدم عند تكرار مؤشرات لم تتوفر لها أدلة في الزيارات الصفية"
         icon="git-network"
-        gradient={["#5A0C22", "#8A1538"]}
+        gradient={["#3B0A14", "#5C1523"]}
       >
         <HeroBtn title={adding ? "إغلاق النموذج" : "خطة جديدة"} icon={adding ? "close" : "add"} prominent onPress={() => (adding ? reset() : setAdding(true))} />
       </PageHero>

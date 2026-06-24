@@ -49,7 +49,7 @@ export default function Chat() {
         title="المساعد الذكي (محادثة)"
         desc="تحدّثي معه بكلامك: تلخيص، خطط تحسين، صياغة، أسئلة عن بيانات القسم"
         icon="chatbubbles"
-        gradient={["#B0883A", "#D4B05C"]}
+        gradient={["#A8853A", "#DFC48E"]}
       />
 
       {!aiOn && (

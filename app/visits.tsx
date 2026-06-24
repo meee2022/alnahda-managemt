@@ -90,7 +90,7 @@ export default function Visits() {
         title="جدول الزيارات الشهري"
         desc={`تخطيط زيارات المنسقة (بدون تقييم) — شهر ${month}`}
         icon="footsteps"
-        gradient={["#B0883A", "#D4B05C"]}
+        gradient={["#A8853A", "#DFC48E"]}
       >
         <HeroBtn title={adding ? "إغلاق النموذج" : "إضافة زيارة"} icon={adding ? "close" : "add"} prominent onPress={() => adding ? reset() : setAdding(true)} />
         <ExportMenu heroTitle="تصدير الجدول" run={(m) => { setExportMode(m, `جدول الزيارات - ${month}`); printSchedule(); }} />

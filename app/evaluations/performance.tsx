@@ -174,7 +174,7 @@ export default function Performance() {
         title="استمارة متابعة أداء معلم"
         desc="النموذج التأسيسي الكامل · 26 مؤشراً بتوصية لكل مؤشر · مع بنك التوصيات"
         icon="document-attach"
-        gradient={["#5A0C22", "#8A1538"]}
+        gradient={["#3B0A14", "#5C1523"]}
       >
         <HeroBtn title={adding ? "إغلاق النموذج" : "استمارة جديدة"} icon={adding ? "close" : "add"} prominent onPress={() => (adding ? reset() : setAdding(true))} />
         <HeroBtn title={upStage === "uploading" ? "جارٍ الرفع…" : upStage === "extracting" ? "جارٍ القراءة…" : "رفع استمارة مصوّرة"} icon="cloud-upload" onPress={handleUpload} />

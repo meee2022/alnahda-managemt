@@ -61,7 +61,7 @@ export default function Assistant() {
         title="مساعد التوصيات الذكي"
         desc="اكتبي المجال أو وصف الحالة، واحصلي على توصية جاهزة — انسخيها للاستمارة مباشرة"
         icon="sparkles"
-        gradient={["#B0883A", "#D4B05C"]}
+        gradient={["#A8853A", "#DFC48E"]}
       />
 
       <Card>

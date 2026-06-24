@@ -135,7 +135,7 @@ export default function ClassVisit() {
         title="استمارة تقييم الزيارة"
         desc="تقييم الزيارة الصفية بـ 22 مؤشراً + التوصيات — مطابقة لاستمارة الوزارة"
         icon="eye"
-        gradient={["#5A0C22", "#8A1538"]}
+        gradient={["#3B0A14", "#5C1523"]}
       >
         <HeroBtn title={adding ? "إغلاق النموذج" : "زيارة صفية جديدة"} icon={adding ? "close" : "add"} prominent onPress={() => (adding ? reset() : setAdding(true))} />
         <HeroBtn title={upStage === "uploading" ? "جارٍ الرفع…" : upStage === "extracting" ? "جارٍ القراءة…" : "رفع استمارة مصوّرة"} icon="cloud-upload" onPress={handleUpload} />

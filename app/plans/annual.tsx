@@ -51,7 +51,7 @@ export default function AnnualPlan() {
         title="الخطة السنوية للقسم"
         desc="المجالات والإجراءات والأنشطة الإشرافية — من الخطة التشغيلية"
         icon="map"
-        gradient={["#5E0E24", "#9A1B3C"]}
+        gradient={["#4A0F1B", "#5C1523"]}
       >
         <HeroBtn title={adding || editing ? "إغلاق النموذج" : "إضافة مجال"} icon={adding || editing ? "close" : "add"} prominent onPress={() => (adding || editing ? reset() : setAdding(true))} />
         <HeroBtn title="تعبئة من النموذج الرسمي" icon="sparkles" onPress={loadPreset} />

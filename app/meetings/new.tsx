@@ -113,7 +113,7 @@ export default function NewMeeting() {
         title={id ? "تعديل المحضر" : isGroup ? "محضر اجتماع أكاديمي جديد" : "محضر اجتماع فردي جديد"}
         desc={`${settings?.school ?? ""} — يُحفظ ويُطبع بنفس النموذج الرسمي`}
         icon={isGroup ? "chatbubbles" : "person"}
-        gradient={isGroup ? ["#5E0E24", "#9A1B3C"] : ["#5A0C22", "#8A1538"]}
+        gradient={isGroup ? ["#4A0F1B", "#5C1523"] : ["#3B0A14", "#5C1523"]}
       />
       <Card>
         {isGroup && <Input label="رقم الاجتماع" value={form.number} onChangeText={(v) => setForm({ ...form, number: v })} />}

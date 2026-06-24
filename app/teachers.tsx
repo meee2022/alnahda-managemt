@@ -82,7 +82,7 @@ export default function Teachers() {
         title="المعلمات"
         desc={`${teachers.length} معلمة في القسم — البيانات تظهر تلقائياً في كل الاستمارات`}
         icon="people"
-        gradient={["#5E0E24", "#9A1B3C"]}
+        gradient={["#4A0F1B", "#5C1523"]}
       >
         <HeroBtn title="إضافة معلمة" icon="add" prominent onPress={() => { reset(); setAdding(true); }} />
         <HeroBtn title="تحديث من ملف القسم" icon="cloud-download" onPress={runImport} />

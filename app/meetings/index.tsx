@@ -18,7 +18,7 @@ export default function Meetings() {
         title="الاجتماعات"
         desc="محاضر الاجتماعات الأكاديمية الجماعية والفردية — توثيق وطباعة رسمية"
         icon="chatbubbles"
-        gradient={["#5E0E24", "#9A1B3C"]}
+        gradient={["#4A0F1B", "#5C1523"]}
       >
         <HeroBtn title="محضر اجتماع جماعي" icon="add" prominent onPress={() => router.push("/meetings/new?type=group")} />
         <HeroBtn title="اجتماع فردي" icon="person-add" onPress={() => router.push("/meetings/new?type=individual")} />

@@ -69,7 +69,7 @@ export default function DevelopmentPlan() {
         title="خطة تطوير المعلمة"
         desc="تُملأ بنود الفئة الرسمية تلقائياً (تطوير ذاتي / دعم) — تعدّلين وتكملين"
         icon="trail-sign"
-        gradient={["#5A0C22", "#8A1538"]}
+        gradient={["#3B0A14", "#5C1523"]}
       >
         <HeroBtn title={adding ? "إغلاق النموذج" : "خطة جديدة"} icon={adding ? "close" : "add"} prominent onPress={() => (adding ? reset() : setAdding(true))} />
       </PageHero>

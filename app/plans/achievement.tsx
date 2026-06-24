@@ -45,7 +45,7 @@ export default function AchievementPlan() {
         title="خطة التحصيل الأكاديمي"
         desc="ثلاث مراحل: التخطيط وجمع البيانات → التطبيق → التقييم والتقويم"
         icon="rocket"
-        gradient={["#5A0C22", "#8A1538"]}
+        gradient={["#3B0A14", "#5C1523"]}
       >
         <HeroBtn title={adding || editing ? "إغلاق النموذج" : "إضافة هدف"} icon={adding || editing ? "close" : "add"} prominent onPress={() => (adding || editing ? reset() : setAdding(true))} />
         <ExportMenu heroTitle="تصدير الخطة" run={(m) => { setExportMode(m, "خطة التحصيل"); printAchievementPlan(rows, settings ?? {}); }} />

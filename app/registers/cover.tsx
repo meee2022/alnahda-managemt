@@ -201,7 +201,7 @@ export default function CoverRegister() {
         title="سجل الاحتياط الأكاديمي"
         desc="تسجيل حصص الاحتياط وطباعتها بنفس النموذج الرسمي المعتمد"
         icon="swap-horizontal"
-        gradient={["#5A0C22", "#8A1538"]}
+        gradient={["#3B0A14", "#5C1523"]}
       >
         <HeroBtn title={adding ? "إغلاق" : "سجل جديد"} icon={adding ? "close" : "add"} prominent onPress={() => (adding ? reset() : setAdding(true))} />
         <ExportMenu heroTitle="السياسة والتواقيع" heroIcon="document-text-outline" run={(m) => { setExportMode(m, "سياسة الاحتياط والتواقيع"); printCoverPolicy(teachers ?? [], settings ?? {}); }} />

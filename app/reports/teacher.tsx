@@ -3,14 +3,10 @@ import { View, Text, StyleSheet } from "react-native";
 import { useLocalSearchParams } from "expo-router";
 import { useQuery } from "convex/react";
 import { api } from "../../convex/_generated/api";
-import { Screen, Card, H2, P, Loading, Empty, Row, Badge, PageHero, ExportMenu } from "../../lib/ui";
+import { Screen, Card, H2, P, Loading, Empty, Row, Badge, PageHero, ExportMenu, DataTable, type Col } from "../../lib/ui";
 import { colors, fonts } from "../../lib/theme";
 import { setExportMode } from "../../lib/print";
 import { printTeacherDossier } from "../../lib/printTemplates";
-
-const Line = ({ children }: { children: React.ReactNode }) => (
-  <View style={{ paddingVertical: 6, borderBottomWidth: 1, borderBottomColor: colors.border }}>{children}</View>
-);
 
 export default function TeacherReport() {
   const { id } = useLocalSearchParams<{ id?: string }>();
@@ -22,14 +18,19 @@ export default function TeacherReport() {
   if (d === null) return <Empty text="المعلمة غير موجودة" icon="person-outline" />;
 
   const t = d.teacher as any;
-  const Section = ({ title, count, children }: { title: string; count: number; children?: React.ReactNode }) => (
-    <Card>
-      <Row style={{ justifyContent: "space-between", marginBottom: count ? 8 : 0 }}>
+  // قسم جدولي مرتّب — عنوان + عدّاد + جدول بيانات (أو رسالة فراغ)
+  const SectionTable = ({ title, count, data, columns }: { title: string; count: number; data: any[]; columns: Col<any>[] }) => (
+    <View style={{ marginBottom: 14 }}>
+      <Row style={{ justifyContent: "space-between", marginBottom: 8 }}>
         <H2>{title}</H2>
         <Badge label={String(count)} tone={count ? "primary" : "muted"} />
       </Row>
-      {count ? children : <P muted style={{ fontSize: 12.5 }}>لا يوجد.</P>}
-    </Card>
+      {count ? (
+        <DataTable data={data} columns={columns} minWidth={520} />
+      ) : (
+        <Card><P muted style={{ fontSize: 12.5 }}>لا يوجد.</P></Card>
+      )}
+    </View>
   );
 
   return (
@@ -38,46 +39,61 @@ export default function TeacherReport() {
         title={t.name}
         desc={`${t.grade ?? ""}${t.section ? " " + t.section : ""} · ${t.subject ?? ""}${t.employeeNumber ? " · #" + t.employeeNumber : ""}`}
         icon="person"
-        gradient={["#5E0E24", "#9A1B3C"]}
+        gradient={["#4A0F1B", "#5C1523"]}
       >
         <ExportMenu color="#fff" run={(m) => { setExportMode(m, `ملف المعلمة - ${t.name ?? ""}`); printTeacherDossier(d, settings ?? {}); }} />
       </PageHero>
 
-      <Section title="الاستئذانات" count={d.leaves.length}>
-        {d.leaves.map((x: any, i: number) => (
-          <Line key={i}><Row style={{ justifyContent: "space-between" }}><P style={{ fontSize: 13 }}>{x.reason}</P><P muted style={{ fontSize: 12 }}>{x.date}{x.fromTime ? ` · ${x.fromTime}-${x.toTime ?? ""}` : ""}</P></Row></Line>
-        ))}
-      </Section>
+      <SectionTable title="الاستئذانات" count={d.leaves.length} data={d.leaves}
+        columns={[
+          { key: "reason", label: "السبب", flex: 1.6, align: "right" },
+          { key: "date", label: "التاريخ", width: 110, align: "center" },
+          { key: "time", label: "الوقت", width: 120, align: "center",
+            render: (x: any) => <P muted style={{ fontSize: 12 }}>{x.fromTime ? `${x.fromTime}-${x.toTime ?? ""}` : "—"}</P> },
+        ]}
+      />
 
-      <Section title="الغيابات" count={d.absences.length}>
-        {d.absences.map((x: any, i: number) => (
-          <Line key={i}><Row style={{ justifyContent: "space-between" }}><P style={{ fontSize: 13 }}>{x.reason} — احتياط: {x.coverTeacher}</P><P muted style={{ fontSize: 12 }}>{x.date}</P></Row></Line>
-        ))}
-      </Section>
+      <SectionTable title="الغيابات" count={d.absences.length} data={d.absences}
+        columns={[
+          { key: "reason", label: "السبب", flex: 1.4, align: "right" },
+          { key: "coverTeacher", label: "الاحتياط", flex: 1, align: "right" },
+          { key: "date", label: "التاريخ", width: 110, align: "center" },
+        ]}
+      />
 
-      <Section title="حصص الاحتياط التي نفّذتها" count={d.coversDone.length}>
-        {d.coversDone.map((x: any, i: number) => (
-          <Line key={i}><Row style={{ justifyContent: "space-between" }}><P style={{ fontSize: 13 }}>عن {x.absent} · {x.grade ?? ""} {x.section ?? ""}</P><P muted style={{ fontSize: 12 }}>{x.date}</P></Row></Line>
-        ))}
-      </Section>
+      <SectionTable title="حصص الاحتياط التي نفّذتها" count={d.coversDone.length} data={d.coversDone}
+        columns={[
+          { key: "absent", label: "عن المعلمة", flex: 1.4, align: "right",
+            render: (x: any) => <P style={{ fontSize: 13 }}>عن {x.absent}</P> },
+          { key: "cls", label: "الصف", flex: 1, align: "center",
+            render: (x: any) => <P muted style={{ fontSize: 12.5 }}>{`${x.grade ?? ""} ${x.section ?? ""}`.trim() || "—"}</P> },
+          { key: "date", label: "التاريخ", width: 110, align: "center" },
+        ]}
+      />
 
-      <Section title="الزيارات الصفية" count={d.visits.length}>
-        {d.visits.map((x: any, i: number) => (
-          <Line key={i}><Row style={{ justifyContent: "space-between" }}><P style={{ fontSize: 13 }}>{x.subject} · {x.type}</P><P muted style={{ fontSize: 12 }}>{x.date}</P></Row></Line>
-        ))}
-      </Section>
+      <SectionTable title="الزيارات الصفية" count={d.visits.length} data={d.visits}
+        columns={[
+          { key: "subject", label: "المادة", flex: 1.4, align: "right" },
+          { key: "type", label: "النوع", flex: 1, align: "center" },
+          { key: "date", label: "التاريخ", width: 110, align: "center" },
+        ]}
+      />
 
-      <Section title="متابعات الأداء" count={d.perf.length}>
-        {d.perf.map((x: any, i: number) => (
-          <Line key={i}><Row style={{ justifyContent: "space-between" }}><P style={{ fontSize: 13 }}>{x.subject} {x.unit ? `· ${x.unit}` : ""}</P><P muted style={{ fontSize: 12 }}>{x.date}</P></Row></Line>
-        ))}
-      </Section>
+      <SectionTable title="متابعات الأداء" count={d.perf.length} data={d.perf}
+        columns={[
+          { key: "subject", label: "المادة", flex: 1.4, align: "right" },
+          { key: "unit", label: "الوحدة", flex: 1, align: "right" },
+          { key: "date", label: "التاريخ", width: 110, align: "center" },
+        ]}
+      />
 
-      <Section title="التقييمات السنوية" count={d.annualEvals.length}>
-        {d.annualEvals.map((x: any, i: number) => (
-          <Line key={i}><Row style={{ justifyContent: "space-between" }}><P style={{ fontSize: 13 }}>{x.year}</P><Badge label={`${x.total}% ${x.level ?? ""}`} tone={x.total >= 90 ? "success" : "primary"} /></Row></Line>
-        ))}
-      </Section>
+      <SectionTable title="التقييمات السنوية" count={d.annualEvals.length} data={d.annualEvals}
+        columns={[
+          { key: "year", label: "السنة", flex: 1, align: "right" },
+          { key: "total", label: "النتيجة", width: 150, align: "center",
+            render: (x: any) => <Badge label={`${x.total}% ${x.level ?? ""}`} tone={x.total >= 90 ? "success" : "primary"} /> },
+        ]}
+      />
 
       <P muted style={{ fontSize: 12.5, textAlign: "center", marginTop: 4 }}>التقارير الدورية: {d.periodicReports.length}</P>
     </Screen>

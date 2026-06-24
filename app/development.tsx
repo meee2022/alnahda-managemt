@@ -44,7 +44,7 @@ export default function Development() {
         title="التطوير المهني"
         desc="حصر البرامج التدريبية والقراءات المهنية لكل معلمة — بنموذج الحصر الرسمي"
         icon="library"
-        gradient={["#5E0E24", "#9A1B3C"]}
+        gradient={["#4A0F1B", "#5C1523"]}
       >
         <HeroBtn title={adding ? "إغلاق النموذج" : "إضافة جديدة"} icon={adding ? "close" : "add"} prominent onPress={() => setAdding(!adding)} />
       </PageHero>

@@ -53,7 +53,7 @@ export default function Agenda() {
         title="جدول أعمال المنسقة"
         desc="الفترات الزمنية: الاجتماعات والزيارات والتقارير وفعاليات المدرسة"
         icon="briefcase"
-        gradient={["#B0883A", "#D4B05C"]}
+        gradient={["#A8853A", "#DFC48E"]}
       >
         <HeroBtn title={adding || editing ? "إغلاق النموذج" : "إضافة فترة"} icon={adding || editing ? "close" : "add"} prominent onPress={() => (adding || editing ? reset() : setAdding(true))} />
         {term === TERMS[0] ? <HeroBtn title="تعبئة من الجدول الرسمي" icon="sparkles" onPress={loadPreset} /> : null}

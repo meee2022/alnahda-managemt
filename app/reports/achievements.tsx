@@ -45,7 +45,7 @@ export default function Achievements() {
         title="إنجازات القسم"
         desc="توثيق الإنجازات الأكاديمية والإدارية والمجتمعية — بنموذج الإنجاز الرسمي"
         icon="trophy"
-        gradient={["#B0883A", "#D4B05C"]}
+        gradient={["#A8853A", "#DFC48E"]}
       >
         <HeroBtn title="إضافة إنجاز" icon="add" prominent onPress={() => { if (adding || editing) reset(); else setAdding(true); }} />
         <ExportMenu heroTitle="تصدير النموذج" run={(m) => { setExportMode(m, "إنجازات القسم"); printSheet(); }} />

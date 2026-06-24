@@ -107,7 +107,7 @@ export default function ImportForm() {
         title="رفع وتحليل استمارة خارجية"
         desc="ارفعي استمارة الموجِّهة (PDF أو صورة) ويحلّلها الموقع ويعبّيها تلقائياً"
         icon="cloud-upload"
-        gradient={["#5E0E24", "#9A1B3C"]}
+        gradient={["#4A0F1B", "#5C1523"]}
       />
 
       {!aiOn && (
