@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
-import { View, Text, Pressable, StyleSheet } from "react-native";
+import { View, Text, Pressable, StyleSheet, Platform } from "react-native";
 import { useDraft } from "../../lib/useDraft";
-import { useQuery, useMutation } from "convex/react";
+import { useQuery, useMutation, useAction } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import { Screen, Card, H2, P, Input, Button, Loading, Empty, Row, IconBtn, Badge, Select, PageHero, HeroBtn, AnimatedItem, ExportMenu } from "../../lib/ui";
 import { colors, fonts, radius } from "../../lib/theme";
@@ -11,6 +11,17 @@ import { DateField, TimeField, Stepper } from "../../lib/pickers";
 import { setExportMode } from "../../lib/print";
 import { printPerformanceVisit } from "../../lib/printTemplates";
 import { SourceFileBtn } from "../../lib/sourceFile";
+
+function pickFile(): Promise<File | null> {
+  return new Promise((resolve) => {
+    if (Platform.OS !== "web" || typeof document === "undefined") return resolve(null);
+    const input = document.createElement("input");
+    input.type = "file";
+    input.accept = "application/pdf,image/png,image/jpeg,image/jpg,image/webp";
+    input.onchange = () => resolve(input.files && input.files[0] ? input.files[0] : null);
+    input.click();
+  });
+}
 
 export default function Performance() {
   const visits = useQuery(api.performance.list, {});
@@ -22,6 +33,12 @@ export default function Performance() {
   const remove = useMutation(api.performance.remove);
   const addBank = useMutation(api.performance.addBank);
   const removeBank = useMutation(api.performance.removeBank);
+  const generateUploadUrl = useMutation(api.files.generateUploadUrl);
+  const extractForm = useAction(api.aiExtract.extractForm);
+
+  const [upStage, setUpStage] = useState<"idle" | "uploading" | "extracting">("idle");
+  const [upErr, setUpErr] = useState<string | null>(null);
+  const aiOn = settings?.aiEnabled === "true" || !!settings?.anthropicApiKey;
 
   const [adding, setAdding] = useState(false);
   const [editing, setEditing] = useState<string | null>(null);
@@ -74,6 +91,45 @@ export default function Performance() {
     setEditing(v._id); setRestored(true); setAdding(true);
   };
 
+  // رفع استمارة مصوّرة/PDF وقراءتها بالذكاء وتعبئة الحقول للمراجعة
+  const handleUpload = async () => {
+    setUpErr(null);
+    const file = await pickFile();
+    if (!file) return;
+    const mediaType = file.type || (file.name.toLowerCase().endsWith(".pdf") ? "application/pdf" : "image/jpeg");
+    try {
+      setUpStage("uploading");
+      const url = await generateUploadUrl();
+      const up = await fetch(url, { method: "POST", headers: { "Content-Type": mediaType }, body: file });
+      const { storageId: sid } = await up.json();
+      setUpStage("extracting");
+      const r = await extractForm({ storageId: sid as any, mediaType, formType: "performance" });
+      if (!r.ok) { setUpErr(r.error ?? "تعذّر التحليل."); setUpStage("idle"); return; }
+      const d = r.data ?? {};
+      setInfo((p) => ({
+        ...p,
+        teacherName: d.teacherName ?? p.teacherName, employeeNo: d.employeeNo ?? p.employeeNo,
+        nationality: d.nationality ?? p.nationality, specialization: d.specialization ?? p.specialization,
+        jobTitle: d.jobTitle ?? p.jobTitle, subject: d.subject ?? p.subject,
+        grade: d.grade ?? p.grade, section: d.section ?? p.section, date: d.date ?? p.date,
+        unit: d.unit ?? p.unit, lessonTitle: d.lessonTitle ?? p.lessonTitle, visitType: d.visitType ?? p.visitType,
+        deputyName: d.deputyName ?? p.deputyName,
+        generalRecommendations: d.generalRecommendations ?? p.generalRecommendations,
+        nextSteps: d.nextSteps ?? p.nextSteps, trainingNeeds: d.trainingNeeds ?? p.trainingNeeds,
+        additionalNotes: d.additionalNotes ?? p.additionalNotes,
+      }));
+      const s: Record<string, number> = {}; const rc: Record<string, string> = {};
+      (d.indicators ?? []).forEach((ind: any) => {
+        if (ind.code && ind.score !== undefined && ind.score >= 0) s[ind.code] = ind.score;
+        if (ind.code && ind.recommendation) rc[ind.code] = ind.recommendation;
+      });
+      setScores((p) => ({ ...p, ...s })); setRecs((p) => ({ ...p, ...rc }));
+      setRestored(true); setAdding(true); setUpStage("idle");
+    } catch (e: any) {
+      setUpErr(`خطأ: ${String(e?.message ?? e).slice(0, 160)}`); setUpStage("idle");
+    }
+  };
+
   const save = async () => {
     if (!info.teacherName || !info.date) return;
     const indicators = PERF_ALL_CODES.map((code) => ({ code, score: scores[code] ?? -1, recommendation: recs[code] ?? "" }));
@@ -120,7 +176,10 @@ export default function Performance() {
         gradient={["#5A0C22", "#8A1538"]}
       >
         <HeroBtn title={adding ? "إغلاق النموذج" : "استمارة جديدة"} icon={adding ? "close" : "add"} prominent onPress={() => (adding ? reset() : setAdding(true))} />
+        <HeroBtn title={upStage === "uploading" ? "جارٍ الرفع…" : upStage === "extracting" ? "جارٍ القراءة…" : "رفع استمارة مصوّرة"} icon="cloud-upload" onPress={handleUpload} />
       </PageHero>
+      {upErr ? <Card style={{ borderColor: colors.danger, borderWidth: 1 }}><P style={{ color: colors.danger, fontSize: 12.5 }}>{upErr}</P></Card> : null}
+      {!aiOn ? <Card><P style={{ color: colors.warning, fontSize: 12.5 }}>لرفع استمارة مصوّرة فعّلي مفتاح Anthropic API من مساعد التوصيات.</P></Card> : null}
 
       {adding && (
         <>

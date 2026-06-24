@@ -88,7 +88,11 @@ export default function Visits() {
       {adding && (
         <Card>
           <H2>{editing ? `تعديل الزيارة — ${month}` : `زيارة صفية جديدة — ${month}`}</H2>
-          <Select label="المعلمة" options={(teachers ?? []).map((t) => t.name)} value={form.teacherName} onChange={(v) => setForm({ ...form, teacherName: v })} />
+          <Select label="المعلمة" options={(teachers ?? []).map((t) => t.name)} value={form.teacherName}
+            onChange={(v) => {
+              const t = (teachers ?? []).find((x) => x.name === v) as any;
+              setForm((p) => ({ ...p, teacherName: v, grade: t?.grade ?? p.grade, section: t?.section ?? p.section, subject: t?.subject ?? p.subject }));
+            }} />
           <Row>
             <View style={{ flex: 1 }}>
               <Select label="الصف" options={["الأول", "الثاني"]} value={form.grade} onChange={(v) => setForm({ ...form, grade: v })} />

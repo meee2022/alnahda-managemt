@@ -1,6 +1,6 @@
 import React, { useState } from "react";
-import { View, Text, Pressable, StyleSheet } from "react-native";
-import { useQuery, useMutation } from "convex/react";
+import { View, Text, Pressable, StyleSheet, Platform } from "react-native";
+import { useQuery, useMutation, useAction } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import { Screen, Card, H2, P, Input, Button, Loading, Empty, Row, IconBtn, Badge, Select, Chip, PageHero, HeroBtn, AnimatedItem, ExportMenu } from "../../lib/ui";
 import { colors, fonts } from "../../lib/theme";
@@ -12,6 +12,17 @@ import { SourceFileBtn } from "../../lib/sourceFile";
 
 const ALL = CLASS_VISIT_DOMAINS.flatMap((d) => d.indicators.map((i) => i.code));
 
+function pickFile(): Promise<File | null> {
+  return new Promise((resolve) => {
+    if (Platform.OS !== "web" || typeof document === "undefined") return resolve(null);
+    const input = document.createElement("input");
+    input.type = "file";
+    input.accept = "application/pdf,image/png,image/jpeg,image/jpg,image/webp";
+    input.onchange = () => resolve(input.files && input.files[0] ? input.files[0] : null);
+    input.click();
+  });
+}
+
 export default function ClassVisit() {
   const visits = useQuery(api.classVisits.list, {});
   const teachers = useQuery(api.teachers.list, {});
@@ -22,6 +33,12 @@ export default function ClassVisit() {
   const bank = useQuery(api.performance.listBank, {});
   const addBank = useMutation(api.performance.addBank);
   const removeBank = useMutation(api.performance.removeBank);
+  const generateUploadUrl = useMutation(api.files.generateUploadUrl);
+  const extractForm = useAction(api.aiExtract.extractForm);
+
+  const [upStage, setUpStage] = useState<"idle" | "uploading" | "extracting">("idle");
+  const [upErr, setUpErr] = useState<string | null>(null);
+  const aiOn = settings?.aiEnabled === "true" || !!settings?.anthropicApiKey;
 
   const [adding, setAdding] = useState(false);
   const [editing, setEditing] = useState<string | null>(null);
@@ -53,6 +70,40 @@ export default function ClassVisit() {
   };
 
   const bankFor = (code: string) => (bank ?? []).filter((b) => b.code === code || b.code === "عام");
+
+  // رفع استمارة زيارة مصوّرة/PDF وقراءتها بالذكاء وتعبئة الحقول للمراجعة
+  const handleUpload = async () => {
+    setUpErr(null);
+    const file = await pickFile();
+    if (!file) return;
+    const mediaType = file.type || (file.name.toLowerCase().endsWith(".pdf") ? "application/pdf" : "image/jpeg");
+    try {
+      setUpStage("uploading");
+      const url = await generateUploadUrl();
+      const up = await fetch(url, { method: "POST", headers: { "Content-Type": mediaType }, body: file });
+      const { storageId: sid } = await up.json();
+      setUpStage("extracting");
+      const r = await extractForm({ storageId: sid as any, mediaType, formType: "classVisit" });
+      if (!r.ok) { setUpErr(r.error ?? "تعذّر التحليل."); setUpStage("idle"); return; }
+      const d = r.data ?? {};
+      setForm((p) => ({
+        ...p,
+        teacherName: d.teacherName ?? p.teacherName, subject: d.subject ?? p.subject,
+        grade: d.grade ?? p.grade, section: d.section ?? p.section, date: d.date ?? p.date,
+        lessonTopic: d.lessonTopic ?? p.lessonTopic, visitor: d.visitor ?? p.visitor, visitType: d.visitType ?? p.visitType,
+      }));
+      const sc: Record<string, number> = {}; const rc: Record<string, string> = {};
+      (d.scores ?? []).forEach((s: any) => {
+        if (s.code && s.score !== undefined && s.score >= 0) sc[s.code] = s.score;
+        if (s.code && s.recommendation) rc[s.code] = s.recommendation;
+      });
+      setScores((p) => ({ ...p, ...sc })); setIndRecs((p) => ({ ...p, ...rc }));
+      if (d.recommendations) setRecs((p) => p || d.recommendations);
+      setAdding(true); setUpStage("idle");
+    } catch (e: any) {
+      setUpErr(`خطأ: ${String(e?.message ?? e).slice(0, 160)}`); setUpStage("idle");
+    }
+  };
 
   const save = async () => {
     if (!form.teacherName || !form.date) return;
@@ -86,7 +137,10 @@ export default function ClassVisit() {
         gradient={["#5A0C22", "#8A1538"]}
       >
         <HeroBtn title={adding ? "إغلاق النموذج" : "زيارة صفية جديدة"} icon={adding ? "close" : "add"} prominent onPress={() => (adding ? reset() : setAdding(true))} />
+        <HeroBtn title={upStage === "uploading" ? "جارٍ الرفع…" : upStage === "extracting" ? "جارٍ القراءة…" : "رفع استمارة مصوّرة"} icon="cloud-upload" onPress={handleUpload} />
       </PageHero>
+      {upErr ? <Card style={{ borderColor: colors.danger, borderWidth: 1 }}><P style={{ color: colors.danger, fontSize: 12.5 }}>{upErr}</P></Card> : null}
+      {!aiOn ? <Card><P style={{ color: colors.warning, fontSize: 12.5 }}>لرفع استمارة مصوّرة فعّلي مفتاح Anthropic API من مساعد التوصيات.</P></Card> : null}
 
       {(adding || editing) && (
         <Card>

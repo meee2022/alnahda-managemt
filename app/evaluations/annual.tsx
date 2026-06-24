@@ -95,7 +95,13 @@ export default function AnnualEvaluations() {
       {adding && (
         <Card>
           <H2>{editing ? "تعديل التقييم السنوي" : "تقييم أداء سنوي جديد"}</H2>
-          <Select label="المعلمة" options={(teachers ?? []).map((t) => t.name)} value={teacherName} onChange={setTeacherName} />
+          <Select label="المعلمة" options={(teachers ?? []).map((t) => t.name)} value={teacherName}
+            onChange={(v) => {
+              setTeacherName(v);
+              const t = (teachers ?? []).find((x) => x.name === v) as any;
+              if (t?.nationalId) setPersonalNo(t.nationalId);
+              if (t?.appointmentDate) setAppointmentDate(t.appointmentDate);
+            }} />
           <Row style={{ gap: 10 }}>
             <View style={{ flex: 1 }}><Input label="الرقم الشخصي" value={personalNo} onChangeText={setPersonalNo} /></View>
             <View style={{ flex: 1 }}><DateField label="تاريخ التعيين" value={appointmentDate} onChange={setAppointmentDate} /></View>
