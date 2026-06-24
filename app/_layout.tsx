@@ -158,15 +158,30 @@ function TopNav() {
     </Pressable>
   );
 
+  // عدد التبويبات الظاهرة يُحسب حسب عرض الشاشة — والباقي يُطوى داخل «المزيد»
+  const pillW = (label: string) => label.length * 8.2 + 52; // عرض تقريبي للزر
+  const avail = width - 24;          // الحشو الجانبي
+  const reserved = pillW("المزيد") + 18; // مكان زر «المزيد» دائماً
+  let used = reserved;
+  let count = 0;
+  for (const s of TOP_SECTIONS) {
+    const w = pillW(s.label) + 6;
+    if (used + w <= avail) { used += w; count++; } else break;
+  }
+  count = Math.max(1, Math.min(count, TOP_SECTIONS.length));
+  let visible = TOP_SECTIONS.slice(0, count);
+  // إن كان القسم الحالي مطويّاً، أظهره مكان آخر تبويب ظاهر
+  const activeIdx = TOP_SECTIONS.findIndex((s) => isTabActive(pathname, s.href));
+  if (activeIdx >= count) visible = [...TOP_SECTIONS.slice(0, count - 1), TOP_SECTIONS[activeIdx]];
+
   return (
     <View style={{ backgroundColor: colors.card, borderBottomWidth: 1, borderBottomColor: colors.border }}>
-      <ScrollView horizontal showsHorizontalScrollIndicator={false}
-        contentContainerStyle={{ flexDirection: "row", paddingHorizontal: 10, paddingVertical: 7, gap: 6, alignItems: "center" }}>
-        {TOP_SECTIONS.map((it) => (
+      <View style={{ flexDirection: "row", flexWrap: "nowrap", justifyContent: "flex-start", paddingHorizontal: 12, paddingVertical: 7, gap: 6, alignItems: "center" }}>
+        {visible.map((it) => (
           <Pill key={it.href} label={it.label} icon={it.icon} active={isTabActive(pathname, it.href)} onPress={() => router.replace(it.href as any)} />
         ))}
         <Pill label="المزيد" icon="grid" active={isOpen || !onMain} onPress={() => open()} />
-      </ScrollView>
+      </View>
     </View>
   );
 }
