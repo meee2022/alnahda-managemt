@@ -16,6 +16,7 @@ export default function Visits() {
   const [month, setMonth] = useState("مايو");
   const visits = useQuery(api.visits.list, { month });
   const classVisits = useQuery(api.classVisits.list, {});
+  const perfVisits = useQuery(api.performance.list, {});
   const teachers = useQuery(api.teachers.list, {});
   const settings = useQuery(api.admin.getSettings, {});
   const create = useMutation(api.visits.create);
@@ -52,18 +53,34 @@ export default function Visits() {
     reset();
   };
 
-  // صفوف تلقائية من الزيارات الصفية المقيّمة لنفس الشهر (تُعبّأ ذاتياً دون إدخال يدوي)
+  // صفوف تلقائية من الزيارات المقيّمة لنفس الشهر (تُعبّأ ذاتياً دون إدخال يدوي)
   const planned = visits ?? [];
-  const derived = (classVisits ?? [])
+  const taken = new Set(planned.map((p: any) => p.teacherName + "|" + p.date));
+  const derivedCV = (classVisits ?? [])
     .filter((cv: any) => arabicMonthName(cv.date) === month)
-    .filter((cv: any) => !planned.some((p: any) => p.teacherName === cv.teacherName && p.date === cv.date))
-    .map((cv: any) => ({
-      _id: "cv_" + cv._id, _derived: true,
-      teacherName: cv.teacherName, grade: cv.grade, section: cv.section, date: cv.date,
-      subject: cv.subject, lesson: cv.lessonTopic ?? "", purpose: "زيارة صفية مقيّمة",
-      attendanceType: normType(cv.visitType), status: "تم",
-    }));
-  const combined = [...planned, ...derived];
+    .filter((cv: any) => !taken.has(cv.teacherName + "|" + cv.date))
+    .map((cv: any) => {
+      taken.add(cv.teacherName + "|" + cv.date);
+      return {
+        _id: "cv_" + cv._id, _derived: true,
+        teacherName: cv.teacherName, grade: cv.grade, section: cv.section, date: cv.date,
+        subject: cv.subject, lesson: cv.lessonTopic ?? "", purpose: "زيارة صفية مقيّمة",
+        attendanceType: normType(cv.visitType), status: "تم",
+      };
+    });
+  const derivedPV = (perfVisits ?? [])
+    .filter((pv: any) => arabicMonthName(pv.date) === month)
+    .filter((pv: any) => !taken.has(pv.teacherName + "|" + pv.date))
+    .map((pv: any) => {
+      taken.add(pv.teacherName + "|" + pv.date);
+      return {
+        _id: "pv_" + pv._id, _derived: true,
+        teacherName: pv.teacherName, grade: pv.grade, section: pv.section, date: pv.date,
+        subject: pv.subject, lesson: pv.lessonTitle ?? "", purpose: "متابعة أداء",
+        attendanceType: normType(pv.visitType), status: "تم",
+      };
+    });
+  const combined = [...planned, ...derivedCV, ...derivedPV];
 
   const printSchedule = () => printVisitsSchedule(combined, month, settings ?? {});
 
