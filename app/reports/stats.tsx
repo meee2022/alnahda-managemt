@@ -33,19 +33,27 @@ function MiniBars({ data }: { data: { label: string; leaves: number; covers: num
   );
 }
 
-const StatChip = ({ label, value, tone, href }: { label: string; value: number | string; tone: string; href?: string }) => {
+const StatChip = ({ label, value, icon, color, soft, href }: { label: string; value: number | string; icon: keyof typeof Ionicons.glyphMap; color: string; soft: string; href?: string }) => {
   const inner = (
     <>
-      <Text style={styles.chipVal}>{value}</Text>
-      <Text style={styles.chipLbl}>{label}</Text>
-      {href ? <Text style={styles.chipHint}>اضغط للعرض ‹</Text> : null}
+      <View style={styles.chipTop}>
+        <View style={{ flex: 1 }}>
+          <Text style={[styles.chipVal, { color }]}>{value}</Text>
+          <Text style={styles.chipLbl}>{label}</Text>
+        </View>
+        <View style={[styles.chipOrb, { backgroundColor: color }]}>
+          <Ionicons name={icon} size={19} color="#fff" />
+        </View>
+      </View>
+      {href ? <Text style={[styles.chipHint, { color }]}>عرض التفاصيل ‹</Text> : null}
+      <View style={[styles.chipStrip, { backgroundColor: color }]} />
     </>
   );
-  if (!href) return <View style={[styles.chip, { backgroundColor: tone }]}>{inner}</View>;
+  if (!href) return <View style={[styles.chip, { backgroundColor: soft, borderColor: color + "26" }]}>{inner}</View>;
   return (
     <Pressable
       onPress={() => router.push(href as any)}
-      style={({ hovered, pressed }: any) => [styles.chip, { backgroundColor: tone }, hovered && styles.chipHover, pressed && { transform: [{ scale: 0.97 }] }]}
+      style={({ hovered, pressed }: any) => [styles.chip, { backgroundColor: soft, borderColor: color + "26" }, hovered && styles.chipHover, pressed && { transform: [{ scale: 0.98 }] }]}
     >
       {inner}
     </Pressable>
@@ -75,12 +83,12 @@ export default function Stats() {
       <Card>
         <H2>إجمالي القسم</H2>
         <View style={styles.grid}>
-          <StatChip label="معلمة" value={totals.teachers} tone={colors.primarySoft} href="/teachers" />
-          <StatChip label="استئذان" value={totals.leaves} tone={colors.warningSoft} href="/registers/leave" />
-          <StatChip label="حصة احتياط" value={totals.covers} tone={colors.goldSoft} href="/registers/cover" />
-          <StatChip label="زيارة صفية" value={totals.classVisits} tone={colors.accentSoft} href="/evaluations/class-visit" />
-          <StatChip label="متابعة أداء" value={totals.perfVisits} tone={colors.successSoft} href="/evaluations/performance" />
-          <StatChip label="تقرير دوري" value={totals.periodic} tone={colors.primaryTint} href="/evaluations/periodic" />
+          <StatChip label="معلمة" value={totals.teachers} icon="people" color={colors.primary} soft={colors.primarySoft} href="/teachers" />
+          <StatChip label="استئذان" value={totals.leaves} icon="exit-outline" color={colors.warning} soft={colors.warningSoft} href="/registers/leave" />
+          <StatChip label="حصة احتياط" value={totals.covers} icon="swap-horizontal" color={colors.goldDark} soft={colors.goldSoft} href="/registers/cover" />
+          <StatChip label="زيارة صفية" value={totals.classVisits} icon="eye" color={colors.success} soft={colors.successSoft} href="/evaluations/class-visit" />
+          <StatChip label="متابعة أداء" value={totals.perfVisits} icon="document-attach" color={colors.accent} soft={colors.accentSoft} href="/evaluations/performance" />
+          <StatChip label="تقرير دوري" value={totals.periodic} icon="clipboard" color={colors.primaryDeep} soft={colors.primaryTint} href="/evaluations/periodic" />
         </View>
       </Card>
 
@@ -211,12 +219,15 @@ export default function Stats() {
 }
 
 const styles = StyleSheet.create({
-  grid: { flexDirection: "row", flexWrap: "wrap", gap: 8, marginTop: 10 },
-  chip: { minWidth: 92, flexGrow: 1, borderRadius: 14, paddingVertical: 10, alignItems: "center", ...(Platform.OS === "web" ? { transitionDuration: "150ms" as any, cursor: "pointer" as any } : {}) },
+  grid: { flexDirection: "row", flexWrap: "wrap", gap: 10, marginTop: 12 },
+  chip: { minWidth: 158, flexGrow: 1, flexBasis: 158, borderRadius: 16, paddingTop: 13, paddingBottom: 15, paddingHorizontal: 14, borderWidth: 1, overflow: "hidden", ...(Platform.OS === "web" ? { transitionDuration: "150ms" as any, cursor: "pointer" as any } : {}) },
   chipHover: { transform: [{ translateY: -2 }], ...shadow.card } as any,
-  chipVal: { fontFamily: fonts.bold, fontSize: 20, color: colors.text },
-  chipLbl: { fontFamily: fonts.medium, fontSize: 11.5, color: colors.textSecondary, marginTop: 2 },
-  chipHint: { fontFamily: fonts.medium, fontSize: 9.5, color: colors.primary, marginTop: 3 },
+  chipTop: { flexDirection: "row", alignItems: "center", gap: 8 },
+  chipOrb: { width: 38, height: 38, borderRadius: 12, alignItems: "center", justifyContent: "center" },
+  chipVal: { fontFamily: fonts.bold, fontSize: 26, lineHeight: 30 },
+  chipLbl: { fontFamily: fonts.semibold, fontSize: 12.5, color: colors.textSecondary, marginTop: 1 },
+  chipHint: { fontFamily: fonts.medium, fontSize: 10.5, marginTop: 8 },
+  chipStrip: { position: "absolute", left: 0, right: 0, bottom: 0, height: 3, opacity: 0.85 },
 });
 
 const s = StyleSheet.create({
