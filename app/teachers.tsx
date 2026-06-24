@@ -3,8 +3,9 @@ import { View, Text } from "react-native";
 import { useQuery, useMutation } from "convex/react";
 import { useLocalSearchParams } from "expo-router";
 import { api } from "../convex/_generated/api";
-import { Screen, Card, H2, P, Input, Button, Loading, Empty, Row, IconBtn, Badge, Select, PageHero, HeroBtn, ExportMenu, AnimatedItem } from "../lib/ui";
+import { Screen, Card, H2, P, Input, Button, Loading, Empty, Row, IconBtn, Badge, Select, Chip, PageHero, HeroBtn, ExportMenu, AnimatedItem } from "../lib/ui";
 import { colors, fonts } from "../lib/theme";
+import { isAssistant } from "../lib/forms";
 import { printTeachersSheet } from "../lib/printTemplates";
 import { setExportMode } from "../lib/print";
 
@@ -33,6 +34,7 @@ export default function Teachers() {
   const [adding, setAdding] = useState(false);
   const [editing, setEditing] = useState<string | null>(null);
   const [expanded, setExpanded] = useState<string | null>(null);
+  const [roleTab, setRoleTab] = useState<"الكل" | "معلمات" | "مساعدات">("الكل");
   const [form, setForm] = useState({ ...EMPTY });
   const handledEdit = React.useRef<string | null>(null);
 
@@ -126,19 +128,40 @@ export default function Teachers() {
         </Card>
       )}
 
-      {teachers.length === 0 ? (
+      {teachers.length > 0 && (() => {
+        const nA = teachers.filter((t) => isAssistant(t.jobTitle)).length;
+        const nT = teachers.length - nA;
+        return (
+          <Card style={{ paddingVertical: 10 }}>
+            <Row style={{ flexWrap: "wrap" }}>
+              <Chip label={`الكل (${teachers.length})`} active={roleTab === "الكل"} onPress={() => setRoleTab("الكل")} />
+              <Chip label={`معلمات (${nT})`} active={roleTab === "معلمات"} onPress={() => setRoleTab("معلمات")} />
+              <Chip label={`مساعدات (${nA})`} active={roleTab === "مساعدات"} onPress={() => setRoleTab("مساعدات")} color={colors.accent} />
+            </Row>
+          </Card>
+        );
+      })()}
+
+      {(() => {
+        const shown = teachers.filter((t) =>
+          roleTab === "الكل" ? true : roleTab === "مساعدات" ? isAssistant(t.jobTitle) : !isAssistant(t.jobTitle)
+        );
+        return teachers.length === 0 ? (
         <Empty text="لا توجد معلمات بعد" actionTitle="إضافة معلمة" onAction={() => { reset(); setAdding(true); }} icon="people-outline" />
-      ) : teachers.map((t, ti) => {
+      ) : shown.map((t, ti) => {
         const open = expanded === t._id;
         return (
         <AnimatedItem key={t._id} index={ti}>
         <Card style={{ paddingVertical: 12 }}>
           <Row style={{ justifyContent: "space-between" }}>
             <View style={{ flex: 1 }}>
-              <P style={{ color: colors.text, fontSize: 15 }}>{t.name}</P>
+              <Row style={{ gap: 6, alignItems: "center" }}>
+                <P style={{ color: colors.text, fontSize: 15 }}>{t.name}</P>
+                {isAssistant(t.jobTitle) ? <Badge label="مساعدة" tone="accent" /> : null}
+              </Row>
               <Row style={{ marginTop: 4, flexWrap: "wrap" }}>
                 {t.grade ? <Badge label={`${t.grade}${t.section ? " " + t.section : ""}`} tone="primary" /> : null}
-                {t.subject ? <Badge label={t.subject} tone="accent" /> : null}
+                {t.subject ? <Badge label={t.subject} tone="muted" /> : null}
                 {t.employeeNumber ? <Badge label={`#${t.employeeNumber}`} tone="muted" /> : null}
               </Row>
             </View>
@@ -172,7 +195,8 @@ export default function Teachers() {
         </Card>
         </AnimatedItem>
         );
-      })}
+      });
+      })()}
     </Screen>
   );
 }

@@ -229,6 +229,10 @@ export const TEACHER_CATEGORIES: { key: string; label: string; criteria: string;
 // أهداف الزيارة في الجدول الشهري
 export const VISIT_PURPOSES = ["زيارة تشخيصية", "قياس أثر", "متابعة توصيات", "متابعة أداء الطلبة"];
 
+// التمييز بين المعلمة والمعلمة المساعدة (من المسمى الوظيفي) — يُستخدم في كل الموقع
+export const isAssistant = (jobTitle?: string) => !!jobTitle && jobTitle.includes("مساعد");
+export const roleLabel = (jobTitle?: string) => (isAssistant(jobTitle) ? "مساعدة" : "معلمة");
+
 // ============================================================
 // الخطة الفصلية — الصف الثاني / الفصل الثاني (من الملف الرسمي) — أسابيع جاهزة للتعبئة
 // المصدر: ملف «متابعة تنفيذ الخطة الفصلية - للصف الثاني»

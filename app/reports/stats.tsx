@@ -8,6 +8,7 @@ import { Screen, Card, H2, P, Loading, Empty, Row, Badge, Button, IconBtn, PageH
 import { colors, fonts, shadow } from "../../lib/theme";
 import { printTeacherStats } from "../../lib/printTemplates";
 import { setExportMode } from "../../lib/print";
+import { isAssistant } from "../../lib/forms";
 
 // رسم أعمدة بسيط بدون مكتبة خارجية
 function MiniBars({ data }: { data: { label: string; leaves: number; covers: number }[] }) {
@@ -154,7 +155,13 @@ export default function Stats() {
             minWidth={760}
             data={rows}
             columns={[
-              { key: "name", label: "المعلمة", flex: 1.6, align: "right" },
+              { key: "name", label: "المعلمة", flex: 1.6, align: "right",
+                render: (r: any) => (
+                  <Row style={{ gap: 6, alignItems: "center", justifyContent: "flex-end" }}>
+                    <Text style={{ fontFamily: fonts.semibold, fontSize: 13, color: colors.text }}>{r.name}</Text>
+                    {isAssistant(r.jobTitle) ? <Badge label="مساعدة" tone="accent" /> : null}
+                  </Row>
+                ) },
               { key: "grade", label: "الصف", width: 90, align: "center",
                 render: (r: any) => r.grade ? <Badge label={`${r.grade}${r.section ? " " + r.section : ""}`} tone="muted" /> : <Text style={{ color: colors.textMuted }}>—</Text> },
               { key: "leaveCount", label: "استئذان", width: 72, align: "center" },

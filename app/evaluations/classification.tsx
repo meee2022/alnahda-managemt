@@ -6,7 +6,7 @@ import { api } from "../../convex/_generated/api";
 import { useRouter } from "expo-router";
 import { Screen, Card, H2, P, Button, Loading, Row, Badge, Select, PageHero, HeroBtn, ExportMenu, IconBtn } from "../../lib/ui";
 import { colors, fonts, radius } from "../../lib/theme";
-import { TEACHER_CATEGORIES } from "../../lib/forms";
+import { TEACHER_CATEGORIES, isAssistant } from "../../lib/forms";
 import { printTeacherClassification } from "../../lib/printTemplates";
 import { setExportMode } from "../../lib/print";
 
@@ -87,7 +87,10 @@ export default function Classification() {
                     <Text style={styles.avatarTxt}>{initials(t.name)}</Text>
                   </View>
                   <View style={{ flex: 1 }}>
-                    <Text style={styles.tName}>{t.name}</Text>
+                    <Row style={{ gap: 6, alignItems: "center" }}>
+                      <Text style={styles.tName}>{t.name}</Text>
+                      {isAssistant(t.jobTitle) ? <Badge label="مساعدة" tone="accent" /> : null}
+                    </Row>
                     {cur ? (
                       <Text style={[styles.tStatus, { color: curTone!.color }]}>
                         ● {TEACHER_CATEGORIES.find((c) => c.key === cur)?.label}

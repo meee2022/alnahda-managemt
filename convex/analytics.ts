@@ -45,7 +45,7 @@ export const teacherStats = query({
 
       return {
         id: t._id, name, grade: t.grade, section: t.section, subject: t.subject,
-        employeeNumber: t.employeeNumber,
+        employeeNumber: t.employeeNumber, jobTitle: t.jobTitle,
         leaveCount, leaveDates, coversDone, absences,
         classVisitCount, classVisitDates, perfCount, periodicCount, annualCount,
         lastAnnualScore: lastAnnual?.total ?? null, lastAnnualLevel: lastAnnual?.levelLabel ?? null,
