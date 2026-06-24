@@ -9,6 +9,7 @@ import { DateField } from "../../lib/pickers";
 import { setExportMode } from "../../lib/print";
 import { printClassVisit } from "../../lib/printTemplates";
 import { SourceFileBtn } from "../../lib/sourceFile";
+import { AiSuggest } from "../../lib/aiSuggest";
 
 const ALL = CLASS_VISIT_DOMAINS.flatMap((d) => d.indicators.map((i) => i.code));
 
@@ -233,6 +234,8 @@ export default function ClassVisit() {
           </Row>
 
           <Input label="ملاحظات وتوصيات عامّة" value={recs} onChangeText={setRecs} multiline />
+          <AiSuggest prompt={`ملاحظات وتوصيات عامة لزيارة صفية لمعلمة ${form.subject} (نسبة الأداء ${pct}%)${form.lessonTopic ? `، موضوع الدرس: ${form.lessonTopic}` : ""}.`}
+            onResult={(t) => setRecs((p) => (p ? p + "\n" + t : t))} />
           <Row style={{ gap: 10 }}>
             <Button title={editing ? "حفظ التعديلات" : "حفظ الاستمارة"} icon="checkmark" onPress={save} />
             {editing ? <Button title="إلغاء" variant="ghost" onPress={reset} /> : null}

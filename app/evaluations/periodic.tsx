@@ -7,6 +7,7 @@ import { colors, fonts } from "../../lib/theme";
 import { PERIODIC_DOMAINS, MONTHS } from "../../lib/forms";
 import { setExportMode } from "../../lib/print";
 import { printPeriodicReport } from "../../lib/printTemplates";
+import { AiSuggest } from "../../lib/aiSuggest";
 
 export default function PeriodicReports() {
   const reports = useQuery(api.evaluations.listPeriodic, {});
@@ -93,6 +94,8 @@ export default function PeriodicReports() {
           ))}
           <P muted style={{ fontSize: 12, marginBottom: 8 }}>مفتاح التقييم: 3 = مستكمل الأدلة • 2 = معظم الأدلة متوفرة • 1 = بعض الأدلة متوفرة</P>
           <Input label="ملاحظات عامة" value={notes} onChangeText={setNotes} multiline />
+          <AiSuggest prompt={`ملاحظة عامة موجزة للتقرير الدوري لأداء المعلمة${teacherName ? ` (${teacherName})` : ""} لشهر ${month}.`}
+            onResult={(t) => setNotes((p) => (p ? p + "\n" + t : t))} />
           <Row style={{ gap: 10 }}>
             <Button title={editing ? "حفظ التعديلات" : "حفظ التقرير"} icon="checkmark" onPress={save} />
             {editing ? <Button title="إلغاء" variant="ghost" onPress={reset} /> : null}

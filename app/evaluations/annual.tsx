@@ -8,6 +8,7 @@ import { ANNUAL_INDICATORS, annualLevel } from "../../lib/forms";
 import { DateField } from "../../lib/pickers";
 import { setExportMode } from "../../lib/print";
 import { printAnnualEvaluation } from "../../lib/printTemplates";
+import { AiSuggest } from "../../lib/aiSuggest";
 
 export default function AnnualEvaluations() {
   const evals = useQuery(api.evaluations.listAnnual, {});
@@ -159,6 +160,8 @@ export default function AnnualEvaluations() {
             </Row>
           </Card>
           <Input label="ملاحظات" value={notes} onChangeText={setNotes} multiline />
+          <AiSuggest prompt={`ملاحظة ختامية موجزة للتقييم السنوي لمعلمة حصلت على ${pct}% (${annualLevel(pct)}).`}
+            onResult={(t) => setNotes((p) => (p ? p + "\n" + t : t))} />
           <Row>
             <Button title={editing ? "حفظ التعديل" : "حفظ التقييم"} icon="checkmark" onPress={save} />
             {editing ? <Button title="إلغاء" variant="ghost" onPress={reset} /> : null}

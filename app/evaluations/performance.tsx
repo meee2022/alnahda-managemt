@@ -11,6 +11,7 @@ import { DateField, TimeField, Stepper } from "../../lib/pickers";
 import { setExportMode } from "../../lib/print";
 import { printPerformanceVisit } from "../../lib/printTemplates";
 import { SourceFileBtn } from "../../lib/sourceFile";
+import { AiSuggest } from "../../lib/aiSuggest";
 
 function pickFile(): Promise<File | null> {
   return new Promise((resolve) => {
@@ -319,8 +320,14 @@ export default function Performance() {
           <Card>
             <H2>التوصيات الختامية</H2>
             <Input label="التوصيات العامة" value={info.generalRecommendations} onChangeText={(v) => setInfo({ ...info, generalRecommendations: v })} multiline />
+            <AiSuggest prompt={`توصية تربوية عامة ختامية لمعلمة ${info.subject} (نسبة الأداء ${pct}%)${info.lessonTitle ? `، الدرس: ${info.lessonTitle}` : ""}.`}
+              onResult={(t) => setInfo((p) => ({ ...p, generalRecommendations: p.generalRecommendations ? p.generalRecommendations + "\n" + t : t }))} />
             <Input label="الخطوات القادمة" value={info.nextSteps} onChangeText={(v) => setInfo({ ...info, nextSteps: v })} multiline />
+            <AiSuggest prompt={`الخطوات القادمة لتطوير أداء معلمة ${info.subject} بناءً على متابعة أدائها (نسبة ${pct}%).`}
+              onResult={(t) => setInfo((p) => ({ ...p, nextSteps: p.nextSteps ? p.nextSteps + "\n" + t : t }))} />
             <Input label="الاحتياجات التدريبية" value={info.trainingNeeds} onChangeText={(v) => setInfo({ ...info, trainingNeeds: v })} multiline />
+            <AiSuggest prompt={`الاحتياجات التدريبية المقترحة لمعلمة ${info.subject} بناءً على أداء بنسبة ${pct}%.`}
+              onResult={(t) => setInfo((p) => ({ ...p, trainingNeeds: p.trainingNeeds ? p.trainingNeeds + "\n" + t : t }))} />
             <Input label="ملاحظات إضافية" value={info.additionalNotes} onChangeText={(v) => setInfo({ ...info, additionalNotes: v })} multiline />
           </Card>
 
