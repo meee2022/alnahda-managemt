@@ -13,6 +13,8 @@ export default function Admin() {
   const seed = useMutation(api.admin.seed);
   const seedBank = useMutation(api.performance.seedBank);
   const seedRoster = useMutation(api.teachers.seedRoster);
+  const cleanupFiles = useMutation(api.files.cleanupOrphans);
+  const [cleaning, setCleaning] = React.useState(false);
 
   const [form, setForm] = useState<Record<string, string>>({});
   const [saved, setSaved] = useState(false);
@@ -108,6 +110,21 @@ export default function Admin() {
           <Button title="استيراد بيانات المعلمات" icon="people-outline" variant="outline"
             onPress={async () => { const r = await seedRoster({}); setMsg(`معلمات جديدة: ${r.added} • محدّثة: ${r.updated}`); setTimeout(() => setMsg(""), 3000); }} />
         </Row>
+        {msg ? <Badge label={msg} tone="success" /> : null}
+      </Card>
+
+      <Card>
+        <H2>تنظيف الملفات المؤقتة</H2>
+        <P muted style={{ marginBottom: 10 }}>
+          يحذف ملفات الرفع القديمة المتراكمة (التي حُلّلت بالذكاء ولم تُؤرشف) لتوفير مساحة التخزين. آمن — يُبقي الملفات المرتبطة بالسجلات (توقيع الاجتماع، الملف الأصلي للزيارة ومتابعة الأداء).
+        </P>
+        <Button title={cleaning ? "جارٍ التنظيف…" : "تنظيف الملفات غير المرتبطة"} icon="trash-bin-outline" variant="outline" loading={cleaning}
+          onPress={async () => {
+            if (typeof window !== "undefined" && !window.confirm("حذف كل ملفات الرفع غير المرتبطة بأي سجل؟")) return;
+            setCleaning(true);
+            try { const r = await cleanupFiles({}); setMsg(`حُذف ${r.deleted} ملف (تحرير ~${r.freedKB} ك.ب) • أُبقي ${r.kept} مؤرشف`); setTimeout(() => setMsg(""), 5000); }
+            finally { setCleaning(false); }
+          }} />
         {msg ? <Badge label={msg} tone="success" /> : null}
       </Card>
 
