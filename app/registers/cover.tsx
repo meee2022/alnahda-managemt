@@ -139,7 +139,9 @@ export default function CoverRegister() {
   );
 
   const teacherNames = (teachers ?? []).map((t) => t.name);
-  const daySchedule = useQuery(api.timetable.byDay, day ? { day } : { day: "" });
+  // نستخدم القائمة الكاملة ونصفّي محلياً (أكثر استقراراً من الاستعلام المفهرس عند ضغط الخادم)
+  const allSlots = useQuery(api.timetable.list, {});
+  const daySchedule = (allSlots ?? []).filter((s: any) => s.day === day);
 
   const setEntry = (i: number, patch: Partial<Entry>) =>
     setEntries((p) => p.map((e, j) => (j === i ? { ...e, ...patch } : e)));
