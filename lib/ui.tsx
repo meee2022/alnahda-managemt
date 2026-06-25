@@ -28,6 +28,34 @@ const TOAST_TONE: Record<ToastTone, { bg: string; bar: string; icon: keyof typeo
   error: { bg: colors.dangerSoft, bar: colors.danger, icon: "alert-circle" },
 };
 
+// حاجز أخطاء عام — يمنع الشاشة البيضاء عند فشل عابر (مثل انقطاع Convex أو تجاوز الحصة)
+export class AppErrorBoundary extends React.Component<{ children: React.ReactNode }, { error: any }> {
+  state = { error: null as any };
+  static getDerivedStateFromError(error: any) { return { error }; }
+  componentDidCatch() {}
+  render() {
+    if (this.state.error) {
+      const reload = () => {
+        this.setState({ error: null });
+        if (Platform.OS === "web" && typeof window !== "undefined") window.location.reload();
+      };
+      return (
+        <View style={{ flex: 1, alignItems: "center", justifyContent: "center", padding: 28, backgroundColor: colors.bg }}>
+          <Ionicons name="cloud-offline-outline" size={48} color={colors.textMuted} />
+          <Text style={{ fontFamily: fonts.bold, fontSize: 16, color: colors.text, marginTop: 14, textAlign: "center" }}>تعذّر تحميل البيانات مؤقتاً</Text>
+          <Text style={{ fontFamily: fonts.regular, fontSize: 13, color: colors.textSecondary, marginTop: 6, textAlign: "center", lineHeight: 22, maxWidth: 360 }}>
+            حدث انقطاع مؤقت في الاتصال بالخادم. حدّثي الصفحة وحاولي مرة أخرى — إن تكرر فقد يكون الخادم تجاوز حد الخطة المجانية مؤقتاً.
+          </Text>
+          <Pressable onPress={reload} style={{ marginTop: 16, backgroundColor: colors.primary, borderRadius: radius.md, paddingHorizontal: 20, paddingVertical: 11 }}>
+            <Text style={{ fontFamily: fonts.semibold, fontSize: 14, color: "#fff" }}>إعادة المحاولة</Text>
+          </Pressable>
+        </View>
+      );
+    }
+    return this.props.children as any;
+  }
+}
+
 export function Toaster() {
   const [items, setItems] = React.useState<{ id: number; text: string; tone: ToastTone }[]>([]);
   const seq = React.useRef(0);
