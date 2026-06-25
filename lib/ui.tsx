@@ -8,14 +8,66 @@ import { LinearGradient } from "expo-linear-gradient";
 import { Alert } from "react-native";
 import { colors, radius, shadow, fonts, gradients } from "./theme";
 
-// تنبيه موحّد للمستخدم (تحذير نقص بيانات، أو فشل عملية) — يظهر على الويب والجوال
-export function notify(message: string, title = "تنبيه") {
-  if (Platform.OS === "web") {
-    if (typeof window !== "undefined" && window.alert) window.alert(message);
-  } else {
-    Alert.alert(title, message);
-  }
+// تنبيه موحّد احترافي داخل الموقع (toast) — يظهر بهوية الموقع ويختفي تلقائياً.
+// يُغذّى عبر notify() من أي مكان، ويعرضه مكوّن <Toaster/> المثبّت في الجذر.
+type ToastTone = "warn" | "success" | "error";
+let toastPush: ((text: string, tone: ToastTone) => void) | null = null;
+
+export function notify(message: string, tone: ToastTone = "warn") {
+  if (toastPush) { toastPush(message, tone); return; }
+  // احتياطي قبل تثبيت الـToaster
+  if (Platform.OS === "web") { if (typeof window !== "undefined" && window.alert) window.alert(message); }
+  else Alert.alert("تنبيه", message);
 }
+export const notifySuccess = (m: string) => notify(m, "success");
+export const notifyError = (m: string) => notify(m, "error");
+
+const TOAST_TONE: Record<ToastTone, { bg: string; bar: string; icon: keyof typeof Ionicons.glyphMap }> = {
+  warn: { bg: colors.warningSoft, bar: colors.warning, icon: "warning" },
+  success: { bg: colors.successSoft, bar: colors.success, icon: "checkmark-circle" },
+  error: { bg: colors.dangerSoft, bar: colors.danger, icon: "alert-circle" },
+};
+
+export function Toaster() {
+  const [items, setItems] = React.useState<{ id: number; text: string; tone: ToastTone }[]>([]);
+  const seq = React.useRef(0);
+  React.useEffect(() => {
+    toastPush = (text, tone) => {
+      const id = ++seq.current;
+      setItems((p) => [...p, { id, text, tone }].slice(-3));
+      setTimeout(() => setItems((p) => p.filter((x) => x.id !== id)), 4000);
+    };
+    return () => { toastPush = null; };
+  }, []);
+  if (!items.length) return null;
+  return (
+    <View pointerEvents="box-none" style={tst.host}>
+      {items.map((it) => {
+        const t = TOAST_TONE[it.tone];
+        return (
+          <View key={it.id} style={[tst.toast, { backgroundColor: t.bg }]}>
+            <View style={[tst.bar, { backgroundColor: t.bar }]} />
+            <Ionicons name={t.icon} size={20} color={t.bar} />
+            <Text style={tst.txt}>{it.text}</Text>
+          </View>
+        );
+      })}
+    </View>
+  );
+}
+
+const tst = StyleSheet.create({
+  host: {
+    position: "absolute", top: 14, left: 0, right: 0, alignItems: "center", zIndex: 9999, gap: 8,
+    ...(Platform.OS === "web" ? ({ position: "fixed" as any }) : {}),
+  },
+  toast: {
+    flexDirection: "row", alignItems: "center", gap: 9, maxWidth: 460, width: "92%",
+    paddingVertical: 12, paddingHorizontal: 14, borderRadius: radius.md, overflow: "hidden", ...shadow.raised,
+  },
+  bar: { position: "absolute", right: 0, top: 0, bottom: 0, width: 4 },
+  txt: { flex: 1, fontFamily: fonts.semibold, fontSize: 13.5, color: colors.text, textAlign: "right", lineHeight: 21 },
+});
 
 // غلاف ظهور ناعم — مرئي افتراضياً (لو الحركة ما اشتغلتش يفضل المحتوى ظاهر، مش يختفي)
 // نستخدم حركة CSS على الويب عبر react-native-web؛ على المنصات الأخرى يظهر العنصر مباشرة.

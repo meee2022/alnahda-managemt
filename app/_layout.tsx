@@ -15,6 +15,7 @@ import {
 import { convex } from "../lib/convex";
 import { AuthProvider, useAuth } from "../lib/auth";
 import { DrawerProvider, MenuButton, HeaderAvatar, useDrawer, NAV } from "../lib/nav";
+import { Toaster } from "../lib/ui";
 import { colors, fonts, shadow } from "../lib/theme";
 
 // يسار الترويسة (يمين بصرياً في RTL): زر قائمة في الرئيسية، وزر رجوع في الصفحات الداخلية
@@ -319,6 +320,7 @@ export default function RootLayout() {
           <Stack.Screen name="admin" options={{ title: "لوحة التحكم" }} />
         </Stack>
         <BottomBar />
+        <Toaster />
         </View>
         </DrawerProvider>
       </AuthProvider>
