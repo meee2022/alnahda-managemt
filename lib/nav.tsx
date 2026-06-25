@@ -88,7 +88,7 @@ function DrawerOverlay({ onClose }: { onClose: () => void }) {
   const settings = useQuery(api.admin.getSettings, loggedIn ? {} : "skip");
   const pathname = usePathname();
   const { width, height } = useWindowDimensions();
-  const panelWidth = Math.min(320, width * 0.86);
+  const panelWidth = Math.min(300, Math.max(248, width * 0.72));
 
   const coordinator = settings?.coordinator ?? "المنسقة";
   const initial = coordinator.trim().charAt(0) || "م";
@@ -197,15 +197,15 @@ const styles = StyleSheet.create({
     position: "absolute", top: 0, right: 0, backgroundColor: colors.card,
     borderTopLeftRadius: 22, borderBottomLeftRadius: 22, overflow: "hidden", ...shadow.raised,
   },
-  profile: { paddingTop: 28, paddingBottom: 20, paddingHorizontal: 20, overflow: "hidden" },
+  profile: { paddingTop: 18, paddingBottom: 15, paddingHorizontal: 18, overflow: "hidden" },
   profilePattern: { position: "absolute", right: -50, top: -40, alignItems: "center", justifyContent: "center" },
   ring: { position: "absolute", borderRadius: 999, borderWidth: 1, borderColor: "rgba(255,255,255,0.08)" },
   avatarLg: {
-    width: 58, height: 58, borderRadius: 19, backgroundColor: "rgba(255,255,255,0.16)",
-    borderWidth: 1, borderColor: "rgba(255,255,255,0.25)", alignItems: "center", justifyContent: "center", marginBottom: 12,
+    width: 48, height: 48, borderRadius: 16, backgroundColor: "rgba(255,255,255,0.16)",
+    borderWidth: 1, borderColor: "rgba(255,255,255,0.25)", alignItems: "center", justifyContent: "center", marginBottom: 9,
   },
-  avatarLgText: { fontFamily: fonts.bold, fontSize: 26, color: "#fff" },
-  profileName: { fontFamily: fonts.bold, fontSize: 17, color: "#fff", textAlign: "right" },
+  avatarLgText: { fontFamily: fonts.bold, fontSize: 22, color: "#fff" },
+  profileName: { fontFamily: fonts.bold, fontSize: 16, color: "#fff", textAlign: "right" },
   profileRole: { fontFamily: fonts.regular, fontSize: 12.5, color: "rgba(255,255,255,0.78)", textAlign: "right", marginTop: 2 },
   yearPill: { alignSelf: "flex-end", marginTop: 10, backgroundColor: "rgba(255,255,255,0.14)", borderRadius: 999, paddingHorizontal: 11, paddingVertical: 3 },
   yearText: { fontFamily: fonts.medium, fontSize: 11.5, color: "#fff" },
