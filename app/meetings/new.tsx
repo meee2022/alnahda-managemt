@@ -94,17 +94,27 @@ export default function NewMeeting() {
   const addItem = (title: string) => setItems((p) => [...p, { title, content: "" }]);
   const available = BANK.filter((b) => !items.some((it) => it.title === b));
 
+  const [saving, setSaving] = useState(false);
   const save = async () => {
-    if (!form.date.trim()) return;
-    const payload = {
-      type: isGroup ? "group" : "individual",
-      ...form,
-      items: items.filter((i) => i.title.trim() || i.content.trim()),
-      signatureId: (signatureId as any) ?? undefined,
-    };
-    if (id) await update({ id: id as any, ...payload });
-    else await create(payload);
-    router.back();
+    if (!form.date.trim()) {
+      if (typeof window !== "undefined") window.alert("يرجى تحديد تاريخ الاجتماع أولاً قبل الحفظ.");
+      return;
+    }
+    setSaving(true);
+    try {
+      const payload = {
+        type: isGroup ? "group" : "individual",
+        ...form,
+        items: items.filter((i) => i.title.trim() || i.content.trim()),
+        signatureId: (signatureId as any) ?? undefined,
+      };
+      if (id) await update({ id: id as any, ...payload });
+      else await create(payload);
+      router.back();
+    } catch (e: any) {
+      if (typeof window !== "undefined") window.alert("تعذّر حفظ المحضر: " + String(e?.message ?? e).slice(0, 180));
+      setSaving(false);
+    }
   };
 
   return (
@@ -211,7 +221,7 @@ export default function NewMeeting() {
       </Card>
 
       <Card>
-        <Button title="حفظ المحضر" icon="checkmark" onPress={save} />
+        <Button title={saving ? "جارٍ الحفظ…" : "حفظ المحضر"} icon="checkmark" loading={saving} disabled={saving} onPress={save} />
       </Card>
     </Screen>
   );
