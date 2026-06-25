@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { View, Platform } from "react-native";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "../convex/_generated/api";
-import { Screen, Card, H2, P, Input, Button, Loading, Empty, Row, IconBtn, Badge, Chip, Select, PageHero, HeroBtn, ExportMenu, AnimatedItem } from "../lib/ui";
+import { Screen, Card, H2, P, Input, Button, Loading, Empty, Row, IconBtn, Badge, Chip, Select, PageHero, HeroBtn, ExportMenu, AnimatedItem, notify } from "../lib/ui";
 import { colors } from "../lib/theme";
 import { printStudentsSkillSheet } from "../lib/printTemplates";
 import { setExportMode } from "../lib/print";
@@ -52,7 +52,7 @@ export default function Students() {
   const reset = () => { setForm({ name: "", readingLevel: "", writingLevel: "", behavior: "", notes: "" }); setAdding(false); setEditing(null); };
 
   const save = async () => {
-    if (!form.name.trim()) return;
+    if (!form.name.trim()) { notify("يرجى إدخال اسم الطالبة قبل الحفظ."); return; }
     if (editing) await update({ id: editing as any, ...form });
     else await create({ ...form, grade, section });
     reset();

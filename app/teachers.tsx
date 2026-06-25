@@ -3,7 +3,7 @@ import { View, Text } from "react-native";
 import { useQuery, useMutation } from "convex/react";
 import { useLocalSearchParams } from "expo-router";
 import { api } from "../convex/_generated/api";
-import { Screen, Card, H2, P, Input, Button, Loading, Empty, Row, IconBtn, Badge, Select, Chip, PageHero, HeroBtn, ExportMenu, AnimatedItem } from "../lib/ui";
+import { Screen, Card, H2, P, Input, Button, Loading, Empty, Row, IconBtn, Badge, Select, Chip, PageHero, HeroBtn, ExportMenu, AnimatedItem, notify } from "../lib/ui";
 import { colors, fonts } from "../lib/theme";
 import { isAssistant } from "../lib/forms";
 import { printTeachersSheet } from "../lib/printTemplates";
@@ -41,7 +41,7 @@ export default function Teachers() {
   const reset = () => { setForm({ ...EMPTY }); setAdding(false); setEditing(null); };
 
   const save = async () => {
-    if (!form.name.trim()) return;
+    if (!form.name.trim()) { notify("يرجى إدخال اسم المعلمة قبل الحفظ."); return; }
     if (editing) await update({ id: editing as any, ...form });
     else await create(form);
     reset();

@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { View, Text, Pressable, StyleSheet, Platform } from "react-native";
 import { useQuery, useMutation, useAction } from "convex/react";
 import { api } from "../../convex/_generated/api";
-import { Screen, Card, H2, P, Input, Button, Loading, Empty, Row, IconBtn, Badge, Select, Chip, PageHero, HeroBtn, AnimatedItem, ExportMenu } from "../../lib/ui";
+import { Screen, Card, H2, P, Input, Button, Loading, Empty, Row, IconBtn, Badge, Select, Chip, PageHero, HeroBtn, AnimatedItem, ExportMenu, notify } from "../../lib/ui";
 import { colors, fonts } from "../../lib/theme";
 import { CLASS_VISIT_DOMAINS, CLASS_VISIT_FOLLOWUP, CLASS_VISIT_SCALE, SCORE_OPTIONS } from "../../lib/forms";
 import { DateField } from "../../lib/pickers";
@@ -107,7 +107,7 @@ export default function ClassVisit() {
   };
 
   const save = async () => {
-    if (!form.teacherName || !form.date) return;
+    if (!form.teacherName || !form.date) { notify("يرجى اختيار المعلمة والتاريخ قبل الحفظ."); return; }
     const payload = {
       ...form,
       scores: ALL.map((code) => ({ code, score: scores[code] ?? -1, recommendation: indRecs[code] ?? "" })),

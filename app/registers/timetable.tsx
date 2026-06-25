@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { View, Text, Pressable, StyleSheet, ScrollView, Modal, Platform } from "react-native";
 import { useQuery, useMutation, useAction } from "convex/react";
 import { api } from "../../convex/_generated/api";
-import { Screen, Card, H2, P, Input, Button, Loading, Row, PageHero, Select, Badge } from "../../lib/ui";
+import { Screen, Card, H2, P, Input, Button, Loading, Row, PageHero, Select, Badge, notify } from "../../lib/ui";
 import { Ionicons } from "@expo/vector-icons";
 import { colors, fonts, radius, gradients } from "../../lib/theme";
 
@@ -86,7 +86,7 @@ export default function TimetablePage() {
   };
 
   const saveCell = async () => {
-    if (!selectedTeacher || !modal || !className.trim()) return;
+    if (!selectedTeacher || !modal || !className.trim()) { notify("يرجى اختيار المعلمة وكتابة الصف/الشعبة."); return; }
     await upsert({
       teacherName: selectedTeacher,
       day: modal.day,

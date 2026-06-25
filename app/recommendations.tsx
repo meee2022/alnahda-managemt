@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { View } from "react-native";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "../convex/_generated/api";
-import { Screen, Card, H2, P, Input, Button, Loading, Empty, Row, IconBtn, Badge, Select, Chip, PageHero, HeroBtn, AnimatedItem, ExportMenu } from "../lib/ui";
+import { Screen, Card, H2, P, Input, Button, Loading, Empty, Row, IconBtn, Badge, Select, Chip, PageHero, HeroBtn, AnimatedItem, ExportMenu, notify } from "../lib/ui";
 import { colors } from "../lib/theme";
 import { DateField, TimeField } from "../lib/pickers";
 import { setExportMode } from "../lib/print";
@@ -32,7 +32,7 @@ export default function Recommendations() {
     setEditing(x._id); setAdding(true);
   };
   const save = async () => {
-    if (!form.text.trim()) return;
+    if (!form.text.trim()) { notify("يرجى إدخال نص التوصية قبل الحفظ."); return; }
     if (editing) await update({ id: editing as any, source: form.source, text: form.text, assignee: form.assignee, dueDate: form.dueDate, dueTime: form.dueTime });
     else await create({ ...form, createdDate: new Date().toLocaleDateString("ar-EG") });
     reset();

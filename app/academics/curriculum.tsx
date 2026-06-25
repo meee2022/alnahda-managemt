@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { View, Platform } from "react-native";
 import { useQuery, useMutation, useAction } from "convex/react";
 import { api } from "../../convex/_generated/api";
-import { Screen, Card, H2, P, Input, Button, Loading, Empty, Row, IconBtn, Badge, Select, Chip, PageHero, HeroBtn, ExportMenu, AnimatedItem } from "../../lib/ui";
+import { Screen, Card, H2, P, Input, Button, Loading, Empty, Row, IconBtn, Badge, Select, Chip, PageHero, HeroBtn, ExportMenu, AnimatedItem, notify } from "../../lib/ui";
 import { colors } from "../../lib/theme";
 import { printCurriculumPlan } from "../../lib/printTemplates";
 import { setExportMode } from "../../lib/print";
@@ -80,7 +80,7 @@ export default function Curriculum() {
 
   const save = async () => {
     const n = parseInt(form.weekNumber);
-    if (!n) return;
+    if (!n) { notify("يرجى إدخال رقم الأسبوع."); return; }
     if (editing) {
       await upsert({ id: editing as any, grade, term, weekNumber: n, unit: form.unit, arabicLessons: form.arabicLessons, islamicLessons: form.islamicLessons });
     } else {

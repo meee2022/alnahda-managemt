@@ -3,7 +3,7 @@ import { View, Text, Pressable, StyleSheet } from "react-native";
 import { useLocalSearchParams, router } from "expo-router";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "../../convex/_generated/api";
-import { Screen, Card, H2, P, Input, Button, Loading, Empty, Row, IconBtn, Badge, Select, Chip, PageHero, HeroBtn, AnimatedItem, ExportMenu } from "../../lib/ui";
+import { Screen, Card, H2, P, Input, Button, Loading, Empty, Row, IconBtn, Badge, Select, Chip, PageHero, HeroBtn, AnimatedItem, ExportMenu, notify } from "../../lib/ui";
 import { colors, fonts } from "../../lib/theme";
 import { DateField } from "../../lib/pickers";
 import { setExportMode } from "../../lib/print";
@@ -187,7 +187,7 @@ export default function CoverRegister() {
 
   const save = async () => {
     const valid = entries.filter((e) => e.teacherName.trim() && e.coverTeacher.trim());
-    if (!date.trim() || valid.length === 0) return;
+    if (!date.trim() || valid.length === 0) { notify("يرجى تحديد التاريخ وإضافة معلمة واحدة على الأقل."); return; }
     if (editing) await update({ id: editing as any, date, day, department: settings?.department, entries: valid });
     else await create({ date, day, department: settings?.department, entries: valid });
     reset();

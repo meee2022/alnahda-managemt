@@ -5,7 +5,17 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
+import { Alert } from "react-native";
 import { colors, radius, shadow, fonts, gradients } from "./theme";
+
+// تنبيه موحّد للمستخدم (تحذير نقص بيانات، أو فشل عملية) — يظهر على الويب والجوال
+export function notify(message: string, title = "تنبيه") {
+  if (Platform.OS === "web") {
+    if (typeof window !== "undefined" && window.alert) window.alert(message);
+  } else {
+    Alert.alert(title, message);
+  }
+}
 
 // غلاف ظهور ناعم — مرئي افتراضياً (لو الحركة ما اشتغلتش يفضل المحتوى ظاهر، مش يختفي)
 // نستخدم حركة CSS على الويب عبر react-native-web؛ على المنصات الأخرى يظهر العنصر مباشرة.

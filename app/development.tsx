@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { View } from "react-native";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "../convex/_generated/api";
-import { Screen, Card, H2, P, Input, Button, Loading, Empty, Row, IconBtn, Badge, Select, Chip, PageHero, HeroBtn, AnimatedItem, ExportMenu } from "../lib/ui";
+import { Screen, Card, H2, P, Input, Button, Loading, Empty, Row, IconBtn, Badge, Select, Chip, PageHero, HeroBtn, AnimatedItem, ExportMenu, notify } from "../lib/ui";
 import { colors } from "../lib/theme";
 import { MONTHS } from "../lib/forms";
 import { DateField } from "../lib/pickers";
@@ -32,8 +32,8 @@ export default function Development() {
   const reset = () => { setTform({ ...T0 }); setRform({ ...R0 }); setAdding(false); setEditing(null); };
   const startEditTraining = (t: any) => { setTform({ teacherName: t.teacherName ?? "", programName: t.programName ?? "", date: t.date ?? "", month: t.month ?? "مايو", hours: t.hours ?? "", type: t.type ?? "داخلي", category: t.category ?? "ورشة" }); setEditing(t._id); setAdding(true); };
   const startEditReading = (r: any) => { setRform({ teacherName: r.teacherName ?? "", date: r.date ?? "", bookTitle: r.bookTitle ?? "", summary: r.summary ?? "" }); setEditing(r._id); setAdding(true); };
-  const saveTraining = async () => { if (!tform.teacherName || !tform.programName) return; if (editing) await updateTraining({ id: editing as any, ...tform }); else await createTraining(tform); reset(); };
-  const saveReading = async () => { if (!rform.bookTitle) return; if (editing) await updateReading({ id: editing as any, ...rform }); else await createReading(rform); reset(); };
+  const saveTraining = async () => { if (!tform.teacherName || !tform.programName) { notify("يرجى اختيار المعلمة وإدخال اسم البرنامج."); return; } if (editing) await updateTraining({ id: editing as any, ...tform }); else await createTraining(tform); reset(); };
+  const saveReading = async () => { if (!rform.bookTitle) { notify("يرجى إدخال عنوان الكتاب."); return; } if (editing) await updateReading({ id: editing as any, ...rform }); else await createReading(rform); reset(); };
 
   const printTeacherSheet = (teacherName: string) =>
     printTrainingSheet(teacherName, (trainings ?? []).filter((t) => t.teacherName === teacherName), settings ?? {});

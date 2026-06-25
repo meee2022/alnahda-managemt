@@ -3,7 +3,7 @@ import { View, Text, Pressable, StyleSheet, Platform } from "react-native";
 import { useDraft } from "../../lib/useDraft";
 import { useQuery, useMutation, useAction } from "convex/react";
 import { api } from "../../convex/_generated/api";
-import { Screen, Card, H2, P, Input, Button, Loading, Empty, Row, IconBtn, Badge, Select, PageHero, HeroBtn, AnimatedItem, ExportMenu } from "../../lib/ui";
+import { Screen, Card, H2, P, Input, Button, Loading, Empty, Row, IconBtn, Badge, Select, PageHero, HeroBtn, AnimatedItem, ExportMenu, notify } from "../../lib/ui";
 import { colors, fonts, radius } from "../../lib/theme";
 import { PERF_DOMAINS, PERF_ALL_CODES, SCORE_OPTIONS } from "../../lib/forms";
 import { Chip } from "../../lib/ui";
@@ -132,7 +132,7 @@ export default function Performance() {
   };
 
   const save = async () => {
-    if (!info.teacherName || !info.date) return;
+    if (!info.teacherName || !info.date) { notify("يرجى اختيار المعلمة وتاريخ الزيارة قبل الحفظ."); return; }
     const indicators = PERF_ALL_CODES.map((code) => ({ code, score: scores[code] ?? -1, recommendation: recs[code] ?? "" }));
     if (editing) {
       await update({

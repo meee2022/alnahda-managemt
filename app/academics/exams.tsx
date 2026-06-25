@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { View, Text, StyleSheet } from "react-native";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "../../convex/_generated/api";
-import { Screen, Card, H2, P, Input, Button, Loading, Empty, Row, IconBtn, Badge, Select, PageHero, HeroBtn, AnimatedItem, ExportMenu } from "../../lib/ui";
+import { Screen, Card, H2, P, Input, Button, Loading, Empty, Row, IconBtn, Badge, Select, PageHero, HeroBtn, AnimatedItem, ExportMenu, notify } from "../../lib/ui";
 import { colors, fonts, radius } from "../../lib/theme";
 import { setExportMode } from "../../lib/print";
 import { printExamReport } from "../../lib/printTemplates";
@@ -55,7 +55,7 @@ export default function Exams() {
   };
 
   const save = async () => {
-    if (!form.title.trim()) return;
+    if (!form.title.trim()) { notify("يرجى إدخال اسم التقرير قبل الحفظ."); return; }
     const builtRows = rows.filter((r) => r.passRate || r.achievementRate).map((r) => ({
       grade: form.grade, subject: r.subject, section: r.section,
       passRate: parseFloat(r.passRate) || 0,

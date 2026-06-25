@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { View } from "react-native";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "../../convex/_generated/api";
-import { Screen, Card, H2, P, Input, Button, Loading, Empty, Row, IconBtn, Badge, Select, PageHero, HeroBtn, ExportMenu, AnimatedItem } from "../../lib/ui";
+import { Screen, Card, H2, P, Input, Button, Loading, Empty, Row, IconBtn, Badge, Select, PageHero, HeroBtn, ExportMenu, AnimatedItem, notify } from "../../lib/ui";
 import { colors } from "../../lib/theme";
 import { MONTHS } from "../../lib/forms";
 import { printAchievementsSheet } from "../../lib/printTemplates";
@@ -29,7 +29,7 @@ export default function Achievements() {
   };
 
   const save = async () => {
-    if (!form.description.trim()) return;
+    if (!form.description.trim()) { notify("يرجى إدخال وصف الإنجاز قبل الحفظ."); return; }
     if (editing) await update({ id: editing as any, ...form });
     else await create(form);
     reset();

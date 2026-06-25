@@ -4,7 +4,7 @@ import { useLocalSearchParams, router } from "expo-router";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import { Ionicons } from "@expo/vector-icons";
-import { Screen, Card, H2, Input, Button, Row, IconBtn, P, PageHero } from "../../lib/ui";
+import { Screen, Card, H2, Input, Button, Row, IconBtn, P, PageHero, notify } from "../../lib/ui";
 import { DateField, TimeField } from "../../lib/pickers";
 import { colors, radius, fonts } from "../../lib/theme";
 import { AiSuggest } from "../../lib/aiSuggest";
@@ -96,10 +96,7 @@ export default function NewMeeting() {
 
   const [saving, setSaving] = useState(false);
   const save = async () => {
-    if (!form.date.trim()) {
-      if (typeof window !== "undefined") window.alert("يرجى تحديد تاريخ الاجتماع أولاً قبل الحفظ.");
-      return;
-    }
+    if (!form.date.trim()) { notify("يرجى تحديد تاريخ الاجتماع أولاً قبل الحفظ."); return; }
     setSaving(true);
     try {
       const payload = {
@@ -112,7 +109,7 @@ export default function NewMeeting() {
       else await create(payload);
       router.back();
     } catch (e: any) {
-      if (typeof window !== "undefined") window.alert("تعذّر حفظ المحضر: " + String(e?.message ?? e).slice(0, 180));
+      notify("تعذّر حفظ المحضر: " + String(e?.message ?? e).slice(0, 180));
       setSaving(false);
     }
   };

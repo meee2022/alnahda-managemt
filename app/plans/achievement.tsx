@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { View } from "react-native";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "../../convex/_generated/api";
-import { Screen, Card, H2, P, Input, Button, Loading, Empty, Row, IconBtn, Badge, Select, PageHero, HeroBtn, ExportMenu, AnimatedItem } from "../../lib/ui";
+import { Screen, Card, H2, P, Input, Button, Loading, Empty, Row, IconBtn, Badge, Select, PageHero, HeroBtn, ExportMenu, AnimatedItem, notify } from "../../lib/ui";
 import { colors } from "../../lib/theme";
 import { printAchievementPlan } from "../../lib/printTemplates";
 import { setExportMode } from "../../lib/print";
@@ -27,7 +27,7 @@ export default function AchievementPlan() {
   const reset = () => { setForm({ stage: STAGES[0], goal: "", actions: "", responsible: "منسقة المسار الأدبي", timeframe: "", indicators: "", execution: "" }); setAdding(false); setEditing(null); };
 
   const save = async () => {
-    if (!form.goal.trim()) return;
+    if (!form.goal.trim()) { notify("يرجى إدخال الهدف قبل الحفظ."); return; }
     await upsert({
       id: (editing as any) ?? undefined,
       year: settings?.academicYear ?? "2025-2026",

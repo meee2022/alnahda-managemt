@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { View } from "react-native";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "../convex/_generated/api";
-import { Screen, Card, H2, P, Input, Button, Loading, Empty, Row, IconBtn, Badge, Select, Chip, PageHero, HeroBtn, ExportMenu, AnimatedItem } from "../lib/ui";
+import { Screen, Card, H2, P, Input, Button, Loading, Empty, Row, IconBtn, Badge, Select, Chip, PageHero, HeroBtn, ExportMenu, AnimatedItem, notify } from "../lib/ui";
 import { colors } from "../lib/theme";
 import { printVisitsSchedule } from "../lib/printTemplates";
 import { setExportMode } from "../lib/print";
@@ -47,7 +47,7 @@ export default function Visits() {
   };
 
   const save = async () => {
-    if (!form.teacherName || !form.date) return;
+    if (!form.teacherName || !form.date) { notify("يرجى اختيار المعلمة والتاريخ قبل الحفظ."); return; }
     if (editing) await update({ id: editing as any, ...form, month });
     else await create({ ...form, month });
     reset();

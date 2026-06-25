@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { View } from "react-native";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "../../convex/_generated/api";
-import { Screen, Card, H2, P, Input, Button, Loading, Empty, Row, IconBtn, Badge, Chip, PageHero, HeroBtn, ExportMenu, AnimatedItem } from "../../lib/ui";
+import { Screen, Card, H2, P, Input, Button, Loading, Empty, Row, IconBtn, Badge, Chip, PageHero, HeroBtn, ExportMenu, AnimatedItem, notify } from "../../lib/ui";
 import { colors } from "../../lib/theme";
 import { printAgenda } from "../../lib/printTemplates";
 import { setExportMode } from "../../lib/print";
@@ -34,7 +34,7 @@ export default function Agenda() {
   };
 
   const save = async () => {
-    if (!form.period.trim()) return;
+    if (!form.period.trim()) { notify("يرجى إدخال الفترة الزمنية قبل الحفظ."); return; }
     await upsert({
       id: (editing as any) ?? undefined,
       year: settings?.academicYear ?? "2025-2026",

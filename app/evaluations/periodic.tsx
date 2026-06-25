@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { View, Text, Pressable, StyleSheet } from "react-native";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "../../convex/_generated/api";
-import { Screen, Card, H2, P, Input, Button, Loading, Empty, Row, IconBtn, Badge, Select, PageHero, HeroBtn, AnimatedItem, ExportMenu } from "../../lib/ui";
+import { Screen, Card, H2, P, Input, Button, Loading, Empty, Row, IconBtn, Badge, Select, PageHero, HeroBtn, AnimatedItem, ExportMenu, notify } from "../../lib/ui";
 import { colors, fonts } from "../../lib/theme";
 import { PERIODIC_DOMAINS, MONTHS } from "../../lib/forms";
 import { setExportMode } from "../../lib/print";
@@ -41,7 +41,7 @@ export default function PeriodicReports() {
   };
 
   const save = async () => {
-    if (!teacherName) return;
+    if (!teacherName) { notify("يرجى اختيار المعلمة قبل الحفظ."); return; }
     const payload = {
       teacherName, month, generalNotes: notes,
       scores: allPractices.map((x) => ({ domain: x.domain, practice: x.practice, score: scores[x.practice] ?? 0, note: noteByPractice[x.practice] || undefined })),

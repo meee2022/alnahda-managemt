@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { View } from "react-native";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "../../convex/_generated/api";
-import { Screen, Card, H2, P, Input, Button, Loading, Empty, Row, IconBtn, Badge, PageHero, HeroBtn, ExportMenu, AnimatedItem } from "../../lib/ui";
+import { Screen, Card, H2, P, Input, Button, Loading, Empty, Row, IconBtn, Badge, PageHero, HeroBtn, ExportMenu, AnimatedItem, notify } from "../../lib/ui";
 import { colors } from "../../lib/theme";
 import { DateField } from "../../lib/pickers";
 import { printAnnualPlan } from "../../lib/printTemplates";
@@ -33,7 +33,7 @@ export default function AnnualPlan() {
   };
 
   const save = async () => {
-    if (!form.domain.trim() || !form.actions.trim()) return;
+    if (!form.domain.trim() || !form.actions.trim()) { notify("يرجى إدخال المجال والإجراءات قبل الحفظ."); return; }
     await upsert({
       id: (editing as any) ?? undefined,
       year: settings?.academicYear ?? "2025-2026",

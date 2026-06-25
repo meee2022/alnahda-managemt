@@ -3,7 +3,7 @@ import { View } from "react-native";
 import { router } from "expo-router";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "../../convex/_generated/api";
-import { Screen, Card, H2, P, Input, Button, Loading, Empty, Row, IconBtn, Badge, Select, PageHero, HeroBtn, AnimatedItem, ExportMenu } from "../../lib/ui";
+import { Screen, Card, H2, P, Input, Button, Loading, Empty, Row, IconBtn, Badge, Select, PageHero, HeroBtn, AnimatedItem, ExportMenu, notify } from "../../lib/ui";
 import { Text } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { colors, fonts } from "../../lib/theme";
@@ -134,7 +134,7 @@ export default function LeaveRegister() {
 
   const save = async () => {
     const valid = entries.filter((e) => e.teacherName.trim());
-    if (!date.trim() || valid.length === 0) return;
+    if (!date.trim() || valid.length === 0) { notify("يرجى تحديد التاريخ وإضافة معلمة واحدة على الأقل."); return; }
     // فحص سياسة الاستئذان — يرفض الحفظ عند وجود مخالفة (مع إمكانية التجاوز بموافقة الإدارة)
     const violations: string[] = [];
     for (const e of valid) {

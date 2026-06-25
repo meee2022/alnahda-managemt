@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { View } from "react-native";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "../../convex/_generated/api";
-import { Screen, Card, H2, P, Input, Button, Loading, Empty, Row, IconBtn, Badge, Select, PageHero, HeroBtn, AnimatedItem, ExportMenu } from "../../lib/ui";
+import { Screen, Card, H2, P, Input, Button, Loading, Empty, Row, IconBtn, Badge, Select, PageHero, HeroBtn, AnimatedItem, ExportMenu, notify } from "../../lib/ui";
 import { colors } from "../../lib/theme";
 import { setExportMode } from "../../lib/print";
 import { printGuidePlan } from "../../lib/printTemplates";
@@ -44,7 +44,7 @@ export default function GuidePlan() {
   };
 
   const save = async () => {
-    if (!form.teacherName) return;
+    if (!form.teacherName) { notify("يرجى اختيار المعلمة قبل الحفظ."); return; }
     const cleanRows = rows.filter((r) => r.domain || r.actions || r.guideName);
     if (editing) await update({ id: editing as any, ...form, rows: cleanRows });
     else await create({ ...form, rows: cleanRows });

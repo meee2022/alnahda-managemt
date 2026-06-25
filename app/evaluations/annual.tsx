@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { View, Text, Pressable, StyleSheet } from "react-native";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "../../convex/_generated/api";
-import { Screen, Card, H2, P, Input, Button, Loading, Empty, Row, IconBtn, Badge, Select, PageHero, HeroBtn, AnimatedItem, ExportMenu } from "../../lib/ui";
+import { Screen, Card, H2, P, Input, Button, Loading, Empty, Row, IconBtn, Badge, Select, PageHero, HeroBtn, AnimatedItem, ExportMenu, notify } from "../../lib/ui";
 import { colors, fonts } from "../../lib/theme";
 import { ANNUAL_INDICATORS, annualLevel } from "../../lib/forms";
 import { DateField } from "../../lib/pickers";
@@ -51,7 +51,7 @@ export default function AnnualEvaluations() {
   };
 
   const save = async () => {
-    if (!teacherName) return;
+    if (!teacherName) { notify("يرجى اختيار المعلمة قبل الحفظ."); return; }
     const indicators = ANNUAL_INDICATORS.map((i) => ({ domain: i.domain, indicator: i.indicator, code: i.code, maxScore: i.maxScore, score: scores[i.code] ?? i.maxScore }));
     if (editing) {
       await update({
