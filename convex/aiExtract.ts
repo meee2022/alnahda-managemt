@@ -143,26 +143,31 @@ export const extractCurriculum = action({
     const apiKey = settings.anthropicApiKey || process.env.ANTHROPIC_API_KEY;
     if (!apiKey) return { ok: false, error: "لم يتم إدخال مفتاح Anthropic API. فعّليه من مساعد التوصيات أولاً." };
 
-    const blob = await ctx.storage.get(storageId);
-    if (!blob) return { ok: false, error: "تعذّر قراءة الملف المرفوع." };
-    const base64 = (globalThis as any).Buffer.from(await blob.arrayBuffer()).toString("base64");
-    // ملف مؤقت للتحليل فقط — يُحذف فوراً لتوفير مساحة التخزين
-    try { await ctx.storage.delete(storageId); } catch {}
-
-    const isPdf = mediaType === "application/pdf";
-    const sourceBlock = isPdf
-      ? { type: "document", source: { type: "base64", media_type: "application/pdf", data: base64 } }
-      : { type: "image", source: { type: "base64", media_type: mediaType, data: base64 } };
-
-    const sys = `أنتِ مساعدة دقيقة لمنسقة قسم المسار الأدبي. مهمتك قراءة جدول «متابعة تنفيذ الخطة الفصلية» (صورة أو PDF) واستخراج كل أسبوع فيه. لكل أسبوع: رقمه، الوحدة، دروس اللغة العربية، دروس التربية الإسلامية، وأي ملاحظات (إجازات، تأجيل اختبارات...). انسخي الدروس حرفياً كما وردت وافصلي بينها بـ " / ". أعيدي رقم الأسبوع كرقم فقط. لا تختلقي أي درس؛ اتركي الحقل فارغاً إن لم يرد. ثم استدعي الأداة submit_curriculum بكل الأسابيع.`;
-
     try {
+      const blob = await ctx.storage.get(storageId);
+      if (!blob) return { ok: false, error: "تعذّر قراءة الملف المرفوع." };
+      const ab = await blob.arrayBuffer();
+      // حد حجم آمن لتفادي تجاوز موارد الخادم (الملفات الكبيرة جداً تُسبب فشلاً)
+      if (ab.byteLength > 6 * 1024 * 1024) {
+        try { await ctx.storage.delete(storageId); } catch {}
+        return { ok: false, error: "الملف كبير جداً (أكثر من 6 ميجابايت). صغّري الـPDF أو ارفعي صورة أوضح بحجم أقل." };
+      }
+      const base64 = (globalThis as any).Buffer.from(ab).toString("base64");
+      try { await ctx.storage.delete(storageId); } catch {}
+
+      const isPdf = mediaType === "application/pdf";
+      const sourceBlock = isPdf
+        ? { type: "document", source: { type: "base64", media_type: "application/pdf", data: base64 } }
+        : { type: "image", source: { type: "base64", media_type: mediaType, data: base64 } };
+
+      const sys = `أنتِ مساعدة دقيقة لمنسقة قسم المسار الأدبي. مهمتك قراءة جدول «متابعة تنفيذ الخطة الفصلية» (صورة أو PDF) واستخراج كل أسبوع فيه. لكل أسبوع: رقمه، الوحدة، دروس اللغة العربية، دروس التربية الإسلامية، وأي ملاحظات (إجازات، تأجيل اختبارات...). انسخي الدروس حرفياً كما وردت وافصلي بينها بـ " / ". أعيدي رقم الأسبوع كرقم فقط. لا تختلقي أي درس؛ اتركي الحقل فارغاً إن لم يرد. ثم استدعي الأداة submit_curriculum بكل الأسابيع.`;
+
       const res = await fetch("https://api.anthropic.com/v1/messages", {
         method: "POST",
         headers: { "content-type": "application/json", "x-api-key": apiKey, "anthropic-version": "2023-06-01" },
         body: JSON.stringify({
           model: "claude-sonnet-4-6",
-          max_tokens: 16000,
+          max_tokens: 8000,
           system: sys,
           tools: [CURRICULUM_TOOL],
           tool_choice: { type: "tool", name: CURRICULUM_TOOL.name },
@@ -178,7 +183,7 @@ export const extractCurriculum = action({
       if (!toolUse) return { ok: false, error: "لم يُرجع النموذج بيانات منظّمة." };
       return { ok: true, data: toolUse.input };
     } catch (e: any) {
-      return { ok: false, error: `فشل الاتصال: ${String(e?.message ?? e).slice(0, 200)}` };
+      return { ok: false, error: `فشل المعالجة: ${String(e?.message ?? e).slice(0, 200)}` };
     }
   },
 });
@@ -190,26 +195,30 @@ export const extractTimetable = action({
     const apiKey = settings.anthropicApiKey || process.env.ANTHROPIC_API_KEY;
     if (!apiKey) return { ok: false, error: "لم يتم إدخال مفتاح Anthropic API. فعّليه من مساعد التوصيات أولاً." };
 
-    const blob = await ctx.storage.get(storageId);
-    if (!blob) return { ok: false, error: "تعذّر قراءة الملف المرفوع." };
-    const base64 = (globalThis as any).Buffer.from(await blob.arrayBuffer()).toString("base64");
-    // ملف مؤقت للتحليل فقط — يُحذف فوراً لتوفير مساحة التخزين
-    try { await ctx.storage.delete(storageId); } catch {}
-
-    const isPdf = mediaType === "application/pdf";
-    const sourceBlock = isPdf
-      ? { type: "document", source: { type: "base64", media_type: "application/pdf", data: base64 } }
-      : { type: "image", source: { type: "base64", media_type: mediaType, data: base64 } };
-
-    const sys = `أنت مساعد دقيق لمنسقة قسم. مهمتك قراءة جدول الحصص الأسبوعي المطبوع (صورة أو PDF) واستخراج كل خلية فيه. لكل معلمة، حددي حصصها في كل يوم (السبت، الأحد، الاثنين، الثلاثاء، الأربعاء، الخميس) ورقم الحصة (1 إلى 8) والصف/الشعبة والمادة. أعيدي رقم الحصة كرقم فقط (مثل "3" وليس "الحصة الثالثة"). إن كان الجدول يعرض لكل معلمة صفها وشعبتها لكل حصة، استخرجيها حرفياً. لا تختلقي بيانات؛ تجاهلي الخلايا الفارغة. ثم استدعي الأداة submit_timetable بكل الخلايا.`;
-
     try {
+      const blob = await ctx.storage.get(storageId);
+      if (!blob) return { ok: false, error: "تعذّر قراءة الملف المرفوع." };
+      const ab = await blob.arrayBuffer();
+      if (ab.byteLength > 6 * 1024 * 1024) {
+        try { await ctx.storage.delete(storageId); } catch {}
+        return { ok: false, error: "الملف كبير جداً (أكثر من 6 ميجابايت). صغّري الملف أو ارفعي صورة أوضح بحجم أقل." };
+      }
+      const base64 = (globalThis as any).Buffer.from(ab).toString("base64");
+      try { await ctx.storage.delete(storageId); } catch {}
+
+      const isPdf = mediaType === "application/pdf";
+      const sourceBlock = isPdf
+        ? { type: "document", source: { type: "base64", media_type: "application/pdf", data: base64 } }
+        : { type: "image", source: { type: "base64", media_type: mediaType, data: base64 } };
+
+      const sys = `أنت مساعد دقيق لمنسقة قسم. مهمتك قراءة جدول الحصص الأسبوعي المطبوع (صورة أو PDF) واستخراج كل خلية فيه. لكل معلمة، حددي حصصها في كل يوم (السبت، الأحد، الاثنين، الثلاثاء، الأربعاء، الخميس) ورقم الحصة (1 إلى 8) والصف/الشعبة والمادة. أعيدي رقم الحصة كرقم فقط (مثل "3" وليس "الحصة الثالثة"). إن كان الجدول يعرض لكل معلمة صفها وشعبتها لكل حصة، استخرجيها حرفياً. لا تختلقي بيانات؛ تجاهلي الخلايا الفارغة. ثم استدعي الأداة submit_timetable بكل الخلايا.`;
+
       const res = await fetch("https://api.anthropic.com/v1/messages", {
         method: "POST",
         headers: { "content-type": "application/json", "x-api-key": apiKey, "anthropic-version": "2023-06-01" },
         body: JSON.stringify({
           model: "claude-sonnet-4-6",
-          max_tokens: 16000,
+          max_tokens: 12000,
           system: sys,
           tools: [TIMETABLE_TOOL],
           tool_choice: { type: "tool", name: TIMETABLE_TOOL.name },
@@ -237,23 +246,28 @@ export const extractForm = action({
     const apiKey = settings.anthropicApiKey || process.env.ANTHROPIC_API_KEY;
     if (!apiKey) return { ok: false, error: "لم يتم إدخال مفتاح Anthropic API. فعّليه من مساعد التوصيات أولاً." };
 
-    const blob = await ctx.storage.get(storageId);
-    if (!blob) return { ok: false, error: "تعذّر قراءة الملف المرفوع." };
-    const base64 = (globalThis as any).Buffer.from(await blob.arrayBuffer()).toString("base64");
-    // يُحذف الملف المؤقت إلا إذا طُلب الاحتفاظ به للأرشفة (صفحة الرفع والتحليل)
-    if (!keep) { try { await ctx.storage.delete(storageId); } catch {} }
-
-    const isPdf = mediaType === "application/pdf";
-    const sourceBlock = isPdf
-      ? { type: "document", source: { type: "base64", media_type: "application/pdf", data: base64 } }
-      : { type: "image", source: { type: "base64", media_type: mediaType, data: base64 } };
-
-    const isVisit = formType === "classVisit";
-    const tool = isVisit ? VISIT_TOOL : PERF_TOOL;
-    const formName = isVisit ? "استمارة الزيارة الصفية" : "استمارة متابعة أداء المعلم";
-    const sys = `أنت مساعد دقيق لمنسقة قسم المسار الأدبي. مهمتك قراءة ${formName} واستخراج بياناتها حرفياً كما وردت في المستند، ثم استدعاء الأداة ${tool.name} ببيانات دقيقة. لا تختلق أي بيانات؛ اترك الحقل فارغاً إن لم يرد في المستند. انسخ التوصيات النصية كما هي بالضبط.`;
-
     try {
+      const blob = await ctx.storage.get(storageId);
+      if (!blob) return { ok: false, error: "تعذّر قراءة الملف المرفوع." };
+      const ab = await blob.arrayBuffer();
+      if (ab.byteLength > 6 * 1024 * 1024) {
+        if (!keep) { try { await ctx.storage.delete(storageId); } catch {} }
+        return { ok: false, error: "الملف كبير جداً (أكثر من 6 ميجابايت). صغّري الملف أو ارفعي صورة أوضح بحجم أقل." };
+      }
+      const base64 = (globalThis as any).Buffer.from(ab).toString("base64");
+      // يُحذف الملف المؤقت إلا إذا طُلب الاحتفاظ به للأرشفة (صفحة الرفع والتحليل)
+      if (!keep) { try { await ctx.storage.delete(storageId); } catch {} }
+
+      const isPdf = mediaType === "application/pdf";
+      const sourceBlock = isPdf
+        ? { type: "document", source: { type: "base64", media_type: "application/pdf", data: base64 } }
+        : { type: "image", source: { type: "base64", media_type: mediaType, data: base64 } };
+
+      const isVisit = formType === "classVisit";
+      const tool = isVisit ? VISIT_TOOL : PERF_TOOL;
+      const formName = isVisit ? "استمارة الزيارة الصفية" : "استمارة متابعة أداء المعلم";
+      const sys = `أنت مساعد دقيق لمنسقة قسم المسار الأدبي. مهمتك قراءة ${formName} واستخراج بياناتها حرفياً كما وردت في المستند، ثم استدعاء الأداة ${tool.name} ببيانات دقيقة. لا تختلق أي بيانات؛ اترك الحقل فارغاً إن لم يرد في المستند. انسخ التوصيات النصية كما هي بالضبط.`;
+
       const res = await fetch("https://api.anthropic.com/v1/messages", {
         method: "POST",
         headers: { "content-type": "application/json", "x-api-key": apiKey, "anthropic-version": "2023-06-01" },
