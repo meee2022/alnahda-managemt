@@ -50,7 +50,7 @@ export default function ImportForm() {
       setStorageId(sid);
 
       setStage("extracting");
-      const r = await extractForm({ storageId: sid as any, mediaType, formType });
+      const r = await extractForm({ storageId: sid as any, mediaType, formType, keep: true });
       if (!r.ok) { setError(r.error ?? "تعذّر التحليل."); setStage("idle"); return; }
       setData(r.data);
       setStage("review");

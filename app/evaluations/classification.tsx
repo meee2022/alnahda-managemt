@@ -24,7 +24,7 @@ const initials = (name: string) =>
 export default function Classification() {
   const teachers = useQuery(api.teachers.list, {});
   const classifications = useQuery(api.classVisits.listClassifications, {});
-  const stats = useQuery(api.analytics.teacherStats, {});
+  const annuals = useQuery(api.evaluations.listAnnual, {});
   const settings = useQuery(api.admin.getSettings, {});
   const setClass = useMutation(api.classVisits.setClassification);
   const router = useRouter();
@@ -34,7 +34,10 @@ export default function Classification() {
 
   const catOf = (name: string) => classifications.find((c) => c.teacherName === name)?.category ?? "";
   // اقتراح الفئة تلقائياً حسب آخر نسبة تقييم سنوي مسجّلة للمعلمة
-  const scoreOf = (name: string) => ((stats as any)?.rows ?? []).find((r: any) => r.name === name)?.lastAnnualScore ?? null;
+  const scoreOf = (name: string) => {
+    const list = (annuals ?? []).filter((a: any) => a.teacherName === name).sort((a: any, b: any) => b._creationTime - a._creationTime);
+    return list[0]?.total ?? null;
+  };
   const suggestCat = (score: number | null) => (score == null ? null : score >= 85 ? "تطوير ذاتي" : score >= 70 ? "دعم عام" : "دعم مكثف");
 
   const assignments: Record<string, string[]> = {};

@@ -12,3 +12,11 @@ export const getUrl = query({
   args: { storageId: v.id("_storage") },
   handler: async (ctx, { storageId }) => await ctx.storage.getUrl(storageId),
 });
+
+// حذف ملف مخزّن — يُستدعى بعد قراءة الملفات المؤقتة (الرفع للتحليل فقط) لتوفير المساحة
+export const remove = mutation({
+  args: { storageId: v.id("_storage") },
+  handler: async (ctx, { storageId }) => {
+    try { await ctx.storage.delete(storageId); } catch {}
+  },
+});

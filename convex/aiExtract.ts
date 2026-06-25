@@ -146,6 +146,8 @@ export const extractCurriculum = action({
     const blob = await ctx.storage.get(storageId);
     if (!blob) return { ok: false, error: "تعذّر قراءة الملف المرفوع." };
     const base64 = (globalThis as any).Buffer.from(await blob.arrayBuffer()).toString("base64");
+    // ملف مؤقت للتحليل فقط — يُحذف فوراً لتوفير مساحة التخزين
+    try { await ctx.storage.delete(storageId); } catch {}
 
     const isPdf = mediaType === "application/pdf";
     const sourceBlock = isPdf
@@ -191,6 +193,8 @@ export const extractTimetable = action({
     const blob = await ctx.storage.get(storageId);
     if (!blob) return { ok: false, error: "تعذّر قراءة الملف المرفوع." };
     const base64 = (globalThis as any).Buffer.from(await blob.arrayBuffer()).toString("base64");
+    // ملف مؤقت للتحليل فقط — يُحذف فوراً لتوفير مساحة التخزين
+    try { await ctx.storage.delete(storageId); } catch {}
 
     const isPdf = mediaType === "application/pdf";
     const sourceBlock = isPdf
@@ -227,8 +231,8 @@ export const extractTimetable = action({
 });
 
 export const extractForm = action({
-  args: { storageId: v.id("_storage"), mediaType: v.string(), formType: v.optional(v.string()) },
-  handler: async (ctx, { storageId, mediaType, formType }): Promise<{ ok: boolean; data?: any; error?: string }> => {
+  args: { storageId: v.id("_storage"), mediaType: v.string(), formType: v.optional(v.string()), keep: v.optional(v.boolean()) },
+  handler: async (ctx, { storageId, mediaType, formType, keep }): Promise<{ ok: boolean; data?: any; error?: string }> => {
     const settings: Record<string, string> = await ctx.runQuery(api.admin.getSettings, {});
     const apiKey = settings.anthropicApiKey || process.env.ANTHROPIC_API_KEY;
     if (!apiKey) return { ok: false, error: "لم يتم إدخال مفتاح Anthropic API. فعّليه من مساعد التوصيات أولاً." };
@@ -236,6 +240,8 @@ export const extractForm = action({
     const blob = await ctx.storage.get(storageId);
     if (!blob) return { ok: false, error: "تعذّر قراءة الملف المرفوع." };
     const base64 = (globalThis as any).Buffer.from(await blob.arrayBuffer()).toString("base64");
+    // يُحذف الملف المؤقت إلا إذا طُلب الاحتفاظ به للأرشفة (صفحة الرفع والتحليل)
+    if (!keep) { try { await ctx.storage.delete(storageId); } catch {} }
 
     const isPdf = mediaType === "application/pdf";
     const sourceBlock = isPdf
