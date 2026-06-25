@@ -57,6 +57,7 @@ export default function LeaveRegister() {
   };
 
   // آخر استئذان مسجّل لهذه المعلمة (تلميح مساعد)
+  const ts = (d?: string) => { const p = parseDate(d); return p ? new Date(p.y, p.m, p.d).getTime() : 0; };
   const lastLeave = (teacherName: string): { date: string; reason: string } | null => {
     if (!teacherName) return null;
     let best: { date: string; reason: string } | null = null;
@@ -64,9 +65,7 @@ export default function LeaveRegister() {
       if (r._id === editing) continue;
       for (const e of r.entries ?? []) {
         if (nameMatch(e.teacherName, teacherName)) {
-          const tCur = parseDate(r.date)?.getTime() ?? 0;
-          const tBest = best ? (parseDate(best.date)?.getTime() ?? 0) : -1;
-          if (!best || tCur > tBest) best = { date: r.date, reason: e.reason ?? "" };
+          if (!best || ts(r.date) > ts(best.date)) best = { date: r.date, reason: e.reason ?? "" };
         }
       }
     }
