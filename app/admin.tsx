@@ -16,7 +16,31 @@ export default function Admin() {
   const cleanupFiles = useMutation(api.files.cleanupOrphans);
   const dedupe = useMutation(api.teachers.dedupe);
   const importExcel = useMutation(api.teachers.importFromExcel);
+  const importAll = useMutation(api.admin.importAll);
   const [cleaning, setCleaning] = React.useState(false);
+  const [restoring, setRestoring] = useState(false);
+
+  const restore = async () => {
+    if (Platform.OS !== "web" || typeof document === "undefined") return;
+    const file: File | null = await new Promise((resolve) => {
+      const input = document.createElement("input");
+      input.type = "file"; input.accept = "application/json,.json";
+      input.onchange = () => resolve(input.files && input.files[0] ? input.files[0] : null);
+      input.click();
+    });
+    if (!file) return;
+    if (!window.confirm("استعادة البيانات من هذه النسخة؟ ستُضاف السجلات إلى الموجود (يُفضّل الاستعادة على قسم فارغ لتجنّب التكرار).")) return;
+    setRestoring(true);
+    try {
+      const text = await file.text();
+      const parsed = JSON.parse(text);
+      const data = parsed?.data ?? parsed;
+      const r = await importAll({ data });
+      notify(`تمت الاستعادة: أُدرج ${r.inserted} سجل`, "success");
+    } catch (e: any) {
+      notify("تعذّرت الاستعادة: تأكدي أن الملف نسخة احتياطية صحيحة.", "error");
+    } finally { setRestoring(false); }
+  };
   const [apiKey, setApiKey] = useState("");
   const aiOn = !!(settings && (settings.aiEnabled === "true" || settings.anthropicApiKey));
 
@@ -171,7 +195,11 @@ export default function Admin() {
         <P muted style={{ marginBottom: 10 }}>
           حمّلي نسخة كاملة من كل بيانات القسم (المعلمات، الطالبات، الاستمارات، السجلات، البنك...) كملف واحد للأرشفة والأمان. يُنصح بعملها دورياً.
         </P>
-        <Button title={backing ? "جارٍ التحضير…" : "تحميل نسخة احتياطية (JSON)"} icon="download-outline" variant="outline" loading={backing} onPress={backup} />
+        <Row style={{ flexWrap: "wrap" }}>
+          <Button title={backing ? "جارٍ التحضير…" : "تحميل نسخة احتياطية (JSON)"} icon="download-outline" variant="outline" loading={backing} onPress={backup} />
+          <Button title={restoring ? "جارٍ الاستعادة…" : "استعادة من نسخة"} icon="cloud-upload-outline" variant="outline" loading={restoring} onPress={restore} />
+        </Row>
+        <P muted style={{ fontSize: 11.5, marginTop: 8 }}>الاستعادة تُدرج السجلات من الملف. للاسترجاع الكامل بعد فقدان البيانات، استخدميها على قسم فارغ.</P>
       </Card>
 
       <Card>

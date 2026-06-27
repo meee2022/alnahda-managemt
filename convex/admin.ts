@@ -94,19 +94,49 @@ export const seed = mutation({
 });
 
 // تصدير كل بيانات القسم (نسخة احتياطية)
+// كل جداول البيانات (للنسخ الاحتياطي والاستعادة) — شاملة
+const ALL_TABLES = [
+  "settings", "teachers", "classes", "students", "meetings", "visits", "classVisits",
+  "annualPlanRows", "achievementPlanRows", "agendaEntries", "teacherClassifications",
+  "performanceVisits", "recommendationBank", "periodicReports", "annualEvaluations",
+  "writtenWorkRecords", "examResults", "curriculumWeeks", "trainings", "professionalReadings",
+  "monthlyReports", "achievements", "recommendations", "formTemplates",
+  "leaveRegisters", "coverRegisters", "timetable", "guidePlans", "devPlans",
+];
+
 export const exportAll = query({
   args: {},
   handler: async (ctx) => {
-    const tables = [
-      "settings", "teachers", "students", "classes", "meetings", "classVisits",
-      "performanceVisits", "periodicReports", "annualEvaluations", "writtenWorkRecords",
-      "leaveRegisters", "coverRegisters", "recommendationBank", "teacherClassifications",
-      "monthlyReports", "annualPlanRows", "achievementPlans",
-    ];
     const out: Record<string, any[]> = {};
-    for (const t of tables) {
+    for (const t of ALL_TABLES) {
       try { out[t] = await ctx.db.query(t as any).collect(); } catch { out[t] = []; }
     }
     return { exportedAt: Date.now(), data: out };
+  },
+});
+
+// استعادة نسخة احتياطية — يُدرج السجلات من ملف النسخة (الإعدادات تُدمج بالمفتاح)
+export const importAll = mutation({
+  args: { data: v.any() },
+  handler: async (ctx, { data }) => {
+    let inserted = 0;
+    for (const t of ALL_TABLES) {
+      const rows = (data?.[t] ?? []) as any[];
+      if (!Array.isArray(rows)) continue;
+      for (const row of rows) {
+        const { _id, _creationTime, ...rest } = row ?? {};
+        try {
+          if (t === "settings") {
+            const ex = await ctx.db.query("settings").withIndex("by_key", (q) => q.eq("key", rest.key)).first();
+            if (ex) await ctx.db.patch(ex._id, { value: rest.value });
+            else await ctx.db.insert("settings", rest);
+          } else {
+            await ctx.db.insert(t as any, rest);
+          }
+          inserted++;
+        } catch {}
+      }
+    }
+    return { inserted };
   },
 });
