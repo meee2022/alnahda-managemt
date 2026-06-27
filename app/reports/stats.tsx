@@ -278,8 +278,8 @@ export default function Stats() {
             columns={[
               { key: "name", label: "المعلمة", flex: 1.6, align: "right",
                 render: (r: any) => (
-                  <Row style={{ gap: 6, alignItems: "center", justifyContent: "flex-end" }}>
-                    <Text style={{ fontFamily: fonts.semibold, fontSize: 13, color: colors.text }}>{r.name}</Text>
+                  <Row style={{ width: "100%", alignItems: "center", gap: 6 }}>
+                    <Text style={{ flex: 1, fontFamily: fonts.semibold, fontSize: 13, color: colors.text, textAlign: "right" }}>{r.name}</Text>
                     {isAssistant(r.jobTitle) ? <Badge label="مساعدة" tone="accent" /> : null}
                   </Row>
                 ) },
