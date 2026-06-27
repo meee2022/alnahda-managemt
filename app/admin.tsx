@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { View, Platform } from "react-native";
 import { useQuery, useMutation, useConvex } from "convex/react";
 import { api } from "../convex/_generated/api";
-import { Screen, Card, H2, P, Input, Button, Loading, Row, Badge, PageHero } from "../lib/ui";
+import { Screen, Card, H2, P, Input, Button, Loading, Row, Badge, PageHero, notify } from "../lib/ui";
 import { colors } from "../lib/theme";
 
 export default function Admin() {
@@ -14,7 +14,11 @@ export default function Admin() {
   const seedBank = useMutation(api.performance.seedBank);
   const seedRoster = useMutation(api.teachers.seedRoster);
   const cleanupFiles = useMutation(api.files.cleanupOrphans);
+  const dedupe = useMutation(api.teachers.dedupe);
+  const importExcel = useMutation(api.teachers.importFromExcel);
   const [cleaning, setCleaning] = React.useState(false);
+  const [apiKey, setApiKey] = useState("");
+  const aiOn = !!(settings && (settings.aiEnabled === "true" || settings.anthropicApiKey));
 
   const [form, setForm] = useState<Record<string, string>>({});
   const [saved, setSaved] = useState(false);
@@ -126,6 +130,40 @@ export default function Admin() {
             finally { setCleaning(false); }
           }} />
         {msg ? <Badge label={msg} tone="success" /> : null}
+      </Card>
+
+      <Card>
+        <Row style={{ justifyContent: "space-between" }}>
+          <H2 style={{ marginBottom: 0 }}>الذكاء الاصطناعي</H2>
+          <Badge label={aiOn ? "مُفعّل" : "غير مُفعّل"} tone={aiOn ? "success" : "muted"} />
+        </Row>
+        <P muted style={{ fontSize: 12.5, marginTop: 6, marginBottom: 8 }}>
+          مفتاح Anthropic API يُفعّل: المحادثة، توليد التوصيات، رفع الاستمارات والخطط بالذكاء. يُحفظ بأمان في قاعدة بيانات قسمك.
+        </P>
+        <Input label="مفتاح Anthropic API" value={apiKey} onChangeText={setApiKey} autoCapitalize="none"
+          placeholder={aiOn ? "مفتاح محفوظ — أدخلي جديداً للتغيير" : "sk-ant-..."} />
+        <Row>
+          <Button title="حفظ المفتاح" icon="key-outline" small
+            onPress={async () => { await setSetting({ key: "anthropicApiKey", value: apiKey.trim() }); setApiKey(""); notify("تم حفظ مفتاح الذكاء الاصطناعي", "success"); }} />
+          {aiOn ? <Button title="إيقاف الذكاء" variant="ghost" small
+            onPress={async () => { await setSetting({ key: "anthropicApiKey", value: "" }); notify("تم إيقاف الذكاء الاصطناعي"); }} /> : null}
+        </Row>
+      </Card>
+
+      <Card>
+        <H2>صيانة بيانات المعلمات</H2>
+        <P muted style={{ fontSize: 12.5, marginBottom: 10 }}>
+          تحديث البيانات الرسمية من ملف القسم (15 معلمة)، أو حذف السجلات المكررة (نفس الرقم الوظيفي أو اسم مكرر).
+        </P>
+        <Row style={{ flexWrap: "wrap" }}>
+          <Button title="تحديث من ملف القسم" icon="cloud-download-outline" variant="outline"
+            onPress={async () => { const r = await importExcel({}); notify(`تم: حُدّثت ${r.updated} وأُضيفت ${r.added} من ${r.total}`, "success"); }} />
+          <Button title="حذف السجلات المكررة" icon="git-merge-outline" variant="outline"
+            onPress={async () => {
+              if (typeof window !== "undefined" && !window.confirm("حذف المعلمات المكررة (يُبقي الأكمل بياناتاً)؟")) return;
+              const r = await dedupe({}); notify(r.removed.length ? `حُذف ${r.removed.length} سجل مكرر` : "لا توجد سجلات مكررة", "success");
+            }} />
+        </Row>
       </Card>
 
       <Card>
