@@ -8,7 +8,7 @@ import { Screen, Card, H2, P, Loading, Empty, Row, Badge, Button, IconBtn, PageH
 import { colors, fonts, shadow } from "../../lib/theme";
 import { printTeacherStats } from "../../lib/printTemplates";
 import { setExportMode } from "../../lib/print";
-import { isAssistant } from "../../lib/forms";
+import { isAssistant, TEACHER_CATEGORIES } from "../../lib/forms";
 
 // رسم أعمدة بسيط بدون مكتبة خارجية
 function MiniBars({ data }: { data: { label: string; leaves: number; covers: number }[] }) {
@@ -61,13 +61,55 @@ const StatChip = ({ label, value, icon, color, soft, href }: { label: string; va
   );
 };
 
+// لون كل فئة أداء (ضمن الهوية)
+const CAT_COLOR: Record<string, string> = {
+  "تطوير ذاتي": colors.success, "دعم عام": colors.goldDark, "دعم مكثف": colors.warning, "مستجد": colors.primary,
+};
+
+// شريط تغطية بسيط (نسبة مئوية حقيقية)
+function CoverageBar({ label, done, total, color }: { label: string; done: number; total: number; color: string }) {
+  const pct = total ? Math.round((done / total) * 100) : 0;
+  return (
+    <View style={{ marginTop: 12 }}>
+      <Row style={{ justifyContent: "space-between", marginBottom: 5 }}>
+        <Text style={{ fontFamily: fonts.medium, fontSize: 13, color: colors.text }}>{label}</Text>
+        <Text style={{ fontFamily: fonts.semibold, fontSize: 12.5, color }}>{done} / {total} · {pct}%</Text>
+      </Row>
+      <View style={{ height: 10, backgroundColor: colors.bg, borderRadius: 6, overflow: "hidden" }}>
+        <View style={{ width: `${pct}%` as any, height: "100%", backgroundColor: color, borderRadius: 6 }} />
+      </View>
+    </View>
+  );
+}
+
 export default function Stats() {
   const data = useQuery(api.analytics.teacherStats, {});
   const settings = useQuery(api.admin.getSettings, {});
+  const classifications = useQuery(api.classVisits.listClassifications, {});
+  const exams = useQuery(api.academics.listExams, {});
 
   if (data === undefined) return <Loading />;
   const { rows, totals, alerts, monthly } = data as any;
   const alertTone: Record<string, any> = { danger: "danger", warn: "warning", info: "muted" };
+
+  // تغطية القسم هذا الفصل — من بيانات حقيقية فقط
+  const visited = (rows ?? []).filter((r: any) => r.classVisitCount > 0 || r.perfCount > 0).length;
+  const evaluated = (rows ?? []).filter((r: any) => r.lastAnnualScore != null).length;
+  const classifiedNames = new Set((classifications ?? []).map((c: any) => c.teacherName));
+  const classifiedCount = (rows ?? []).filter((r: any) => classifiedNames.has(r.name)).length;
+
+  // توزيع فئات الأداء — عدّ فعلي لكل فئة
+  const catCounts: Record<string, number> = {};
+  for (const c of (classifications ?? [])) catCounts[c.category] = (catCounts[c.category] ?? 0) + 1;
+  const maxCat = Math.max(1, ...TEACHER_CATEGORIES.map((c) => catCounts[c.key] ?? 0));
+
+  // اتجاه نسب التحصيل — متوسط نسبة التحصيل لكل اختبار (زمنياً)
+  const examTrend = [...(exams ?? [])].reverse().map((e: any) => {
+    const vals = (e.rows ?? []).map((r: any) => r.achievementRate).filter((v: any) => v != null && v !== "");
+    const avg = vals.length ? Math.round(vals.reduce((a: number, b: number) => a + Number(b), 0) / vals.length) : 0;
+    return { title: e.title ?? "اختبار", avg };
+  }).filter((x: any) => x.avg > 0);
+  const maxTrend = Math.max(1, ...examTrend.map((x: any) => x.avg));
 
   return (
     <Screen>
@@ -92,6 +134,53 @@ export default function Stats() {
           <StatChip label="تقرير دوري" value={totals.periodic} icon="clipboard" color={colors.primaryDeep} soft={colors.primaryTint} href="/evaluations/periodic" />
         </View>
       </Card>
+
+      {/* تغطية القسم — نِسب حقيقية تتحدّث مع إدخال البيانات */}
+      <Card>
+        <H2>تغطية القسم</H2>
+        <P muted style={{ fontSize: 12.5 }}>كم معلمة شملتها المتابعة فعلياً (تتحدّث تلقائياً مع كل إدخال).</P>
+        <CoverageBar label="زيارة صفية أو متابعة أداء" done={visited} total={totals.teachers} color={colors.success} />
+        <CoverageBar label="تقييم سنوي مسجّل" done={evaluated} total={totals.teachers} color={colors.primary} />
+        <CoverageBar label="مصنّفة في فئة أداء" done={classifiedCount} total={totals.teachers} color={colors.goldDark} />
+      </Card>
+
+      {/* توزيع فئات الأداء — من التصنيف الفعلي */}
+      {(classifications ?? []).length > 0 && (
+        <Card>
+          <H2>توزيع فئات الأداء</H2>
+          {TEACHER_CATEGORIES.map((c) => {
+            const n = catCounts[c.key] ?? 0;
+            const col = CAT_COLOR[c.key] ?? colors.primary;
+            return (
+              <View key={c.key} style={{ marginTop: 10 }}>
+                <Row style={{ justifyContent: "space-between", marginBottom: 4 }}>
+                  <Text style={{ fontFamily: fonts.medium, fontSize: 12.5, color: colors.text }}>{c.label}</Text>
+                  <Text style={{ fontFamily: fonts.semibold, fontSize: 12.5, color: col }}>{n}</Text>
+                </Row>
+                <View style={{ height: 10, backgroundColor: colors.bg, borderRadius: 6, overflow: "hidden" }}>
+                  <View style={{ width: `${Math.round((n / maxCat) * 100)}%` as any, height: "100%", backgroundColor: col, borderRadius: 6 }} />
+                </View>
+              </View>
+            );
+          })}
+        </Card>
+      )}
+
+      {/* اتجاه نسب التحصيل — من نتائج الاختبارات الفعلية */}
+      {examTrend.length > 0 && (
+        <Card>
+          <H2>اتجاه نسب التحصيل الأكاديمي</H2>
+          <View style={{ flexDirection: "row", alignItems: "flex-end", justifyContent: "space-around", height: 130, gap: 8, marginTop: 12 }}>
+            {examTrend.map((x: any, i: number) => (
+              <View key={i} style={{ flex: 1, alignItems: "center", maxWidth: 70 }}>
+                <Text style={{ fontFamily: fonts.semibold, fontSize: 11.5, color: colors.primary, marginBottom: 3 }}>{x.avg}%</Text>
+                <View style={{ width: 22, height: Math.max(4, (x.avg / maxTrend) * 96), backgroundColor: colors.primary, borderTopLeftRadius: 5, borderTopRightRadius: 5 }} />
+                <Text numberOfLines={2} style={{ fontFamily: fonts.regular, fontSize: 9.5, color: colors.textMuted, marginTop: 5, textAlign: "center" }}>{x.title}</Text>
+              </View>
+            ))}
+          </View>
+        </Card>
+      )}
 
       {/* التنبيهات الذكية */}
       {alerts && alerts.length > 0 && (
