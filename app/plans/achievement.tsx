@@ -34,6 +34,7 @@ export default function AchievementPlan() {
       order: editing ? (rows?.find((r) => r._id === editing)?.order ?? 0) : (rows?.length ?? 0) + 1,
       ...form,
     });
+    notify("تم حفظ الهدف بنجاح", "success");
     reset();
   };
 

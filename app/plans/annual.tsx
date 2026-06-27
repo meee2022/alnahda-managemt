@@ -40,6 +40,7 @@ export default function AnnualPlan() {
       order: editing ? (rows?.find((r) => r._id === editing)?.order ?? 0) : (rows?.length ?? 0) + 1,
       ...form,
     });
+    notify("تم حفظ المجال بنجاح", "success");
     reset();
   };
 

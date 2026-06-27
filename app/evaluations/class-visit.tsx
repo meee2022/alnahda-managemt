@@ -116,6 +116,7 @@ export default function ClassVisit() {
     };
     if (editing) await update({ id: editing as any, ...payload });
     else await create(payload);
+    notify("تم حفظ استمارة الزيارة بنجاح", "success");
     reset();
   };
 

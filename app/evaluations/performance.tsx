@@ -156,6 +156,7 @@ export default function Performance() {
         teacherAttended: info.teacherAttended, sendDate: info.sendDate,
       });
     }
+    notify("تم حفظ استمارة الأداء بنجاح", "success");
     reset();
   };
 

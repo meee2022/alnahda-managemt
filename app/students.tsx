@@ -55,6 +55,7 @@ export default function Students() {
     if (!form.name.trim()) { notify("يرجى إدخال اسم الطالبة قبل الحفظ."); return; }
     if (editing) await update({ id: editing as any, ...form });
     else await create({ ...form, grade, section });
+    notify("تم حفظ بيانات الطالبة بنجاح", "success");
     reset();
   };
 

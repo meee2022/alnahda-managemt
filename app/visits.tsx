@@ -50,6 +50,7 @@ export default function Visits() {
     if (!form.teacherName || !form.date) { notify("يرجى اختيار المعلمة والتاريخ قبل الحفظ."); return; }
     if (editing) await update({ id: editing as any, ...form, month });
     else await create({ ...form, month });
+    notify("تم حفظ الزيارة بنجاح", "success");
     reset();
   };
 

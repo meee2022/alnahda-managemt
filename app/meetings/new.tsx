@@ -107,6 +107,7 @@ export default function NewMeeting() {
       };
       if (id) await update({ id: id as any, ...payload });
       else await create(payload);
+      notify("تم حفظ المحضر بنجاح", "success");
       router.back();
     } catch (e: any) {
       notify("تعذّر حفظ المحضر: " + String(e?.message ?? e).slice(0, 180));

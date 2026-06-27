@@ -48,6 +48,7 @@ export default function PeriodicReports() {
     };
     if (editing) await update({ id: editing as any, month: payload.month, generalNotes: payload.generalNotes, scores: payload.scores });
     else await create(payload);
+    notify("تم حفظ التقرير الدوري بنجاح", "success");
     reset();
   };
 

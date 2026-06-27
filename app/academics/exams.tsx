@@ -86,6 +86,7 @@ export default function Exams() {
         rows: builtRows,
       });
     }
+    notify("تم حفظ تقرير الاختبار بنجاح", "success");
     reset();
   };
 

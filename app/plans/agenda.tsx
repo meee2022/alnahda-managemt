@@ -42,6 +42,7 @@ export default function Agenda() {
       order: editing ? (entries?.find((e) => e._id === editing)?.order ?? 0) : (entries?.length ?? 0) + 1,
       ...form,
     });
+    notify("تم حفظ الفترة بنجاح", "success");
     reset();
   };
 

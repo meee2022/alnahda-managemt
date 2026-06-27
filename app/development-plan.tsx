@@ -58,6 +58,7 @@ export default function DevelopmentPlan() {
     const cleanRows = rows.filter((r) => r.action || r.mechanism || r.indicator);
     if (editing) await update({ id: editing as any, ...form, rows: cleanRows });
     else await create({ ...form, rows: cleanRows });
+    notify("تم حفظ خطة التطوير بنجاح", "success");
     reset();
   };
 

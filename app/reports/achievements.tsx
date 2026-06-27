@@ -32,6 +32,7 @@ export default function Achievements() {
     if (!form.description.trim()) { notify("يرجى إدخال وصف الإنجاز قبل الحفظ."); return; }
     if (editing) await update({ id: editing as any, ...form });
     else await create(form);
+    notify("تم حفظ الإنجاز بنجاح", "success");
     reset();
   };
 

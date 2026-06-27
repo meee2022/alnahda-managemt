@@ -32,8 +32,8 @@ export default function Development() {
   const reset = () => { setTform({ ...T0 }); setRform({ ...R0 }); setAdding(false); setEditing(null); };
   const startEditTraining = (t: any) => { setTform({ teacherName: t.teacherName ?? "", programName: t.programName ?? "", date: t.date ?? "", month: t.month ?? "مايو", hours: t.hours ?? "", type: t.type ?? "داخلي", category: t.category ?? "ورشة" }); setEditing(t._id); setAdding(true); };
   const startEditReading = (r: any) => { setRform({ teacherName: r.teacherName ?? "", date: r.date ?? "", bookTitle: r.bookTitle ?? "", summary: r.summary ?? "" }); setEditing(r._id); setAdding(true); };
-  const saveTraining = async () => { if (!tform.teacherName || !tform.programName) { notify("يرجى اختيار المعلمة وإدخال اسم البرنامج."); return; } if (editing) await updateTraining({ id: editing as any, ...tform }); else await createTraining(tform); reset(); };
-  const saveReading = async () => { if (!rform.bookTitle) { notify("يرجى إدخال عنوان الكتاب."); return; } if (editing) await updateReading({ id: editing as any, ...rform }); else await createReading(rform); reset(); };
+  const saveTraining = async () => { if (!tform.teacherName || !tform.programName) { notify("يرجى اختيار المعلمة وإدخال اسم البرنامج."); return; } if (editing) await updateTraining({ id: editing as any, ...tform }); else await createTraining(tform); notify("تم حفظ البرنامج التدريبي بنجاح", "success"); reset(); };
+  const saveReading = async () => { if (!rform.bookTitle) { notify("يرجى إدخال عنوان الكتاب."); return; } if (editing) await updateReading({ id: editing as any, ...rform }); else await createReading(rform); notify("تم حفظ القراءة المهنية بنجاح", "success"); reset(); };
 
   const printTeacherSheet = (teacherName: string) =>
     printTrainingSheet(teacherName, (trainings ?? []).filter((t) => t.teacherName === teacherName), settings ?? {});

@@ -149,6 +149,7 @@ export default function LeaveRegister() {
     }
     if (editing) await update({ id: editing as any, date, day, term: settings?.term, department: settings?.department, entries: valid });
     else await create({ date, day, department: settings?.department, term: settings?.term, entries: valid });
+    notify("تم حفظ سجل الاستئذان بنجاح", "success");
     reset();
   };
 

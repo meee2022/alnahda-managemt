@@ -75,6 +75,7 @@ export default function AnnualEvaluations() {
         notes,
       });
     }
+    notify("تم حفظ التقييم السنوي بنجاح", "success");
     reset();
   };
 

@@ -48,6 +48,7 @@ export default function GuidePlan() {
     const cleanRows = rows.filter((r) => r.domain || r.actions || r.guideName);
     if (editing) await update({ id: editing as any, ...form, rows: cleanRows });
     else await create({ ...form, rows: cleanRows });
+    notify("تم حفظ خطة المتابعة بنجاح", "success");
     reset();
   };
 

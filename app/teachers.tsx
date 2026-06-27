@@ -44,6 +44,7 @@ export default function Teachers() {
     if (!form.name.trim()) { notify("يرجى إدخال اسم المعلمة قبل الحفظ."); return; }
     if (editing) await update({ id: editing as any, ...form });
     else await create(form);
+    notify("تم حفظ بيانات المعلمة بنجاح", "success");
     reset();
   };
 

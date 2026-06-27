@@ -192,6 +192,7 @@ export default function CoverRegister() {
     if (!date.trim() || valid.length === 0) { notify("يرجى تحديد التاريخ وإضافة معلمة واحدة على الأقل."); return; }
     if (editing) await update({ id: editing as any, date, day, department: settings?.department, entries: valid });
     else await create({ date, day, department: settings?.department, entries: valid });
+    notify("تم حفظ سجل الاحتياط بنجاح", "success");
     reset();
   };
 

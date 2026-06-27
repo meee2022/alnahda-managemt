@@ -86,6 +86,7 @@ export default function Curriculum() {
     } else {
       await upsert({ grade, term, weekNumber: n, unit: form.unit, arabicLessons: form.arabicLessons, islamicLessons: form.islamicLessons, arabicDone: false, islamicDone: false });
     }
+    notify("تم حفظ الأسبوع بنجاح", "success");
     reset();
   };
 

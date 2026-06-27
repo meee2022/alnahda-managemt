@@ -35,6 +35,7 @@ export default function Recommendations() {
     if (!form.text.trim()) { notify("يرجى إدخال نص التوصية قبل الحفظ."); return; }
     if (editing) await update({ id: editing as any, source: form.source, text: form.text, assignee: form.assignee, dueDate: form.dueDate, dueTime: form.dueTime });
     else await create({ ...form, createdDate: new Date().toLocaleDateString("ar-EG") });
+    notify("تم حفظ التوصية بنجاح", "success");
     reset();
   };
 

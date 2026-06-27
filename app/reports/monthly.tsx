@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { View } from "react-native";
 import { useQuery, useMutation, useAction } from "convex/react";
 import { api } from "../../convex/_generated/api";
-import { Screen, Card, H2, P, Input, Button, Loading, Empty, Row, IconBtn, Badge, Select, PageHero, HeroBtn, AnimatedItem, ExportMenu } from "../../lib/ui";
+import { Screen, Card, H2, P, Input, Button, Loading, Empty, Row, IconBtn, Badge, Select, PageHero, HeroBtn, AnimatedItem, ExportMenu, notify } from "../../lib/ui";
 import { colors } from "../../lib/theme";
 import { MONTHLY_SECTIONS, MONTHS } from "../../lib/forms";
 import { setExportMode } from "../../lib/print";
@@ -59,6 +59,7 @@ export default function MonthlyReports() {
     }));
     if (editing) await update({ id: editing as any, sections });
     else await create({ month, year: settings?.academicYear ?? "2025-2026", sections });
+    notify("تم حفظ التقرير الشهري بنجاح", "success");
     reset();
   };
 
