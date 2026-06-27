@@ -66,6 +66,19 @@ const CAT_COLOR: Record<string, string> = {
   "تطوير ذاتي": colors.success, "دعم عام": colors.goldDark, "دعم مكثف": colors.warning, "مستجد": colors.primary,
 };
 
+// رأس قسم موحّد بهوية الموقع — أيقونة داخل دائرة ملوّنة + عنوان
+function SectionHead({ icon, title, color = colors.primary, right }: { icon: keyof typeof Ionicons.glyphMap; title: string; color?: string; right?: React.ReactNode }) {
+  return (
+    <Row style={{ alignItems: "center", gap: 10, marginBottom: 12 }}>
+      <View style={{ width: 34, height: 34, borderRadius: 11, backgroundColor: color + "1A", alignItems: "center", justifyContent: "center" }}>
+        <Ionicons name={icon} size={18} color={color} />
+      </View>
+      <Text style={{ fontFamily: fonts.bold, fontSize: 15.5, color: colors.text, flex: 1, textAlign: "right" }}>{title}</Text>
+      {right ?? null}
+    </Row>
+  );
+}
+
 // شريط تغطية بسيط (نسبة مئوية حقيقية)
 function CoverageBar({ label, done, total, color }: { label: string; done: number; total: number; color: string }) {
   const pct = total ? Math.round((done / total) * 100) : 0;
@@ -145,7 +158,7 @@ export default function Stats() {
 
       {/* إجماليات القسم */}
       <Card>
-        <H2>إجمالي القسم</H2>
+        <SectionHead icon="albums" title="إجمالي القسم" color={colors.primary} />
         <View style={styles.grid}>
           <StatChip label="معلمة" value={totals.teachers} icon="people" color={colors.primary} soft={colors.primarySoft} href="/teachers" />
           <StatChip label="استئذان" value={totals.leaves} icon="exit-outline" color={colors.warning} soft={colors.warningSoft} href="/registers/leave" />
@@ -158,7 +171,7 @@ export default function Stats() {
 
       {/* تغطية القسم — نِسب حقيقية تتحدّث مع إدخال البيانات */}
       <Card>
-        <H2>تغطية القسم</H2>
+        <SectionHead icon="pie-chart" title="تغطية القسم" color={colors.success} />
         <P muted style={{ fontSize: 12.5 }}>كم معلمة شملتها المتابعة فعلياً (تتحدّث تلقائياً مع كل إدخال).</P>
         <CoverageBar label="زيارة صفية أو متابعة أداء" done={visited} total={totals.teachers} color={colors.success} />
         <CoverageBar label="تقييم سنوي مسجّل" done={evaluated} total={totals.teachers} color={colors.primary} />
@@ -168,7 +181,7 @@ export default function Stats() {
       {/* بحاجة إلى متابعة — أسماء فعلية تنقصها متابعة هذا الفصل */}
       {(notVisited.length > 0 || notClassified.length > 0 || notEvaluated.length > 0) && (
         <Card>
-          <H2>بحاجة إلى متابعة</H2>
+          <SectionHead icon="flag" title="بحاجة إلى متابعة" color={colors.warning} />
           <P muted style={{ fontSize: 12.5 }}>اضغطي على أي بند للانتقال وإكماله.</P>
           {notVisited.length > 0 ? <NeedRow label="لم تُزر صفياً بعد" names={notVisited} color={colors.warning} href="/visits" /> : null}
           {notClassified.length > 0 ? <NeedRow label="غير مصنّفة في فئة أداء" names={notClassified} color={colors.goldDark} href="/evaluations/classification" /> : null}
@@ -179,7 +192,7 @@ export default function Stats() {
       {/* توزيع فئات الأداء — من التصنيف الفعلي */}
       {(classifications ?? []).length > 0 && (
         <Card>
-          <H2>توزيع فئات الأداء</H2>
+          <SectionHead icon="git-branch" title="توزيع فئات الأداء" color={colors.goldDark} />
           {TEACHER_CATEGORIES.map((c) => {
             const n = catCounts[c.key] ?? 0;
             const col = CAT_COLOR[c.key] ?? colors.primary;
@@ -201,7 +214,7 @@ export default function Stats() {
       {/* اتجاه نسب التحصيل — من نتائج الاختبارات الفعلية */}
       {examTrend.length > 0 && (
         <Card>
-          <H2>اتجاه نسب التحصيل الأكاديمي</H2>
+          <SectionHead icon="trending-up" title="اتجاه نسب التحصيل الأكاديمي" color={colors.primary} />
           <View style={{ flexDirection: "row", alignItems: "flex-end", justifyContent: "space-around", height: 130, gap: 8, marginTop: 12 }}>
             {examTrend.map((x: any, i: number) => (
               <View key={i} style={{ flex: 1, alignItems: "center", maxWidth: 70 }}>
@@ -217,10 +230,7 @@ export default function Stats() {
       {/* التنبيهات الذكية */}
       {alerts && alerts.length > 0 && (
         <Card style={{ borderColor: colors.warning, borderWidth: 1 }}>
-          <Row style={{ justifyContent: "space-between", marginBottom: 8 }}>
-            <H2>تنبيهات تحتاج انتباهك</H2>
-            <Badge label={String(alerts.length)} tone="warning" />
-          </Row>
+          <SectionHead icon="notifications" title="تنبيهات تحتاج انتباهك" color={colors.warning} right={<Badge label={String(alerts.length)} tone="warning" />} />
           {alerts.map((a: any, i: number) => (
             <Row key={i} style={{ gap: 8, paddingVertical: 6, borderBottomWidth: 1, borderBottomColor: colors.border }}>
               <Ionicons name={a.level === "danger" ? "alert-circle" : a.level === "warn" ? "warning" : "information-circle"} size={17}
@@ -237,7 +247,7 @@ export default function Stats() {
       {/* الرسوم الشهرية */}
       {monthly && monthly.length > 0 && (
         <Card>
-          <H2>الاستئذان والاحتياط شهرياً</H2>
+          <SectionHead icon="bar-chart" title="الاستئذان والاحتياط شهرياً" color={colors.gold} />
           <MiniBars data={monthly} />
         </Card>
       )}
@@ -250,7 +260,7 @@ export default function Stats() {
         const max = Math.max(1, ...ranked.map((r: any) => r.leaveCount + r.absences));
         return (
           <Card>
-            <H2>مقارنة المعلمات (الاستئذان + الغياب)</H2>
+            <SectionHead icon="podium" title="مقارنة المعلمات (الاستئذان + الغياب)" color={colors.primary} />
             <View style={{ marginTop: 8, gap: 8 }}>
               {ranked.map((r: any) => (
                 <View key={r.id}>
@@ -271,7 +281,7 @@ export default function Stats() {
       {/* جدول ملخّص مرتّب لكل المعلمات */}
       {rows.length > 0 && (
         <Card>
-          <H2>جدول ملخّص المعلمات</H2>
+          <SectionHead icon="grid" title="جدول ملخّص المعلمات" color={colors.primary} />
           <DataTable
             minWidth={760}
             data={rows}
@@ -299,7 +309,7 @@ export default function Stats() {
         </Card>
       )}
 
-      {rows.length > 0 && <H2>تفاصيل كل معلمة</H2>}
+      {rows.length > 0 && <View style={{ marginTop: 4 }}><SectionHead icon="list" title="تفاصيل كل معلمة" color={colors.primary} /></View>}
       {rows.length === 0 ? (
         <Empty text="لا توجد بيانات بعد — أدخلي السجلات والاستمارات وستظهر الإحصائيات تلقائياً" icon="stats-chart-outline" />
       ) : rows.map((r: any, i: number) => (
@@ -316,12 +326,12 @@ export default function Stats() {
               <IconBtn name="document-text-outline" color={colors.primary} onPress={() => router.push({ pathname: "/reports/teacher", params: { id: r.id } })} />
             </Row>
             <View style={styles.grid}>
-              <StatChip label="استئذان" value={r.leaveCount} tone={colors.warningSoft} />
-              <StatChip label="احتياط نفّذته" value={r.coversDone} tone={colors.goldSoft} />
-              <StatChip label="غياب" value={r.absences} tone={colors.dangerSoft} />
-              <StatChip label="زيارة صفية" value={r.classVisitCount} tone={colors.accentSoft} />
-              <StatChip label="متابعة أداء" value={r.perfCount} tone={colors.successSoft} />
-              <StatChip label="تقرير دوري" value={r.periodicCount} tone={colors.primarySoft} />
+              <StatChip label="استئذان" value={r.leaveCount} icon="exit-outline" color={colors.warning} soft={colors.warningSoft} />
+              <StatChip label="احتياط نفّذته" value={r.coversDone} icon="swap-horizontal" color={colors.goldDark} soft={colors.goldSoft} />
+              <StatChip label="غياب" value={r.absences} icon="close-circle" color={colors.danger} soft={colors.dangerSoft} />
+              <StatChip label="زيارة صفية" value={r.classVisitCount} icon="eye" color={colors.success} soft={colors.successSoft} />
+              <StatChip label="متابعة أداء" value={r.perfCount} icon="document-attach" color={colors.accent} soft={colors.accentSoft} />
+              <StatChip label="تقرير دوري" value={r.periodicCount} icon="clipboard" color={colors.primaryDeep} soft={colors.primaryTint} />
             </View>
             {(r.leaveDates?.length || r.classVisitDates?.length) ? (
               <View style={{ marginTop: 10, gap: 6 }}>
