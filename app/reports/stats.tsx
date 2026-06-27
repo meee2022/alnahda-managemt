@@ -82,6 +82,22 @@ function CoverageBar({ label, done, total, color }: { label: string; done: numbe
   );
 }
 
+// صف «بحاجة متابعة» — عنوان + عدد + أسماء كرقائق، يفتح القسم المعني
+function NeedRow({ label, names, color, href }: { label: string; names: string[]; color: string; href: string }) {
+  return (
+    <Pressable onPress={() => router.push(href as any)} style={{ paddingVertical: 9, borderTopWidth: 1, borderTopColor: colors.border }}>
+      <Row style={{ justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
+        <Text style={{ fontFamily: fonts.semibold, fontSize: 13, color }}>● {label}</Text>
+        <Badge label={`${names.length}`} tone="muted" />
+      </Row>
+      <Row style={{ flexWrap: "wrap", gap: 5 }}>
+        {names.slice(0, 12).map((n) => <Badge key={n} label={n} tone="muted" />)}
+        {names.length > 12 ? <Badge label={`+${names.length - 12}`} tone="muted" /> : null}
+      </Row>
+    </Pressable>
+  );
+}
+
 export default function Stats() {
   const data = useQuery(api.analytics.teacherStats, {});
   const settings = useQuery(api.admin.getSettings, {});
@@ -97,6 +113,11 @@ export default function Stats() {
   const evaluated = (rows ?? []).filter((r: any) => r.lastAnnualScore != null).length;
   const classifiedNames = new Set((classifications ?? []).map((c: any) => c.teacherName));
   const classifiedCount = (rows ?? []).filter((r: any) => classifiedNames.has(r.name)).length;
+
+  // قوائم «بحاجة متابعة» — أسماء فعلية مأخوذة من السجلات
+  const notVisited = (rows ?? []).filter((r: any) => r.classVisitCount === 0 && r.perfCount === 0).map((r: any) => r.name);
+  const notClassified = (rows ?? []).filter((r: any) => !classifiedNames.has(r.name)).map((r: any) => r.name);
+  const notEvaluated = (rows ?? []).filter((r: any) => r.lastAnnualScore == null).map((r: any) => r.name);
 
   // توزيع فئات الأداء — عدّ فعلي لكل فئة
   const catCounts: Record<string, number> = {};
@@ -143,6 +164,17 @@ export default function Stats() {
         <CoverageBar label="تقييم سنوي مسجّل" done={evaluated} total={totals.teachers} color={colors.primary} />
         <CoverageBar label="مصنّفة في فئة أداء" done={classifiedCount} total={totals.teachers} color={colors.goldDark} />
       </Card>
+
+      {/* بحاجة إلى متابعة — أسماء فعلية تنقصها متابعة هذا الفصل */}
+      {(notVisited.length > 0 || notClassified.length > 0 || notEvaluated.length > 0) && (
+        <Card>
+          <H2>بحاجة إلى متابعة</H2>
+          <P muted style={{ fontSize: 12.5 }}>اضغطي على أي بند للانتقال وإكماله.</P>
+          {notVisited.length > 0 ? <NeedRow label="لم تُزر صفياً بعد" names={notVisited} color={colors.warning} href="/visits" /> : null}
+          {notClassified.length > 0 ? <NeedRow label="غير مصنّفة في فئة أداء" names={notClassified} color={colors.goldDark} href="/evaluations/classification" /> : null}
+          {notEvaluated.length > 0 ? <NeedRow label="بدون تقييم سنوي مسجّل" names={notEvaluated} color={colors.primary} href="/evaluations/annual" /> : null}
+        </Card>
+      )}
 
       {/* توزيع فئات الأداء — من التصنيف الفعلي */}
       {(classifications ?? []).length > 0 && (
