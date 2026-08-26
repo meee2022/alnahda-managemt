@@ -29,6 +29,7 @@ import type * as seedData from "../seedData.js";
 import type * as students from "../students.js";
 import type * as teachers from "../teachers.js";
 import type * as timetable from "../timetable.js";
+import type * as timetableData from "../timetableData.js";
 import type * as visits from "../visits.js";
 
 import type {
@@ -59,6 +60,7 @@ declare const fullApi: ApiFromModules<{
   students: typeof students;
   teachers: typeof teachers;
   timetable: typeof timetable;
+  timetableData: typeof timetableData;
   visits: typeof visits;
 }>;
 

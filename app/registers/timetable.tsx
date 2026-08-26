@@ -6,8 +6,10 @@ import { Screen, Card, H2, P, Input, Button, Loading, Row, PageHero, Select, Bad
 import { Ionicons } from "@expo/vector-icons";
 import { colors, fonts, radius, gradients } from "../../lib/theme";
 
-const DAYS = ["السبت", "الأحد", "الاثنين", "الثلاثاء", "الأربعاء", "الخميس"];
-const PERIODS = ["1", "2", "3", "4", "5", "6", "7", "8"];
+// أيام الدوام (الأحد–الخميس) وترتيب الحصص — مطابقة لجدول المدرسة وسجل الاحتياط
+const DAYS = ["الأحد", "الإثنين", "الثلاثاء", "الأربعاء", "الخميس"];
+const PERIODS = ["1", "2", "3", "4", "5", "6", "7"];
+const NON_TEACHING = new Set(["جلسة تحضير", "اجتماع القسم", "تطوير"]);
 
 function pickFile(): Promise<File | null> {
   return new Promise((resolve) => {
@@ -26,6 +28,8 @@ export default function TimetablePage() {
   const upsert = useMutation(api.timetable.upsert);
   const removeMut = useMutation(api.timetable.remove);
   const bulkUpsert = useMutation(api.timetable.bulkUpsert);
+  const importChildhood = useMutation(api.timetable.importChildhood);
+  const [importing, setImporting] = useState(false);
   const generateUploadUrl = useMutation(api.files.generateUploadUrl);
   const extractTimetable = useAction(api.aiExtract.extractTimetable);
 
@@ -150,6 +154,33 @@ export default function TimetablePage() {
         ) : null}
       </Card>
 
+      <Card style={{ backgroundColor: colors.primaryTint, borderColor: colors.primary, borderWidth: 1 }}>
+        <Row style={{ gap: 8 }}>
+          <Ionicons name="school-outline" size={20} color={colors.primary} />
+          <H2 style={{ marginBottom: 0 }}>الجدول الرسمي لمعلمات الطفولة</H2>
+        </Row>
+        <P muted style={{ fontSize: 13, marginTop: 6 }}>
+          استيراد جداول 24 معلمة (الصفوف الأول والثاني) دفعة واحدة من الملف الرسمي المعتمد — يوفّق الأسماء مع القائمة ويضيف الناقص، ويُفعّل اقتراح الاحتياط تلقائياً.
+        </P>
+        <Button
+          title={importing ? "جارٍ الاستيراد…" : "استيراد الجدول الرسمي للطفولة"}
+          icon="download-outline"
+          variant="outline"
+          loading={importing}
+          style={{ marginTop: 10, alignSelf: "flex-start" }}
+          onPress={async () => {
+            if (typeof window !== "undefined" && !window.confirm("استيراد جداول معلمات الطفولة (24 معلمة)؟ سيُستبدل جدول كل معلمة واردة بحصصها من الملف الرسمي.")) return;
+            setImporting(true);
+            try {
+              const r = await importChildhood({});
+              notify(`تم استيراد ${r.cells} حصة لـ ${r.teachers} معلمة (أُضيفت ${r.addedTeachers} معلمة جديدة).`, "success");
+            } catch (e: any) {
+              notify("تعذّر الاستيراد: " + String(e?.message ?? e).slice(0, 120), "error");
+            } finally { setImporting(false); }
+          }}
+        />
+      </Card>
+
       <Card>
         <Select
           label="المعلمة"
@@ -191,19 +222,24 @@ export default function TimetablePage() {
                     </View>
                     {DAYS.map((d) => {
                       const entry = getCellEntry(d, p);
+                      const nonTeaching = entry ? NON_TEACHING.has(entry.className) : false;
                       return (
                         <Pressable
                           key={d}
-                          style={[styles.cell, entry ? styles.cellFilled : styles.cellEmpty]}
+                          style={[styles.cell, !entry ? styles.cellEmpty : nonTeaching ? styles.cellNonTeaching : styles.cellFilled]}
                           onPress={() => openModal(d, p)}
                         >
                           {entry ? (
-                            <>
-                              <Text style={styles.cellClass}>{entry.className}</Text>
-                              {entry.subject ? (
-                                <Text style={styles.cellSubject}>{entry.subject}</Text>
-                              ) : null}
-                            </>
+                            nonTeaching ? (
+                              <Text style={styles.cellNonTxt}>{entry.className}</Text>
+                            ) : (
+                              <>
+                                <Text style={styles.cellClass}>{entry.className}</Text>
+                                {entry.subject ? (
+                                  <Text style={styles.cellSubject}>{entry.subject}</Text>
+                                ) : null}
+                              </>
+                            )
                           ) : (
                             <Text style={styles.cellPlus}>+</Text>
                           )}
@@ -303,9 +339,11 @@ const styles = StyleSheet.create({
     padding: 4,
   },
   cellFilled: { backgroundColor: "#e8f5e9" },
+  cellNonTeaching: { backgroundColor: colors.goldSoft },
   cellEmpty: { backgroundColor: "#fafafa" },
   cellClass: { fontFamily: fonts.bold, fontSize: 13, color: "#1b5e20", textAlign: "center" },
   cellSubject: { fontFamily: fonts.regular, fontSize: 11, color: "#388e3c", textAlign: "center" },
+  cellNonTxt: { fontFamily: fonts.medium, fontSize: 11.5, color: colors.goldDark, textAlign: "center" },
   cellPlus: { fontSize: 22, color: colors.border },
 });
 

@@ -1,5 +1,58 @@
 import { query, mutation } from "./_generated/server";
 import { v } from "convex/values";
+import { CHILDHOOD_TIMETABLE } from "./timetableData";
+
+// استيراد جدول حصص معلمات الطفولة من الملف الرسمي.
+// يوفّق كل معلمة مع سجلها في قائمة المعلمات (بمطابقة الاسم الأول واسم العائلة)،
+// ويضيف المعلمات غير الموجودة، ثم يستبدل جدول كل معلمة بالكامل بحصصها من الملف.
+export const importChildhood = mutation({
+  args: {},
+  handler: async (ctx) => {
+    const data = CHILDHOOD_TIMETABLE;
+    const teachers = await ctx.db.query("teachers").collect();
+    const norm = (s: string) => s.replace(/[إأآ]/g, "ا").replace(/ـ/g, "").replace(/\s+/g, " ").trim();
+    const toks = (s: string) => norm(s).split(" ").filter(Boolean);
+
+    const pdfNames = Array.from(new Set(data.map((d) => d.teacherName)));
+    const nameMap: Record<string, string> = {};
+    const pool: { id: any; name: string }[] = teachers.map((t) => ({ id: t._id, name: t.name }));
+    let addedTeachers = 0;
+
+    for (const pn of pdfNames) {
+      const pt = toks(pn);
+      const first = pt[0], last = pt[pt.length - 1];
+      const match = pool.find((t) => { const tt = toks(t.name); return tt[0] === first && tt[tt.length - 1] === last; });
+      if (match) {
+        nameMap[pn] = match.name;
+      } else {
+        const id = await ctx.db.insert("teachers", { name: pn, jobTitle: "معلمة", active: true });
+        pool.push({ id, name: pn });
+        nameMap[pn] = pn;
+        addedTeachers++;
+      }
+    }
+
+    const canonical = Array.from(new Set(Object.values(nameMap)));
+    for (const cn of canonical) {
+      const old = await ctx.db.query("timetable")
+        .withIndex("by_teacher_day", (q) => q.eq("teacherName", cn)).collect();
+      for (const o of old) await ctx.db.delete(o._id);
+    }
+
+    let cells = 0;
+    for (const d of data) {
+      await ctx.db.insert("timetable", {
+        teacherName: nameMap[d.teacherName],
+        day: d.day,
+        period: d.period,
+        className: d.className,
+        subject: d.subject || undefined,
+      });
+      cells++;
+    }
+    return { teachers: pdfNames.length, addedTeachers, cells };
+  },
+});
 
 export const list = query({
   args: {},

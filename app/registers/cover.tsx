@@ -14,6 +14,11 @@ type Entry = {
   period: string; coverTeacher: string; planType: string; notify: string; notes: string;
 };
 
+// خلايا غير تدريسية في الجدول — لا تُعامل كحصة تحتاج تغطية
+const NON_TEACHING = new Set(["جلسة تحضير", "اجتماع القسم", "تطوير"]);
+// المعلمة متاحة للتغطية إذا لم يكن لديها حصة، أو لديها «جلسة تحضير» فقط
+const isBusyClass = (className: string) => !!className && className !== "جلسة تحضير";
+
 const REASONS = ["غياب", "تبديل"];
 const PLAN_TYPES = ["مراجعة", "درس", "متابعة واجبات", "إشرافية فقط"];
 const NOTIFY = ["تم إبلاغي قبل الحصة بوقت كافٍ", "تم إبلاغي قبل الحصة مباشرة", "تم الرفض"];
@@ -49,7 +54,10 @@ type EntryFormProps = {
 function EntryForm({ e, i, teacherNames, day, daySchedule, canRemove, onRemove, onPatch, onSelectTeacher }: EntryFormProps) {
   const freeTeachersFor = (period: string) => {
     if (!daySchedule) return teacherNames;
-    const busy = new Set(daySchedule.filter((x) => x.period === period).map((x) => x.teacherName));
+    // مشغولة = لديها حصة تدريسية أو اجتماع/تطوير في هذه الحصة (جلسة التحضير تُعدّ متاحة)
+    const busy = new Set(
+      daySchedule.filter((x) => x.period === period && isBusyClass(x.className)).map((x) => x.teacherName)
+    );
     busy.add(e.teacherName);
     return teacherNames.filter((n) => !busy.has(n));
   };
@@ -149,7 +157,7 @@ export default function CoverRegister() {
   // عند اختيار المعلمة الغائبة: تظهر كل حصصها لهذا اليوم تلقائياً كصفوف، يتبقى فقط اختيار من يغطّي
   const handleSelectTeacher = (i: number, name: string) => {
     const slots = (daySchedule ?? [])
-      .filter((x) => x.teacherName === name)
+      .filter((x) => x.teacherName === name && !NON_TEACHING.has(x.className))
       .sort((a, b) => Number(a.period) - Number(b.period));
 
     if (!name || slots.length === 0) {
