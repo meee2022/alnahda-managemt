@@ -43,6 +43,7 @@ export default function TimetablePage() {
   const extractTimetable = useAction(api.aiExtract.extractTimetable);
 
   const [selectedTeacher, setSelectedTeacher] = useState("");
+  const [teacherQuery, setTeacherQuery] = useState("");
   const [modal, setModal] = useState<{ day: string; period: string; existing?: any } | null>(null);
   const [className, setClassName] = useState("");
   const [subject, setSubject] = useState("");
@@ -87,6 +88,32 @@ export default function TimetablePage() {
   );
 
   const teacherNames = (teachers ?? []).map((t) => t.name);
+
+  // بيانات مختصرة لكل معلمة (الصف والمادة الأساسية) لعرضها في بطاقات الاختيار
+  const allSlots = useQuery(api.timetable.list, {});
+  const teacherMeta = React.useMemo(() => {
+    const m: Record<string, { grade?: string; subject?: string; count: number }> = {};
+    for (const s of allSlots ?? []) {
+      if (NON_TEACHING.has(s.className)) continue;
+      const info = (m[s.teacherName] = m[s.teacherName] || { count: 0 });
+      info.count++;
+      if (!info.grade) info.grade = String(s.className).split("/")[0];
+      if (!info.subject && s.subject) info.subject = s.subject;
+    }
+    return m;
+  }, [allSlots]);
+
+  // ترتيب: المعلمات صاحبات الجدول أولاً، ثم أبجدياً — مع تصفية بالبحث
+  const teacherCards = React.useMemo(() => {
+    const q = teacherQuery.trim();
+    let list = (teachers ?? []).map((t) => t.name);
+    if (q) list = list.filter((n) => n.includes(q));
+    return list.sort((a, b) => {
+      const ha = teacherMeta[a] ? 0 : 1, hb = teacherMeta[b] ? 0 : 1;
+      if (ha !== hb) return ha - hb;
+      return a.localeCompare(b, "ar");
+    });
+  }, [teachers, teacherMeta, teacherQuery]);
 
   const getCellEntry = (day: string, period: string) =>
     (schedule ?? []).find((e) => e.day === day && e.period === period);
@@ -191,14 +218,43 @@ export default function TimetablePage() {
       </Card>
 
       <Card>
-        <Select
-          label="المعلمة"
-          options={teacherNames}
-          value={selectedTeacher}
-          onChange={setSelectedTeacher}
-          searchable
-          placeholder="اختاري المعلمة…"
+        <Row style={{ justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
+          <H2 style={{ marginBottom: 0 }}>اختاري المعلمة</H2>
+          <Badge label={`${teacherCards.length} معلمة`} tone="muted" />
+        </Row>
+        <Input
+          value={teacherQuery}
+          onChangeText={setTeacherQuery}
+          placeholder="ابحثي بالاسم…"
         />
+        <View style={styles.teacherGrid}>
+          {teacherCards.map((name) => {
+            const meta = teacherMeta[name];
+            const active = selectedTeacher === name;
+            const grade2 = meta?.grade === "الثاني";
+            return (
+              <Pressable
+                key={name}
+                style={[styles.tCard, active && styles.tCardActive]}
+                onPress={() => setSelectedTeacher(active ? "" : name)}
+              >
+                <View style={[styles.tAvatar, { backgroundColor: grade2 ? colors.goldSoft : colors.primarySoft, borderColor: grade2 ? colors.gold : colors.primary }]}>
+                  <Text style={[styles.tAvatarTxt, { color: grade2 ? colors.goldDark : colors.primary }]}>{name.slice(0, 1)}</Text>
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={[styles.tName, active && { color: colors.primary }]} numberOfLines={1}>{name}</Text>
+                  <Text style={styles.tSub} numberOfLines={1}>
+                    {meta ? `${meta.grade ?? ""}${meta.subject ? " · " + shortSubject(meta.subject) : ""} · ${meta.count} حصة` : "لا يوجد جدول"}
+                  </Text>
+                </View>
+                {active ? <Ionicons name="checkmark-circle" size={20} color={colors.primary} /> : null}
+              </Pressable>
+            );
+          })}
+          {teacherCards.length === 0 ? (
+            <P muted style={{ textAlign: "center", width: "100%", paddingVertical: 10 }}>لا توجد معلمة بهذا الاسم</P>
+          ) : null}
+        </View>
       </Card>
 
       {selectedTeacher ? (
@@ -418,6 +474,30 @@ const styles = StyleSheet.create({
   legendDot: { width: 14, height: 14, borderRadius: 4, borderWidth: 1 },
   legendTxt: { fontFamily: fonts.regular, fontSize: 11.5, color: colors.textSecondary },
   emptyState: { alignItems: "center", marginTop: 36, paddingHorizontal: 20 },
+  teacherGrid: { flexDirection: "row", flexWrap: "wrap", gap: 8, marginTop: 12 },
+  tCard: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    flexGrow: 1,
+    flexBasis: 190,
+    minWidth: 165,
+    maxWidth: 320,
+    backgroundColor: "#fff",
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: 14,
+    paddingVertical: 9,
+    paddingHorizontal: 11,
+  },
+  tCardActive: { borderColor: colors.primary, borderWidth: 1.5, backgroundColor: colors.primaryTint },
+  tAvatar: {
+    width: 40, height: 40, borderRadius: 20, borderWidth: 1.5,
+    alignItems: "center", justifyContent: "center",
+  },
+  tAvatarTxt: { fontFamily: fonts.bold, fontSize: 18 },
+  tName: { fontFamily: fonts.semibold, fontSize: 13.5, color: colors.text, textAlign: "right" },
+  tSub: { fontFamily: fonts.regular, fontSize: 11, color: colors.textSecondary, textAlign: "right", marginTop: 2 },
 });
 
 const ss = StyleSheet.create({
