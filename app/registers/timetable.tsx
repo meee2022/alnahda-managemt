@@ -10,6 +10,15 @@ import { colors, fonts, radius, gradients } from "../../lib/theme";
 const DAYS = ["الأحد", "الإثنين", "الثلاثاء", "الأربعاء", "الخميس"];
 const PERIODS = ["1", "2", "3", "4", "5", "6", "7"];
 const NON_TEACHING = new Set(["جلسة تحضير", "اجتماع القسم", "تطوير"]);
+// اختصارات المواد لعرضها بوضوح داخل خلية مضغوطة (الاسم الكامل يبقى في نافذة التعديل)
+const SUBJECT_SHORT: Record<string, string> = {
+  "اللغة الإنجليزية": "إنجليزي",
+  "اللغة العربية": "عربي",
+  "التربية الإسلامية": "إسلامية",
+  "الرياضيات": "رياضيات",
+  "العلوم": "علوم",
+};
+const shortSubject = (s?: string) => (s ? SUBJECT_SHORT[s] ?? s : "");
 
 function pickFile(): Promise<File | null> {
   return new Promise((resolve) => {
@@ -197,6 +206,20 @@ export default function TimetablePage() {
           <Loading />
         ) : (
           <Card style={{ padding: 0, overflow: "hidden" }}>
+            {/* ترويسة الجدول: اسم المعلمة + ملخص الأسبوع */}
+            <View style={styles.gridHead}>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.gridHeadName}>{selectedTeacher}</Text>
+                <Text style={styles.gridHeadSub}>الجدول الأسبوعي للحصص</Text>
+              </View>
+              <View style={styles.gridHeadStat}>
+                <Text style={styles.gridHeadStatNum}>
+                  {(schedule ?? []).filter((e) => !NON_TEACHING.has(e.className)).length}
+                </Text>
+                <Text style={styles.gridHeadStatLbl}>حصة تدريس</Text>
+              </View>
+            </View>
+
             <ScrollView
               horizontal
               showsHorizontalScrollIndicator
@@ -206,7 +229,7 @@ export default function TimetablePage() {
                 {/* Header row */}
                 <View style={styles.row}>
                   <View style={[styles.headerCell, styles.cornerCell]}>
-                    <Text style={styles.headerTxt}>الحصة</Text>
+                    <Ionicons name="time-outline" size={15} color="#fff" />
                   </View>
                   {DAYS.map((d) => (
                     <View key={d} style={styles.headerCell}>
@@ -215,10 +238,11 @@ export default function TimetablePage() {
                   ))}
                 </View>
                 {/* Period rows */}
-                {PERIODS.map((p) => (
+                {PERIODS.map((p, pi) => (
                   <View key={p} style={styles.row}>
                     <View style={[styles.periodCell]}>
-                      <Text style={styles.periodTxt}>الحصة {p}</Text>
+                      <Text style={styles.periodNum}>{p}</Text>
+                      <Text style={styles.periodTxt}>الحصة</Text>
                     </View>
                     {DAYS.map((d) => {
                       const entry = getCellEntry(d, p);
@@ -226,17 +250,17 @@ export default function TimetablePage() {
                       return (
                         <Pressable
                           key={d}
-                          style={[styles.cell, !entry ? styles.cellEmpty : nonTeaching ? styles.cellNonTeaching : styles.cellFilled]}
+                          style={[styles.cell, !entry ? (pi % 2 ? styles.cellEmptyAlt : styles.cellEmpty) : nonTeaching ? styles.cellNonTeaching : styles.cellFilled]}
                           onPress={() => openModal(d, p)}
                         >
                           {entry ? (
                             nonTeaching ? (
-                              <Text style={styles.cellNonTxt}>{entry.className}</Text>
+                              <Text style={styles.cellNonTxt} numberOfLines={2}>{entry.className}</Text>
                             ) : (
                               <>
-                                <Text style={styles.cellClass}>{entry.className}</Text>
+                                <Text style={styles.cellClass} numberOfLines={1}>{entry.className}</Text>
                                 {entry.subject ? (
-                                  <Text style={styles.cellSubject}>{entry.subject}</Text>
+                                  <Text style={styles.cellSubject} numberOfLines={1}>{shortSubject(entry.subject)}</Text>
                                 ) : null}
                               </>
                             )
@@ -250,12 +274,22 @@ export default function TimetablePage() {
                 ))}
               </View>
             </ScrollView>
+
+            {/* مفتاح الألوان */}
+            <View style={styles.legend}>
+              <View style={styles.legendItem}><View style={[styles.legendDot, { backgroundColor: colors.primarySoft, borderColor: colors.primary }]} /><Text style={styles.legendTxt}>حصة تدريس</Text></View>
+              <View style={styles.legendItem}><View style={[styles.legendDot, { backgroundColor: colors.goldSoft, borderColor: colors.gold }]} /><Text style={styles.legendTxt}>تحضير / اجتماع / تطوير</Text></View>
+              <View style={styles.legendItem}><View style={[styles.legendDot, { backgroundColor: "#fff", borderColor: colors.border }]} /><Text style={styles.legendTxt}>فراغ (متاحة للاحتياط)</Text></View>
+            </View>
           </Card>
         )
       ) : (
-        <P style={{ textAlign: "center", color: colors.textSecondary, marginTop: 32 }}>
-          اختاري معلمة لعرض جدولها
-        </P>
+        <View style={styles.emptyState}>
+          <Ionicons name="calendar-outline" size={40} color={colors.borderStrong} />
+          <P style={{ textAlign: "center", color: colors.textSecondary, marginTop: 10 }}>
+            اختاري معلمة لعرض جدولها الأسبوعي
+          </P>
+        </View>
       )}
 
       <Modal visible={!!modal} transparent animationType="fade" onRequestClose={() => setModal(null)}>
@@ -305,46 +339,85 @@ const styles = StyleSheet.create({
     width: "100%",
     maxWidth: 420,
   },
+  gridHead: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    backgroundColor: colors.primaryTint,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+  },
+  gridHeadName: { fontFamily: fonts.bold, fontSize: 16, color: colors.primary },
+  gridHeadSub: { fontFamily: fonts.regular, fontSize: 12, color: colors.textSecondary, marginTop: 2 },
+  gridHeadStat: {
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: colors.primary,
+    borderRadius: 12,
+    paddingVertical: 6,
+    paddingHorizontal: 14,
+    minWidth: 64,
+  },
+  gridHeadStatNum: { fontFamily: fonts.bold, fontSize: 20, color: "#fff", lineHeight: 24 },
+  gridHeadStatLbl: { fontFamily: fonts.regular, fontSize: 10.5, color: colors.goldSoft },
   row: { flexDirection: "row" },
   headerCell: {
     flex: 1,
-    minWidth: 92,
-    paddingVertical: 12,
+    minWidth: 96,
+    paddingVertical: 11,
     backgroundColor: colors.primary,
     borderWidth: 0.5,
-    borderColor: "#fff4",
+    borderColor: "#ffffff22",
     alignItems: "center",
     justifyContent: "center",
   },
-  cornerCell: { flex: 0, width: 78, minWidth: 78 },
+  cornerCell: { flex: 0, width: 62, minWidth: 62, backgroundColor: colors.primaryDeep },
   headerTxt: { color: "#fff", fontFamily: fonts.bold, fontSize: 13 },
   periodCell: {
-    width: 78,
-    paddingVertical: 12,
-    backgroundColor: colors.primaryTint,
+    width: 62,
+    paddingVertical: 10,
+    backgroundColor: colors.goldSoft,
     borderWidth: 0.5,
     borderColor: colors.border,
     alignItems: "center",
     justifyContent: "center",
   },
-  periodTxt: { fontFamily: fonts.medium, fontSize: 12, color: colors.primary },
+  periodNum: { fontFamily: fonts.bold, fontSize: 16, color: colors.goldDark, lineHeight: 18 },
+  periodTxt: { fontFamily: fonts.regular, fontSize: 10, color: colors.textMuted },
   cell: {
     flex: 1,
-    minWidth: 92,
-    minHeight: 56,
+    minWidth: 96,
+    minHeight: 60,
     borderWidth: 0.5,
     borderColor: colors.border,
     alignItems: "center",
     justifyContent: "center",
-    padding: 4,
+    padding: 5,
   },
-  cellFilled: { backgroundColor: "#e8f5e9" },
+  cellFilled: { backgroundColor: colors.primarySoft },
   cellNonTeaching: { backgroundColor: colors.goldSoft },
-  cellEmpty: { backgroundColor: "#fafafa" },
-  cellClass: { fontFamily: fonts.bold, fontSize: 13, color: "#1b5e20", textAlign: "center" },
-  cellSubject: { fontFamily: fonts.regular, fontSize: 11, color: "#388e3c", textAlign: "center" },
-  cellNonTxt: { fontFamily: fonts.medium, fontSize: 11.5, color: colors.goldDark, textAlign: "center" },
-  cellPlus: { fontSize: 22, color: colors.border },
+  cellEmpty: { backgroundColor: "#fff" },
+  cellEmptyAlt: { backgroundColor: "#FCFAF6" },
+  cellClass: { fontFamily: fonts.bold, fontSize: 13, color: colors.primary, textAlign: "center" },
+  cellSubject: { fontFamily: fonts.medium, fontSize: 10.5, color: colors.textSecondary, textAlign: "center", marginTop: 2 },
+  cellNonTxt: { fontFamily: fonts.medium, fontSize: 11, color: colors.goldDark, textAlign: "center" },
+  cellPlus: { fontSize: 18, color: "#EDE6D8" },
+  legend: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 14,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    backgroundColor: colors.primaryTint,
+    borderTopWidth: 1,
+    borderTopColor: colors.border,
+    justifyContent: "center",
+  },
+  legendItem: { flexDirection: "row", alignItems: "center", gap: 6 },
+  legendDot: { width: 14, height: 14, borderRadius: 4, borderWidth: 1 },
+  legendTxt: { fontFamily: fonts.regular, fontSize: 11.5, color: colors.textSecondary },
+  emptyState: { alignItems: "center", marginTop: 36, paddingHorizontal: 20 },
 });
 
 const ss = StyleSheet.create({
