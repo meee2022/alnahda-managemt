@@ -3,7 +3,7 @@ import { View, Text, Pressable, StyleSheet, ScrollView, Modal, Platform } from "
 import { useQuery, useMutation, useAction } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import { Screen, Card, H2, P, Input, Button, Loading, Row, PageHero, Select, Badge, notify } from "../../lib/ui";
-import { Ionicons } from "@expo/vector-icons";
+import Ionicons from "@expo/vector-icons/Ionicons";
 import { colors, fonts, radius, gradients } from "../../lib/theme";
 
 // أيام الدوام (الأحد–الخميس) وترتيب الحصص — مطابقة لجدول المدرسة وسجل الاحتياط
@@ -19,6 +19,20 @@ const SUBJECT_SHORT: Record<string, string> = {
   "العلوم": "علوم",
 };
 const shortSubject = (s?: string) => (s ? SUBJECT_SHORT[s] ?? s : "");
+
+// حدود خطأ صغيرة لعزل استعلام اختياري عن بقية الصفحة
+class QuietBoundary extends React.Component<{ children: React.ReactNode }, { failed: boolean }> {
+  state = { failed: false };
+  static getDerivedStateFromError() { return { failed: true }; }
+  componentDidCatch() {}
+  render() { return this.state.failed ? null : this.props.children; }
+}
+
+function AllSlotsLoader({ onLoad }: { onLoad: (rows: any[] | undefined) => void }) {
+  const rows = useQuery(api.timetable.list, {});
+  React.useEffect(() => { onLoad(rows); }, [rows]);
+  return null;
+}
 
 function pickFile(): Promise<File | null> {
   return new Promise((resolve) => {
@@ -89,8 +103,9 @@ export default function TimetablePage() {
 
   const teacherNames = (teachers ?? []).map((t) => t.name);
 
-  // بيانات مختصرة لكل معلمة (الصف والمادة الأساسية) لعرضها في بطاقات الاختيار
-  const allSlots = useQuery(api.timetable.list, {});
+  // بيانات مختصرة لكل معلمة (الصف والمادة الأساسية) لعرضها في بطاقات الاختيار.
+  // تُحمَّل داخل حدود خطأ معزولة: إن تعذّر تحميلها تظهر البطاقات بدون التفاصيل بدل سقوط الصفحة.
+  const [allSlots, setAllSlots] = useState<any[] | undefined>(undefined);
   const teacherMeta = React.useMemo(() => {
     const m: Record<string, { grade?: string; subject?: string; count: number }> = {};
     for (const s of allSlots ?? []) {
@@ -145,6 +160,10 @@ export default function TimetablePage() {
 
   return (
     <Screen>
+      <QuietBoundary>
+        <AllSlotsLoader onLoad={setAllSlots} />
+      </QuietBoundary>
+
       <PageHero
         title="جدول حصص المعلمات"
         desc="أدخل جدول حصص كل معلمة لتفعيل اقتراح الاحتياط الذكي"

@@ -79,6 +79,23 @@ export const byDay = query({
   },
 });
 
+// نسخة خفيفة ليوم واحد — تُعيد الحقول اللازمة فقط لاقتراح الاحتياط
+// (أخف بكثير من تحميل الجدول كامل، وأقل عرضة للفشل عند ضغط الخادم)
+export const byDayLite = query({
+  args: { day: v.string() },
+  handler: async (ctx, { day }) => {
+    if (!day) return [];
+    const rows = await ctx.db.query("timetable")
+      .withIndex("by_day", (q) => q.eq("day", day))
+      .collect();
+    return rows.map((r) => ({
+      teacherName: r.teacherName,
+      period: r.period,
+      className: r.className,
+    }));
+  },
+});
+
 export const byTeacher = query({
   args: { teacherName: v.string() },
   handler: async (ctx, { teacherName }) => {

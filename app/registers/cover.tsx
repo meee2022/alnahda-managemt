@@ -23,6 +23,22 @@ const REASONS = ["غياب", "تبديل"];
 const PLAN_TYPES = ["مراجعة", "درس", "متابعة واجبات", "إشرافية فقط"];
 const NOTIFY = ["تم إبلاغي قبل الحصة بوقت كافٍ", "تم إبلاغي قبل الحصة مباشرة", "تم الرفض"];
 
+// حدود خطأ صغيرة: تعزل تحميل الجدول عن بقية الصفحة.
+// جدول الحصص ميزة مساعدة فقط — إن تعذّر تحميله يبقى السجل قابلاً للاستخدام يدوياً.
+class QuietBoundary extends React.Component<{ children: React.ReactNode }, { failed: boolean }> {
+  state = { failed: false };
+  static getDerivedStateFromError() { return { failed: true }; }
+  componentDidCatch() {}
+  render() { return this.state.failed ? null : this.props.children; }
+}
+
+// يحمّل جدول اليوم ويمرّره للأعلى — معزول داخل QuietBoundary
+function DayScheduleLoader({ day, onLoad }: { day: string; onLoad: (rows: any[] | undefined) => void }) {
+  const rows = useQuery(api.timetable.byDayLite, day ? { day } : "skip");
+  React.useEffect(() => { onLoad(day ? rows : []); }, [rows, day]);
+  return null;
+}
+
 const emptyEntry = (): Entry => ({
   teacherName: "", reason: "غياب", grade: "", section: "",
   period: "", coverTeacher: "", planType: "مراجعة", notify: NOTIFY[0], notes: "",
@@ -147,9 +163,8 @@ export default function CoverRegister() {
   );
 
   const teacherNames = (teachers ?? []).map((t) => t.name);
-  // نستخدم القائمة الكاملة ونصفّي محلياً (أكثر استقراراً من الاستعلام المفهرس عند ضغط الخادم)
-  const allSlots = useQuery(api.timetable.list, {});
-  const daySchedule = (allSlots ?? []).filter((s: any) => s.day === day);
+  // جدول اليوم فقط — يُحمَّل داخل حدود خطأ معزولة حتى لا يُسقط فشله الصفحة كلها
+  const [daySchedule, setDaySchedule] = useState<any[] | undefined>(undefined);
 
   const setEntry = (i: number, patch: Partial<Entry>) =>
     setEntries((p) => p.map((e, j) => (j === i ? { ...e, ...patch } : e)));
@@ -208,6 +223,10 @@ export default function CoverRegister() {
 
   return (
     <Screen>
+      <QuietBoundary key={day}>
+        <DayScheduleLoader day={day} onLoad={setDaySchedule} />
+      </QuietBoundary>
+
       <PageHero
         title="سجل الاحتياط الأكاديمي"
         desc="تسجيل حصص الاحتياط وطباعتها بنفس النموذج الرسمي المعتمد"
