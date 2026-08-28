@@ -44,7 +44,7 @@ export class AppErrorBoundary extends React.Component<{ children: React.ReactNod
           <Ionicons name="cloud-offline-outline" size={48} color={colors.textMuted} />
           <Text style={{ fontFamily: fonts.bold, fontSize: 16, color: colors.text, marginTop: 14, textAlign: "center" }}>تعذّر تحميل البيانات مؤقتاً</Text>
           <Text style={{ fontFamily: fonts.regular, fontSize: 13, color: colors.textSecondary, marginTop: 6, textAlign: "center", lineHeight: 22, maxWidth: 360 }}>
-            حدث انقطاع مؤقت في الاتصال بالخادم. حدّثي الصفحة وحاولي مرة أخرى — إن تكرر فقد يكون الخادم تجاوز حد الخطة المجانية مؤقتاً.
+            حدث انقطاع مؤقت في الاتصال بالخادم. حدّثي الصفحة وحاولي مرة أخرى — وإن تكرر فتأكدي من اتصال الإنترنت.
           </Text>
           <Pressable onPress={reload} style={{ marginTop: 16, backgroundColor: colors.primary, borderRadius: radius.md, paddingHorizontal: 20, paddingVertical: 11 }}>
             <Text style={{ fontFamily: fonts.semibold, fontSize: 14, color: "#fff" }}>إعادة المحاولة</Text>
