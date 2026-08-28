@@ -13,8 +13,13 @@ const TITLE = "منصة قسم المسار الأدبي";
 const DESC =
   "منصة إدارة قسم المسار الأدبي — روضة ومدرسة النهضة الابتدائية للبنات: استمارات رسمية، متابعة المعلمات والطالبات، تقارير وإحصائيات ومتابعة ذكية.";
 const OG_IMAGE = `${SITE}/og-image.png`;
+const buildMetaFile = path.resolve("public", "build-meta.json");
+const buildVersion = fs.existsSync(buildMetaFile)
+  ? JSON.parse(fs.readFileSync(buildMetaFile, "utf8")).version
+  : "local";
 
 const tags = `
+    <meta name="app-build" content="${buildVersion}" />
     <meta property="og:site_name" content="${TITLE}" />
     <meta property="og:type" content="website" />
     <meta property="og:title" content="${TITLE}" />

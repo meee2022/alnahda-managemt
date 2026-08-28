@@ -17,6 +17,7 @@ import { AuthProvider, useAuth } from "../lib/auth";
 import { DrawerProvider, MenuButton, HeaderAvatar, useDrawer, NAV } from "../lib/nav";
 import { Toaster, AppErrorBoundary } from "../lib/ui";
 import { colors, fonts, shadow } from "../lib/theme";
+import { UpdateManager } from "../lib/updateManager";
 
 // يسار الترويسة (يمين بصرياً في RTL): زر قائمة في الرئيسية، وزر رجوع في الصفحات الداخلية
 function HeaderLeading() {
@@ -323,6 +324,7 @@ export default function RootLayout() {
         </AppErrorBoundary>
         <BottomBar />
         <Toaster />
+        <UpdateManager />
         </View>
         </DrawerProvider>
       </AuthProvider>
