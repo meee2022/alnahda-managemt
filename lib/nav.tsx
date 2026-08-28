@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState } from "react";
 import { View, Text, Pressable, StyleSheet, ScrollView, Platform, useWindowDimensions } from "react-native";
 import { router, usePathname } from "expo-router";
-import { Ionicons } from "@expo/vector-icons";
+import Ionicons from "@expo/vector-icons/Ionicons";
 import { LinearGradient } from "expo-linear-gradient";
 import Animated, { SlideInRight, SlideOutRight, FadeIn, FadeOut } from "react-native-reanimated";
 import { useQuery } from "convex/react";

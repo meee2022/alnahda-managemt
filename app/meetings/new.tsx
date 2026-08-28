@@ -3,7 +3,7 @@ import { View, Text, Pressable, Image, Platform } from "react-native";
 import { useLocalSearchParams, router } from "expo-router";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "../../convex/_generated/api";
-import { Ionicons } from "@expo/vector-icons";
+import Ionicons from "@expo/vector-icons/Ionicons";
 import { Screen, Card, H2, Input, Button, Row, IconBtn, P, PageHero, notify } from "../../lib/ui";
 import { DateField, TimeField } from "../../lib/pickers";
 import { colors, radius, fonts } from "../../lib/theme";

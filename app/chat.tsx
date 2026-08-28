@@ -2,7 +2,7 @@ import React, { useState, useRef } from "react";
 import { View, Text, ScrollView, Pressable, Platform } from "react-native";
 import { useAction, useQuery } from "convex/react";
 import { api } from "../convex/_generated/api";
-import { Ionicons } from "@expo/vector-icons";
+import Ionicons from "@expo/vector-icons/Ionicons";
 import { Screen, Card, P, Input, Button, Row, PageHero } from "../lib/ui";
 import { colors, fonts, radius } from "../lib/theme";
 

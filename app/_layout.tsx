@@ -1,17 +1,15 @@
 import React, { useEffect } from "react";
 import { I18nManager, Platform, View, ActivityIndicator, Pressable, Text, ScrollView, useWindowDimensions } from "react-native";
 import { Stack, router, usePathname } from "expo-router";
-import { Ionicons } from "@expo/vector-icons";
+import Ionicons from "@expo/vector-icons/Ionicons";
 import { StatusBar } from "expo-status-bar";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { ConvexProvider } from "convex/react";
-import {
-  useFonts,
-  Cairo_400Regular,
-  Cairo_500Medium,
-  Cairo_600SemiBold,
-  Cairo_700Bold,
-} from "@expo-google-fonts/cairo";
+import { useFonts } from "expo-font";
+import { Cairo_400Regular } from "@expo-google-fonts/cairo/400Regular";
+import { Cairo_500Medium } from "@expo-google-fonts/cairo/500Medium";
+import { Cairo_600SemiBold } from "@expo-google-fonts/cairo/600SemiBold";
+import { Cairo_700Bold } from "@expo-google-fonts/cairo/700Bold";
 import { convex } from "../lib/convex";
 import { AuthProvider, useAuth } from "../lib/auth";
 import { DrawerProvider, MenuButton, HeaderAvatar, useDrawer, NAV } from "../lib/nav";
@@ -83,6 +81,9 @@ function BottomBar() {
           <Pressable
             key={t.label}
             onPress={() => (t.more ? open() : router.replace(t.href as any))}
+            accessibilityRole="tab"
+            accessibilityLabel={t.label}
+            accessibilityState={{ selected: active }}
             style={({ pressed }: any) => ({
               flex: 1,
               alignItems: "center",
@@ -144,6 +145,9 @@ function TopNav() {
   const Pill = ({ label, icon, active, onPress }: any) => (
     <Pressable
       onPress={onPress}
+      accessibilityRole="tab"
+      accessibilityLabel={label}
+      accessibilityState={{ selected: active }}
       style={({ hovered }: any) => [
         {
           flexDirection: "row", alignItems: "center", gap: 5,
@@ -198,7 +202,7 @@ function SearchButton() {
   const pathname = usePathname();
   if (pathname === "/login" || pathname === "/search") return null;
   return (
-    <Pressable onPress={() => router.push("/search" as any)} hitSlop={8}
+    <Pressable onPress={() => router.push("/search" as any)} hitSlop={8} accessibilityRole="button" accessibilityLabel="بحث سريع"
       style={({ hovered, pressed }: any) => [{ width: 36, height: 36, borderRadius: 11, alignItems: "center", justifyContent: "center" }, hovered && { backgroundColor: colors.primarySoft }, pressed && { opacity: 0.7 }]}>
       <Ionicons name="search" size={20} color={colors.primary} />
     </Pressable>
@@ -217,6 +221,8 @@ function BackButton() {
     <Pressable
       onPress={goBack}
       hitSlop={10}
+      accessibilityRole="button"
+      accessibilityLabel="الرجوع إلى الشاشة السابقة"
       style={({ hovered, pressed }: any) => ({
         flexDirection: "row",
         alignItems: "center",
@@ -268,6 +274,7 @@ export default function RootLayout() {
         <DrawerProvider>
         <StatusBar style="dark" />
         <View style={{ flex: 1, backgroundColor: colors.bg }}>
+        <UpdateManager />
         <TopNav />
         <AppErrorBoundary>
         <Stack
@@ -324,7 +331,6 @@ export default function RootLayout() {
         </AppErrorBoundary>
         <BottomBar />
         <Toaster />
-        <UpdateManager />
         </View>
         </DrawerProvider>
       </AuthProvider>

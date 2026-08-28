@@ -5,7 +5,7 @@ import { useQuery, useMutation } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import { Screen, Card, H2, P, Input, Button, Loading, Empty, Row, IconBtn, Badge, Select, PageHero, HeroBtn, AnimatedItem, ExportMenu, notify } from "../../lib/ui";
 import { Text } from "react-native";
-import { Ionicons } from "@expo/vector-icons";
+import Ionicons from "@expo/vector-icons/Ionicons";
 import { colors, fonts } from "../../lib/theme";
 import { DateField, TimeField, weekdayOf, prevWeekSameDay, prevDay, monthKeyOf, minutesBetween, parseDate } from "../../lib/pickers";
 

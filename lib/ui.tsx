@@ -3,7 +3,7 @@ import {
   View, Text, TextInput, Pressable, ScrollView, StyleSheet,
   ActivityIndicator, Platform, ViewStyle, TextStyle, useWindowDimensions, Modal,
 } from "react-native";
-import { Ionicons } from "@expo/vector-icons";
+import Ionicons from "@expo/vector-icons/Ionicons";
 import { LinearGradient } from "expo-linear-gradient";
 import { Alert } from "react-native";
 import { colors, radius, shadow, fonts, gradients } from "./theme";
@@ -230,9 +230,9 @@ export function Card({ children, style }: { children: React.ReactNode; style?: V
 export function H1({ children }: { children: React.ReactNode }) {
   return <Text style={styles.h1}>{children}</Text>;
 }
-export function H2({ children }: { children: React.ReactNode }) {
+export function H2({ children, style }: { children: React.ReactNode; style?: ViewStyle }) {
   return (
-    <View style={{ marginBottom: 12 }}>
+    <View style={[{ marginBottom: 12 }, style]}>
       <Text style={styles.h2}>{children}</Text>
       <View style={styles.h2rule} />
     </View>
@@ -242,8 +242,8 @@ export function P({ children, muted, style }: { children: React.ReactNode; muted
   return <Text style={[styles.p, muted && { color: colors.textMuted }, style]}>{children}</Text>;
 }
 
-export function Label({ children }: { children: React.ReactNode }) {
-  return <Text style={styles.label}>{children}</Text>;
+export function Label({ children, style }: { children: React.ReactNode; style?: TextStyle }) {
+  return <Text style={[styles.label, style]}>{children}</Text>;
 }
 
 export function Input(props: React.ComponentProps<typeof TextInput> & { label?: string }) {
@@ -253,6 +253,7 @@ export function Input(props: React.ComponentProps<typeof TextInput> & { label?: 
     <View style={{ marginBottom: 14 }}>
       {label ? <Label>{label}</Label> : null}
       <TextInput
+        accessibilityLabel={rest.accessibilityLabel ?? label}
         placeholderTextColor={colors.textMuted}
         onFocus={() => setFocused(true)}
         onBlur={() => setFocused(false)}
@@ -269,13 +270,14 @@ export function Input(props: React.ComponentProps<typeof TextInput> & { label?: 
 }
 
 export function Button({
-  title, onPress, variant = "primary", icon, loading, small, style,
+  title, onPress, variant = "primary", icon, loading, disabled, small, style,
 }: {
   title: string;
   onPress?: () => void;
   variant?: "primary" | "accent" | "outline" | "ghost" | "danger";
   icon?: keyof typeof Ionicons.glyphMap;
   loading?: boolean;
+  disabled?: boolean;
   small?: boolean;
   style?: ViewStyle;
 }) {
@@ -289,7 +291,10 @@ export function Button({
   return (
     <Pressable
       onPress={onPress}
-      disabled={loading}
+      disabled={loading || disabled}
+      accessibilityRole="button"
+      accessibilityLabel={title}
+      accessibilityState={{ disabled: Boolean(loading || disabled), busy: Boolean(loading) }}
       style={({ pressed, hovered }: any) => [
         styles.btn,
         small && styles.btnSmall,
@@ -302,6 +307,7 @@ export function Button({
         hovered && variant === "danger" && { backgroundColor: "#F6DAD5" },
         hovered && variant === "outline" && { borderColor: colors.primary, backgroundColor: colors.primaryTint },
         pressed && { transform: [{ scale: 0.985 }], opacity: 0.92 },
+        (loading || disabled) && { opacity: 0.52 },
         (variant === "primary" || variant === "accent") && shadow.card,
         style,
       ]}
@@ -323,6 +329,9 @@ export function Chip({ label, active, onPress, color }: { label: string; active?
   return (
     <Pressable
       onPress={onPress}
+      accessibilityRole="button"
+      accessibilityLabel={label}
+      accessibilityState={{ selected: Boolean(active) }}
       style={({ hovered }: any) => [
         styles.chip,
         hovered && !active && { borderColor: colors.borderStrong, backgroundColor: colors.bg },
@@ -516,11 +525,28 @@ export function Loading() {
   );
 }
 
-export function IconBtn({ name, onPress, color = colors.textSecondary }: { name: keyof typeof Ionicons.glyphMap; onPress?: () => void; color?: string }) {
+// تسمية عربية مفهومة لكل أيقونة إجراء، حتى تنطق قارئات الشاشة الإجراء الحقيقي
+// بدل كلمة عامة. تُستخدم تلقائياً ما لم تُمرَّر label صراحةً.
+const ICON_LABELS: Record<string, string> = {
+  "pencil-outline": "تعديل",
+  "trash-outline": "حذف",
+  "close-circle-outline": "إزالة",
+  "copy-outline": "نسخ",
+  "download-outline": "تحميل",
+  "document-text-outline": "عرض التفاصيل",
+  "swap-horizontal-outline": "تبديل",
+  "checkmark-circle-outline": "تأكيد",
+  "chevron-down": "عرض التفاصيل",
+  "chevron-up": "إخفاء التفاصيل",
+};
+
+export function IconBtn({ name, onPress, color = colors.textSecondary, label }: { name: keyof typeof Ionicons.glyphMap; onPress?: () => void; color?: string; label?: string }) {
   return (
     <Pressable
       onPress={onPress}
       hitSlop={8}
+      accessibilityRole="button"
+      accessibilityLabel={label ?? ICON_LABELS[name as string] ?? "إجراء"}
       style={({ pressed, hovered }: any) => [
         styles.iconBtn,
         hovered && { backgroundColor: colors.bg },

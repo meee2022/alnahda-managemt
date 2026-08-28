@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, Pressable, Platform } from "react-native";
 import { router } from "expo-router";
 import { useQuery } from "convex/react";
 import { api } from "../../convex/_generated/api";
-import { Ionicons } from "@expo/vector-icons";
+import Ionicons from "@expo/vector-icons/Ionicons";
 import { Screen, Card, H2, P, Loading, Empty, Row, Badge, Button, IconBtn, PageHero, HeroBtn, AnimatedItem, ExportMenu, DataTable, type Col } from "../../lib/ui";
 import { colors, fonts, shadow } from "../../lib/theme";
 import { printTeacherStats } from "../../lib/printTemplates";

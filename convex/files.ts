@@ -27,7 +27,7 @@ export const cleanupOrphans = mutation({
   args: {},
   handler: async (ctx) => {
     const referenced = new Set<string>();
-    for (const m of await ctx.db.query("meetingRecords").collect()) if (m.signatureId) referenced.add(m.signatureId as any);
+    for (const m of await ctx.db.query("meetings").collect()) if (m.signatureId) referenced.add(m.signatureId);
     for (const v of await ctx.db.query("classVisits").collect()) if (v.sourceFileId) referenced.add(v.sourceFileId as any);
     for (const p of await ctx.db.query("performanceVisits").collect()) if (p.sourceFileId) referenced.add(p.sourceFileId as any);
 

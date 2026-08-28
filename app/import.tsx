@@ -3,7 +3,7 @@ import { View, Text, Platform } from "react-native";
 import { router } from "expo-router";
 import { useAction, useMutation, useQuery } from "convex/react";
 import { api } from "../convex/_generated/api";
-import { Ionicons } from "@expo/vector-icons";
+import Ionicons from "@expo/vector-icons/Ionicons";
 import { Screen, Card, H2, P, Button, Row, Badge, Chip, PageHero } from "../lib/ui";
 import { colors, fonts } from "../lib/theme";
 

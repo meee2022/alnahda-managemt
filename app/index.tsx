@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { View, Text, StyleSheet, Pressable, useWindowDimensions, Platform } from "react-native";
 import { router, Redirect } from "expo-router";
-import { Ionicons } from "@expo/vector-icons";
+import Ionicons from "@expo/vector-icons/Ionicons";
 import { LinearGradient } from "expo-linear-gradient";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "../convex/_generated/api";
@@ -188,6 +188,8 @@ function HomeAlerts() {
 
 // شريط "حالة القسم" — مؤشّر صحّة موحّد محسوب من التنبيهات والتوصيات والزيارات
 function DeptStatus() {
+  const { width } = useWindowDimensions();
+  const compact = width <= 520;
   const data = useQuery(api.analytics.teacherStats, {}) as any;
   const stats = useQuery(api.admin.dashboardStats, {}) as any;
   if (!data || !stats) return null;
@@ -209,12 +211,17 @@ function DeptStatus() {
 
   return (
     <Reveal delay={40}>
-      <Pressable onPress={() => router.push("/reports/stats" as any)} style={dsx.wrap}>
+      <Pressable
+        onPress={() => router.push("/reports/stats" as any)}
+        accessibilityRole="button"
+        accessibilityLabel={`${label}. فتح الإحصائيات والتقارير`}
+        style={[dsx.wrap, compact && dsx.wrapCompact]}
+      >
         <View style={[dsx.badge, { backgroundColor: tone }]}>
           <Ionicons name={icon} size={18} color="#fff" />
           <Text style={dsx.badgeTxt}>{label}</Text>
         </View>
-        <View style={dsx.metrics}>
+        <View style={[dsx.metrics, compact && dsx.metricsCompact]}>
           {metrics.map((m) => (
             <View key={m.l} style={dsx.metric}>
               <Text style={[dsx.metricNum, { color: m.c }]}>{m.n}</Text>
@@ -233,9 +240,11 @@ const dsx = StyleSheet.create({
     backgroundColor: colors.card, borderRadius: radius.lg, borderWidth: 1, borderColor: colors.border,
     paddingHorizontal: 16, paddingVertical: 14, marginBottom: 16, ...shadow.card,
   } as any,
+  wrapCompact: { alignItems: "stretch", gap: 12 },
   badge: { flexDirection: "row", alignItems: "center", gap: 8, borderRadius: 999, paddingHorizontal: 14, paddingVertical: 8 },
   badgeTxt: { fontFamily: fonts.bold, fontSize: 13.5, color: "#fff" },
   metrics: { flexDirection: "row", flexWrap: "wrap", gap: 18, flex: 1, justifyContent: "flex-end" },
+  metricsCompact: { flexBasis: "100%", justifyContent: "space-between", gap: 8 },
   metric: { alignItems: "center", minWidth: 64 },
   metricNum: { fontFamily: fonts.bold, fontSize: 19 },
   metricLbl: { fontFamily: fonts.medium, fontSize: 10.5, color: colors.textSecondary, marginTop: 1 },
