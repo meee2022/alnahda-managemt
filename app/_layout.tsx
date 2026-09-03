@@ -325,6 +325,7 @@ export default function RootLayout() {
           <Stack.Screen name="reports/achievements" options={{ title: "إنجازات القسم" }} />
           <Stack.Screen name="registers/leave" options={{ title: "سجل الاستئذان" }} />
           <Stack.Screen name="registers/cover" options={{ title: "سجل الاحتياط" }} />
+          <Stack.Screen name="registers/schedule-builder" options={{ title: "مولّد الجدول" }} />
           <Stack.Screen name="recommendations" options={{ title: "متابعة التوصيات" }} />
           <Stack.Screen name="admin" options={{ title: "لوحة التحكم" }} />
         </Stack>

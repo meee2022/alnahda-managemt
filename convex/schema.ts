@@ -396,6 +396,20 @@ export default defineSchema({
   }).index("by_teacher_day", ["teacherName", "day"])
     .index("by_day", ["day"]),
 
+  // قيود بناء الجدول — تتحكم بها المنسقة من داخل التطبيق
+  // kind: noFirstPeriod (منع الحصة الأولى) | reduceHours (تخفيف ساعات)
+  //     | noSubjectFirstOnDay (منع مادة في الحصة الأولى بيوم) | minPerDay (حد أدنى لحصص المادة في اليوم)
+  //     | rule (تشغيل/إيقاف قاعدة تفضيلية) | firstPrefer (مواد يُفضّل وضعها في الحصة الأولى)
+  scheduleConstraints: defineTable({
+    kind: v.string(),
+    teacherName: v.optional(v.string()),
+    subject: v.optional(v.string()),
+    day: v.optional(v.string()),   // فارغ = كل الأيام
+    amount: v.optional(v.number()), // عدد الساعات أو الحد الأدنى
+    ruleId: v.optional(v.string()), // للقواعد التفضيلية
+    enabled: v.boolean(),
+  }).index("by_kind", ["kind"]),
+
   // خطة متابعة توصيات (موجه تربوي) — تُستخدم عند تكرار مؤشرات لم تتوفر لها أدلة في الزيارات الصفية
   guidePlans: defineTable({
     teacherName: v.string(),

@@ -25,11 +25,13 @@ import type * as plans from "../plans.js";
 import type * as recommendationSeed from "../recommendationSeed.js";
 import type * as registers from "../registers.js";
 import type * as reports from "../reports.js";
+import type * as scheduleConstraints from "../scheduleConstraints.js";
 import type * as seedData from "../seedData.js";
 import type * as students from "../students.js";
 import type * as teachers from "../teachers.js";
 import type * as timetable from "../timetable.js";
 import type * as timetableData from "../timetableData.js";
+import type * as timetableData2 from "../timetableData2.js";
 import type * as visits from "../visits.js";
 
 import type {
@@ -56,11 +58,13 @@ declare const fullApi: ApiFromModules<{
   recommendationSeed: typeof recommendationSeed;
   registers: typeof registers;
   reports: typeof reports;
+  scheduleConstraints: typeof scheduleConstraints;
   seedData: typeof seedData;
   students: typeof students;
   teachers: typeof teachers;
   timetable: typeof timetable;
   timetableData: typeof timetableData;
+  timetableData2: typeof timetableData2;
   visits: typeof visits;
 }>;
 

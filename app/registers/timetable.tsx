@@ -1,8 +1,9 @@
 import React, { useState } from "react";
+import { router } from "expo-router";
 import { View, Text, Pressable, StyleSheet, ScrollView, Modal, Platform } from "react-native";
 import { useQuery, useMutation, useAction } from "convex/react";
 import { api } from "../../convex/_generated/api";
-import { Screen, Card, H2, P, Input, Button, Loading, Row, PageHero, Select, Badge, notify } from "../../lib/ui";
+import { Screen, Card, H2, P, Input, Button, Loading, Row, PageHero, HeroBtn, Select, Badge, notify } from "../../lib/ui";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { colors, fonts, radius, gradients } from "../../lib/theme";
 
@@ -169,7 +170,9 @@ export default function TimetablePage() {
         desc="أدخل جدول حصص كل معلمة لتفعيل اقتراح الاحتياط الذكي"
         icon="grid-outline"
         gradient={gradients.heroDeep}
-      />
+      >
+        <HeroBtn title="مولّد الجدول" icon="construct" prominent onPress={() => router.push("/registers/schedule-builder" as any)} />
+      </PageHero>
 
       {/* رفع الجدول المطبوع وتعبئته تلقائياً بالذكاء */}
       <Card style={{ backgroundColor: colors.goldSoft, borderColor: colors.gold, borderWidth: 1 }}>
