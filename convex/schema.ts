@@ -277,6 +277,108 @@ export default defineSchema({
     deputyRecommendations: v.optional(v.string()),
   }),
 
+  // ===== استمارات 2026-2027 =====
+
+  // التقرير الكمي/الوصفي للمعلم لقراءة نتائج اختبار (يرفعه المعلم للمنسق)
+  teacherExamReports: defineTable({
+    teacherName: v.string(),
+    examTitle: v.string(),      // اسم الاختبار
+    subject: v.optional(v.string()),
+    date: v.optional(v.string()),
+    year: v.string(),
+    term: v.optional(v.string()),
+    rows: v.array(v.object({    // صف/شعبة لكل عمود في النموذج
+      section: v.string(),
+      subject: v.optional(v.string()),
+      passRate: v.number(),
+      achievementRate: v.number(),
+      addedValue: v.number(),
+      highCount: v.optional(v.number()),
+      midCount: v.optional(v.number()),
+      lowCount: v.optional(v.number()),
+      failCount: v.optional(v.number()),
+    })),
+    unmetStandards: v.optional(v.string()),   // المعايير غير المحققة وأسماء الطلبة وأسباب التدني
+    remedialActions: v.optional(v.string()),  // الإجراءات العلاجية
+    enrichmentActions: v.optional(v.string()),// الإجراءات الإثرائية
+    coordinatorComment: v.optional(v.string()),// تعليق المنسق
+  }).index("by_teacher", ["teacherName"]),
+
+  // تقرير القسم للنائب الأكاديمي — 41 بنداً في 9 مجالات
+  departmentReports: defineTable({
+    reportNumber: v.optional(v.string()),
+    date: v.optional(v.string()),
+    year: v.string(),
+    term: v.optional(v.string()),
+    entries: v.array(v.object({
+      domain: v.string(),
+      item: v.string(),
+      done: v.optional(v.string()),   // ما تم إنجازه
+      notes: v.optional(v.string()),  // ملاحظات / تحديات
+    })),
+    deputyFeedback: v.optional(v.string()), // التغذية الراجعة من النائب الأكاديمي
+  }).index("by_year", ["year"]),
+
+  // استمارة زيارة المنسق الصفية لمساعد معلم — 11 مؤشراً بمقياس 0..3
+  assistantVisits: defineTable({
+    assistantName: v.string(),
+    jobNumber: v.optional(v.string()),
+    date: v.optional(v.string()),
+    day: v.optional(v.string()),
+    grade: v.optional(v.string()),
+    section: v.optional(v.string()),
+    period: v.optional(v.string()),
+    subject: v.optional(v.string()),
+    guide: v.optional(v.string()),       // الموجّه التربوي
+    scores: v.array(v.object({
+      indicator: v.string(),
+      score: v.optional(v.number()),     // 0..3 أو -1 = لم يتم قياسه
+      recommendation: v.optional(v.string()),
+    })),
+    domainScore: v.optional(v.number()),
+    notes: v.optional(v.string()),
+  }).index("by_assistant", ["assistantName"]),
+
+  // نموذج جلسة التحضير الجماعي — 8 بنود + تكليفات + تأمل
+  prepSessions: defineTable({
+    date: v.optional(v.string()),
+    time: v.optional(v.string()),
+    subject: v.optional(v.string()),
+    supervisor: v.optional(v.string()),  // المشرف على الجلسة
+    attendees: v.optional(v.string()),
+    coversFrom: v.optional(v.string()),  // تاريخ المحضر له من
+    coversTo: v.optional(v.string()),    // إلى
+    items: v.array(v.object({
+      item: v.string(),
+      status: v.optional(v.string()),    // تم | لم يتم
+      notes: v.optional(v.string()),
+    })),
+    assignments: v.array(v.object({
+      lessons: v.optional(v.string()),   // أسماء الدروس
+      teacher: v.optional(v.string()),   // المعلم المسؤول
+      dueDate: v.optional(v.string()),   // تاريخ التسليم
+    })),
+    improvements: v.optional(v.string()), // التعديلات والإضافات والمقترحات
+    reflection: v.optional(v.string()),   // تأمل المنسقة
+  }).index("by_date", ["date"]),
+
+  // خطة تهيئة معلم مستجد — 7 جوانب × (إجراءات، مسؤول، إطار زمني، أدلة)
+  inductionPlans: defineTable({
+    teacherName: v.string(),
+    subjectDept: v.optional(v.string()),
+    date: v.optional(v.string()),
+    year: v.string(),
+    rows: v.array(v.object({
+      aspect: v.string(),
+      actions: v.optional(v.string()),
+      owner: v.optional(v.string()),      // المسؤول عن التنفيذ
+      timeframe: v.optional(v.string()),  // الإطار الزمني
+      evidence: v.optional(v.string()),   // مؤشرات التنفيذ (الأدلة)
+    })),
+    notes: v.optional(v.string()),
+    acknowledged: v.optional(v.boolean()), // اطلع المعلم على الخطة
+  }).index("by_teacher", ["teacherName"]),
+
   // متابعة الخطة الفصلية (أسابيع × دروس)
   curriculumWeeks: defineTable({
     grade: v.string(),

@@ -327,6 +327,11 @@ export default function RootLayout() {
           <Stack.Screen name="registers/cover" options={{ title: "سجل الاحتياط" }} />
           <Stack.Screen name="registers/schedule-builder" options={{ title: "مولّد الجدول" }} />
           <Stack.Screen name="recommendations" options={{ title: "متابعة التوصيات" }} />
+          <Stack.Screen name="academics/teacher-exam-report" options={{ title: "التقرير الكمي للمعلم" }} />
+          <Stack.Screen name="reports/department" options={{ title: "تقرير القسم" }} />
+          <Stack.Screen name="evaluations/assistant-visit" options={{ title: "زيارة مساعد المعلم" }} />
+          <Stack.Screen name="plans/prep-session" options={{ title: "جلسة التحضير الجماعي" }} />
+          <Stack.Screen name="evaluations/induction" options={{ title: "خطة تهيئة معلم مستجد" }} />
           <Stack.Screen name="admin" options={{ title: "لوحة التحكم" }} />
         </Stack>
         </AppErrorBoundary>

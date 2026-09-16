@@ -4,7 +4,7 @@ import { printHtml } from "./print";
 import { PERF_DOMAINS } from "./forms";
 import { MINISTRY_LOGO } from "./letterhead";
 
-type Settings = Record<string, string | undefined>;
+export type Settings = Record<string, string | undefined>;
 
 const MAROON = "#5C1523"; // العنابي الأساسي (هوية موحّدة)
 const GOLD = "#C9A96E"; // الذهبي الأساسي
@@ -14,7 +14,7 @@ const DEFAULT_MISSION =
   "نربي بيئة تعليمية شاملة ومبتكرة تعزز القيم والأخلاق وتؤهل المتعلم بمهارات عالية لإعداد جيل واعٍ قادر على بناء مجتمع متقدم واقتصاد مزدهر.";
 
 // ===== الأساس: ورقة رسمية A4 بترويسة الوزارة العنابية والرؤية/الرسالة =====
-function officialPage(body: string, opts?: { landscape?: boolean; s?: Settings; footer?: boolean }) {
+export function officialPage(body: string, opts?: { landscape?: boolean; s?: Settings; footer?: boolean }) {
   const s = opts?.s ?? {};
   const showFooter = opts?.footer !== false;
   const schoolName = s.school ? `روضة ومدرسة ${s.school}` : "روضة ومدرسة النهضة الابتدائية للبنات";
@@ -81,8 +81,8 @@ function officialPage(body: string, opts?: { landscape?: boolean; s?: Settings; 
 </html>`;
 }
 
-const esc = (s?: string) => (s ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/\n/g, "<br/>");
-const dotted = (n = 3) => Array.from({ length: n }, () => `<div class="dots"></div>`).join("");
+export const esc = (s?: string) => (s ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/\n/g, "<br/>");
+export const dotted = (n = 3) => Array.from({ length: n }, () => `<div class="dots"></div>`).join("");
 
 // ====================================================================
 // 1) محضر اجتماع أكاديمي (جماعي) — مطابق لملف "اجتماع 12"

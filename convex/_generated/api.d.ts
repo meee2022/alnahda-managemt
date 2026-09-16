@@ -18,6 +18,7 @@ import type * as devPlans from "../devPlans.js";
 import type * as development from "../development.js";
 import type * as evaluations from "../evaluations.js";
 import type * as files from "../files.js";
+import type * as forms2026 from "../forms2026.js";
 import type * as guidePlans from "../guidePlans.js";
 import type * as meetings from "../meetings.js";
 import type * as performance from "../performance.js";
@@ -51,6 +52,7 @@ declare const fullApi: ApiFromModules<{
   development: typeof development;
   evaluations: typeof evaluations;
   files: typeof files;
+  forms2026: typeof forms2026;
   guidePlans: typeof guidePlans;
   meetings: typeof meetings;
   performance: typeof performance;

@@ -39,6 +39,8 @@ export const NAV: Group[] = [
       { label: "استمارة تقييم الزيارة", icon: "eye", href: "/evaluations/class-visit" },
       { label: "متابعة الأداء", icon: "document-attach", href: "/evaluations/performance" },
       { label: "تصنيف الأداء", icon: "git-branch", href: "/evaluations/classification" },
+      { label: "زيارة مساعد المعلم", icon: "clipboard", href: "/evaluations/assistant-visit" },
+      { label: "خطة تهيئة معلم مستجد", icon: "school", href: "/evaluations/induction" },
     ],
   },
   {
@@ -47,6 +49,7 @@ export const NAV: Group[] = [
       { label: "التحصيل الأكاديمي", icon: "trending-up", href: "/academics/exams" },
       { label: "الخطة الفصلية", icon: "calendar", href: "/academics/curriculum" },
       { label: "الأعمال الكتابية", icon: "create", href: "/academics/written-work" },
+      { label: "التقرير الكمي للمعلم", icon: "stats-chart", href: "/academics/teacher-exam-report" },
     ],
   },
   {
@@ -55,12 +58,14 @@ export const NAV: Group[] = [
       { label: "الخطة السنوية", icon: "map", href: "/plans/annual" },
       { label: "خطة التحصيل", icon: "rocket", href: "/plans/achievement" },
       { label: "جدول أعمال المنسقة", icon: "briefcase", href: "/plans/agenda" },
+      { label: "جلسة التحضير الجماعي", icon: "people", href: "/plans/prep-session" },
     ],
   },
   {
     label: "التطوير والتقارير",
     items: [
       { label: "الإحصائيات والتقارير", icon: "stats-chart", href: "/reports/stats" },
+      { label: "تقرير القسم", icon: "document-text", href: "/reports/department" },
       { label: "المساعد الذكي (محادثة)", icon: "chatbubbles", href: "/chat" },
       { label: "مساعد التوصيات", icon: "sparkles", href: "/assistant" },
       { label: "رفع وتحليل استمارة", icon: "cloud-upload", href: "/import" },
