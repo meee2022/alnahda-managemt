@@ -40,7 +40,8 @@
     "web": "expo start --web",
     "typecheck": "tsc --noEmit",
     "doctor": "npx expo-doctor",
-    "build:web": "node scripts/generate-build-meta.mjs && node scripts/generate-og.mjs && expo export -p web && node scripts/inject-og.mjs"
+    "build:web": "node scripts/generate-build-meta.mjs && node scripts/generate-og.mjs && expo export -p web && node scripts/inject-og.mjs",
+    "deploy:prod": "convex deploy --env-file .env.deploy.local -y"
   },
   "private": true
 }
