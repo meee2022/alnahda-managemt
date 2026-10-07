@@ -102,6 +102,8 @@ const ALL_TABLES = [
   "writtenWorkRecords", "examResults", "curriculumWeeks", "trainings", "professionalReadings",
   "monthlyReports", "achievements", "recommendations", "formTemplates",
   "leaveRegisters", "coverRegisters", "timetable", "guidePlans", "devPlans",
+  "scheduleConstraints", "teacherExamReports", "departmentReports",
+  "assistantVisits", "prepSessions", "inductionPlans",
 ];
 
 export const exportAll = query({
