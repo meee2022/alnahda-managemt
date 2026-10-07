@@ -506,8 +506,31 @@ export function Skeleton({ h = 14, w = "100%" as any, r = 8, style }: { h?: numb
 }
 
 export function Loading() {
+  // If data still has not arrived after a while the connection is stuck (slow or
+  // filtered network). Say so and offer a reload instead of spinning forever.
+  const [slow, setSlow] = React.useState(false);
+  React.useEffect(() => {
+    const t = setTimeout(() => setSlow(true), 12000);
+    return () => clearTimeout(t);
+  }, []);
   return (
     <View style={{ padding: 20, gap: 14, width: "100%", maxWidth: 1040, alignSelf: "center" }}>
+      {slow ? (
+        <View style={[styles.card, { alignItems: "center", gap: 10 }]}>
+          <Ionicons name="cloud-offline-outline" size={30} color={colors.textMuted} />
+          <Text style={{ fontFamily: fonts.bold, fontSize: 14.5, color: colors.text, textAlign: "center" }}>التحميل يأخذ وقتاً أطول من المعتاد</Text>
+          <Text style={{ fontFamily: fonts.regular, fontSize: 12.5, color: colors.textSecondary, textAlign: "center", lineHeight: 21 }}>
+            قد يكون الاتصال بالإنترنت ضعيفاً أو أن الشبكة تحجب الاتصال المباشر بالخادم. جرّبي إعادة التحميل أو شبكة أخرى.
+          </Text>
+          <Pressable
+            accessibilityRole="button"
+            onPress={() => { if (Platform.OS === "web" && typeof window !== "undefined") window.location.reload(); }}
+            style={{ backgroundColor: colors.primary, borderRadius: radius.md, paddingHorizontal: 20, paddingVertical: 10 }}
+          >
+            <Text style={{ fontFamily: fonts.semibold, fontSize: 13.5, color: "#fff" }}>إعادة التحميل</Text>
+          </Pressable>
+        </View>
+      ) : null}
       {[0, 1, 2].map((i) => (
         <View key={i} style={styles.card}>
           <Row style={{ gap: 12, marginBottom: 12 }}>

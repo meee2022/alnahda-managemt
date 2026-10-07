@@ -245,12 +245,20 @@ function BackButton() {
 }
 
 export default function RootLayout() {
-  const [fontsLoaded] = useFonts({
+  const [fontsLoaded, fontError] = useFonts({
     Cairo_400Regular,
     Cairo_500Medium,
     Cairo_600SemiBold,
     Cairo_700Bold,
   });
+  // Never block the app on fonts: on a slow or filtered network a font file can
+  // stall or fail, which used to leave the spinner up forever. After a short
+  // wait (or on error) render with the fallback font; Cairo swaps in when ready.
+  const [fontWaitOver, setFontWaitOver] = React.useState(false);
+  useEffect(() => {
+    const t = setTimeout(() => setFontWaitOver(true), 2500);
+    return () => clearTimeout(t);
+  }, []);
 
   useEffect(() => {
     if (Platform.OS === "web" && typeof document !== "undefined") {
@@ -260,7 +268,7 @@ export default function RootLayout() {
     }
   }, []);
 
-  if (!fontsLoaded) {
+  if (!fontsLoaded && !fontError && !fontWaitOver) {
     return (
       <View style={{ flex: 1, alignItems: "center", justifyContent: "center", backgroundColor: colors.bg }}>
         <ActivityIndicator size="large" color={colors.primary} />
